@@ -2,16 +2,17 @@
 layout: default
 ---
 
-## Understanding the limits of Quantum Theory, Algorithms and Systems
+## AI-OWLS: Advancing Cutting-edge AI through Innovative Optimization, Efficient Model Engineering, and Distributed Systems Design
 
-Our research group, comprised of dedicated CS and ECE students and esteemed faculty, is at the forefront of exploring groundbreaking advancements in quantum optimization and algorithms. Our work delves into the complexities and potential of quantum linear systems of equations problems, Quantum Approximate Optimization Algorithm (QAOA), Variational Quantum Eigensolvers (VQEs), and other cutting-edge techniques. By leveraging quantum computing's and quantum systems' unique capabilities, we aim to solve computational problems that are currently solvable by classical systems but rather inefficiently, thereby pushing the boundaries of what's possible in computer science and practical applications.
+Our long-term vision is to establish Rice University as a premier academic hub for practical, state-of-the-art, open-source algorithms for machine learning (ML) and artificial intelligence (AI) by directly applying the team's theories, practices, and methods with scientific applications in mind. This incentive is based on the fact that Rice Engineering School is a rare case where top-class academics from CS, ECE, Applied Math and Operations Research, and beyond interact actively within AI/ML, Optimization, Networks, and Decision Making. Yet, we often miss a shared vision and opportunity to jointly put ``flesh’’ into attempts toward practical algorithms with crucial societal impact.
 
-Through rigorous research and collaboration, we strive to contribute to the rapidly evolving field of quantum computing. Our projects are designed not only to advance theoretical understanding but also to develop solutions that can be applied across various domains. We invite you to explore our website to learn more about our initiatives, ongoing projects, and the impact of our research. Join us on this exciting journey as we unlock new dimensions of computing and pave the way for future innovations in technology and science.
+At the center of this vision lie Algorithms, Modeling, and Optimization, areas that heavily define the AI/ML time we live in but are also resilient to future engineering shifts, such as quantum computing. This core cluster includes expertise crucial in training deep neural networks, solving combinatorial problems, solving problems on graphs and using graphs, adapting to dynamic streaming data streams, solving large-scale problems in a distributed way, and more. Our interdisciplinary team combines expertise spanning convex/non-convex optimization, distributed algorithms, online learning, efficiency in training, and graph algorithms to develop next-generation recipes that can unlock the full potential of AI across application domains.
+
+Given the opportunity this call gives us, we aim to generate AI-OWLS. This cutting-edge AI model suite integrates optimization and modeling techniques with modern AI settings and problems. Starting with small-to-medium ML models as our initial focus, we want to exploit the trend of what we can achieve using specialized solutions. The goal is to create a comprehensive family of highly optimized and efficiently scalable –open-source– models deployed on devices without needing the latest GPUs that span diverse domains like ML applications (computer vision, natural language processing), infrastructure, ecology, biology, wireless systems, graph analytics, and scientific computing.
+
+Releasing these models as publicly available will democratize access to advanced AI capabilities and foster widespread adoption across industry, government, and academia (starting locally and slowly expanding on that). We will develop intuitive tooling and benchmarking frameworks to streamline model training, deployment, and evaluation. We aim to make Rice one of the academic open-source computational models capital, playing a pivotal role in shaping the next wave of AI innovation built on principled optimization foundations. This will cement Rice's position at the forefront of machine learning research while benefiting society through accessible and scalable AI solutions.
 
 The results of this project include: 
 
-- [A Catalyst Framework for the Quantum Linear System Problem via the Proximal Point Algorithm](./QLSP_PPA.html).
-
 ### Publications
 
-> Junhyung Lyle Kim, Nai-Hui Chia, Anastasios Kyrillidis, [**``A Catalyst Framework for the Quantum Linear System Problem via the Proximal Point Algorithm''**](), Preprint.
