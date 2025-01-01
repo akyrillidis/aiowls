@@ -17,7 +17,6 @@ layout: default
 + Optimal Guarantees for Online Selection Over Time. Perez-Salazar, Verdugo (To appear in the Proceedings of WINE 2024).
 + Fast fixmatch: Faster semi-supervised learning with curriculum batch size, J Chen, C Dun, A Kyrillidis, 2024 IEEE International Symposium on Information Theory (ISIT), 1836-1841
 + A Catalyst Framework for the Quantum Linear System Problem via the Proximal Point Algorithm, JL Kim, NH Chia, A Kyrillidis, arXiv preprint arXiv:2406.13879
-+ On the Error-Propagation of Inexact Deflation for Principal Component Analysis
-+ F Liao, JL Kim, C Barnum, A Kyrillidis, International Conference on Machine Learning (ICML), 2024.
++ On the Error-Propagation of Inexact Deflation for Principal Component Analysis, F Liao, JL Kim, C Barnum, A Kyrillidis, International Conference on Machine Learning (ICML), 2024.
 + Sweeping heterogeneity with smart mops: Mixture of prompts for llm task adaptation, C Dun, MH Garcia, G Zheng, AH Awadallah, A Kyrillidis, R Sim, ΑΑΑΙ, 2025
 + FedJETs: Efficient Just-In-Time Personalization with Federated Mixture of Experts, C Dun, MH Garcia, G Zheng, AH Awadallah, R Sim, A Kyrillidis, arXiv preprint arXiv:2306.08586
