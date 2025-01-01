@@ -2,8 +2,6 @@
 layout: default
 ---
 
-## AI-OWLS: Advancing Cutting-edge AI through Innovative Optimization, Efficient Model Engineering, and Distributed Systems Design
-
 Our long-term vision is to establish Rice University as a premier academic hub for practical, state-of-the-art, open-source algorithms for machine learning (ML) and artificial intelligence (AI) by directly applying the team's theories, practices, and methods with scientific applications in mind. This incentive is based on the fact that Rice Engineering School is a rare case where top-class academics from CS, ECE, Applied Math and Operations Research, and beyond interact actively within AI/ML, Optimization, Networks, and Decision Making. Yet, we often miss a shared vision and opportunity to jointly put ``flesh’’ into attempts toward practical algorithms with crucial societal impact.
 
 At the center of this vision lie Algorithms, Modeling, and Optimization, areas that heavily define the AI/ML time we live in but are also resilient to future engineering shifts, such as quantum computing. This core cluster includes expertise crucial in training deep neural networks, solving combinatorial problems, solving problems on graphs and using graphs, adapting to dynamic streaming data streams, solving large-scale problems in a distributed way, and more. Our interdisciplinary team combines expertise spanning convex/non-convex optimization, distributed algorithms, online learning, efficiency in training, and graph algorithms to develop next-generation recipes that can unlock the full potential of AI across application domains.
