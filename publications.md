@@ -2,8 +2,6 @@
 layout: default
 ---
 
-## AI-OWLS: Advancing Cutting-edge AI through Innovative Optimization, Efficient Model Engineering, and Distributed Systems Design
-
 ### Publications (no priority list, rather random and quite unstructured)
 
 #### 2024/2025
