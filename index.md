@@ -12,7 +12,3 @@ Given the opportunity this call gives us, we aim to generate AI-OWLS. This cutti
 
 Releasing these models as publicly available will democratize access to advanced AI capabilities and foster widespread adoption across industry, government, and academia (starting locally and slowly expanding on that). We will develop intuitive tooling and benchmarking frameworks to streamline model training, deployment, and evaluation. We aim to make Rice one of the academic open-source computational models capital, playing a pivotal role in shaping the next wave of AI innovation built on principled optimization foundations. This will cement Rice's position at the forefront of machine learning research while benefiting society through accessible and scalable AI solutions.
 
-The results of this project include: 
-
-### Publications
-
