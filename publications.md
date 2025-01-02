@@ -18,3 +18,5 @@ layout: default
 + **On the Error-Propagation of Inexact Deflation for Principal Component Analysis**, *F Liao, JL Kim, C Barnum, A Kyrillidis*, International Conference on Machine Learning (ICML), 2024.
 + **Sweeping heterogeneity with smart mops: Mixture of prompts for llm task adaptation**, *C Dun, MH Garcia, G Zheng, AH Awadallah, A Kyrillidis, R Sim*, ΑΑΑΙ, 2025
 + **FedJETs: Efficient Just-In-Time Personalization with Federated Mixture of Experts**, *C Dun, MH Garcia, G Zheng, AH Awadallah, R Sim, A Kyrillidis*, arXiv preprint arXiv:2306.08586
++ **Fair GLASSO: Estimating Fair Graphical Models with Unbiased Statistical Behavior**, *Madeline Navarro, Samuel Rey, Andrei Buciulea, Antonio G Marques, Santiago Segarra*, NeurIPS (2024)
++ **Opportunities and challenges of graph neural networks in electrical engineering**, *Eli Chien, Mufei Li, Anthony Aportela, Kerr Ding, Shuyi Jia, Supriyo Maji, Zhongyuan Zhao, Javier Duarte, Victor Fung, Cong Hao, Yunan Luo, Olgica Milenkovic, David Pan, Santiago Segarra, Pan Li*, Nature Reviews Electrical Engineering, vol. 1, no. 8, pp. 529-546 (2024).
