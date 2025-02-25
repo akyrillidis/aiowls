@@ -6,7 +6,7 @@ layout: default
 
 #### 2024/2025
 
-+ **Provable Model-Parallel Distributed Principal Component Analysis with Parallel Deflation**, *Fangshuo Liao, Wenyi Su, Anastasios Kyrillidis*, The second Conference on Parsimony and Learning (CPAL), 2025.
++ **[Provable Model-Parallel Distributed Principal Component Analysis with Parallel Deflation](https://openreview.net/pdf?id=n3SpSUzGi0)**, *Fangshuo Liao, Wenyi Su, Anastasios Kyrillidis*, The second Conference on Parsimony and Learning (CPAL), 2025.
 + **Pluvial Flood Emulation with Hydraulics-informed Message Passing**, *Arnold Kazadi, James Doss-Gollin, Arlei Silva*, International Conference on Machine Learning (ICML), 2024.
 + **FloodGNN-GRU: A Spatio-Temporal Graph Neural Network for Flood Prediction**, *Arnold Kazadi, James Doss-Gollin, Antonia Sebastian, Arlei Silva*, Environmental Data Science (EDS), 2024.
 + **Attribute-Enhanced Similarity Ranking for Sparse Link Prediction**, *Joao Mattos, Zexi Huang, Mert Kosan, Ambuj Singh, Arlei Silva*, ACM SIGKDD International Conference on Knowledge Discovery and Data Mining, 2025 (Accepted)
