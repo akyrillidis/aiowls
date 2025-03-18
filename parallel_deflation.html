@@ -191,11 +191,8 @@ Our work advances model-parallel PCA by removing strict sequential dependencies 
     <h2>Problem Statement</h2>
 </center>
 <p>
-We focus on computing the top-K eigenvectors of an empirical covariance matrix <code>Σ</code>. Given a dataset <code>Y</code> with n samples and d features, the covariance matrix is given by:
-</p>
-<pre><code>Σ = Y^T Y</code></pre>
-<p>
-The goal is to find the top-K eigenvectors of <code>Σ</code> efficiently in a distributed setting, without requiring strict sequential dependencies.
+We focus on computing the top-\(K\) eigenvectors of an empirical covariance matrix \(\Sigma\). Given a dataset \(Y\) with \(n\) samples and \(d\) features, the covariance matrix is given by:
+\(\Sigma = Y^\top Y\). The goal is to find the top-\(K\) eigenvectors of \(\Sigma\) efficiently in a distributed setting, without requiring strict sequential dependencies.
 </p>
 
 <br><hr>
@@ -203,7 +200,7 @@ The goal is to find the top-K eigenvectors of <code>Σ</code> efficiently in a d
     <h2>The Parallel Deflation Algorithm</h2>
 </center>
 <p>
-Our algorithm distributes the computation of K principal components across K workers. Unlike traditional deflation methods that require sequential eigenvector computation, we introduce a parallel iterative approach:
+Our algorithm distributes the computation of \(K\) principal components across \(K\) workers. Unlike traditional deflation methods that require sequential eigenvector computation, we introduce a parallel iterative approach:
 </p>
 <ul>
     <li><strong>Initialization:</strong> Each worker starts with a rough estimate of its assigned eigenvector.</li>
@@ -238,12 +235,12 @@ These results establish a strong theoretical foundation for model-parallel PCA, 
     <h2>Experiments</h2>
 </center>
 <p>
-We compare <code>Parallel Deflation</code> against EigenGame-$\alpha$ and EigenGame-$\mu$ on synthetic datasets and real-world benchmarks such as MNIST and ImageNet.
+We compare <code>Parallel Deflation</code> against EigenGame-\(\alpha\) and EigenGame-\(\mu\) on synthetic datasets and real-world benchmarks such as MNIST and ImageNet.
 </p>
 <ul>
-    <li><strong>Speed:</strong> Our method achieves faster convergence than EigenGame-$\alpha$ while matching EigenGame-$\mu$.</li>
+    <li><strong>Speed:</strong> Our method achieves faster convergence than EigenGame-\(\alpha\) while matching EigenGame-\(\mu\).</li>
     <li><strong>Scalability:</strong> Our approach scales efficiently to large datasets without requiring strict dependencies.</li>
-    <li><strong>Accuracy:</strong> Achieves comparable reconstruction error to EigenGame-$\mu$ while offering theoretical guarantees.</li>
+    <li><strong>Accuracy:</strong> Achieves comparable reconstruction error to EigenGame-\(\mu\) while offering theoretical guarantees.</li>
 </ul>
 <center>
 <img class="rounded" src="./assets/img/pd_experiments1.png" alt="Experimental Results" style="width:720px;">
