@@ -546,8 +546,9 @@ Formally, we minimize</p>
 <p style="max-width: 720px; margin-left: auto; margin-right: auto;">
 where \(f\) is smooth and \(\mu\)-strongly convex <em>in \(\mathbf{x}\) alone</em>, with mild
 Lipschitz-in-\(\mathbf{u}\) control on the model and gradient, plus a "universal optimality"
-assumption &mdash; the minimum over \(\mathbf{x}\) for any fixed \(\mathbf{u}\) already hits the global
-minimum. Crucially, \(f\) is <em>never</em> required to be convex or even smooth in \(\mathbf{u}\).</p>
+assumption &mdash; the minimum over \(\mathbf{x}\) for any fixed \(\mathbf{u}\) <em>in a small
+neighborhood around initialization</em> already hits the global minimum. Crucially, \(f\) is
+<em>never</em> required to be convex or even smooth in \(\mathbf{u}\).</p>
 
 <figure>
 <svg width="900" height="320" viewBox="0 0 900 320" xmlns="http://www.w3.org/2000/svg" style="background:#fff;">
@@ -607,7 +608,7 @@ it. But the analysis uses the structure to bound how updates on \(\mathbf{u}\) p
 <tr><td>A3. Outer-loss smoothness</td><td>\(f = g\circ h\) with \(g\) being \(L_2\)-smooth (MSE, logistic, &hellip;).</td></tr>
 <tr><td>A4. \(h\) is \(G_1\)-Lipschitz in \(\mathbf{u}\)</td><td>Model output changes slowly with \(\mathbf{u}\).</td></tr>
 <tr><td>A5. \(\nabla_{\mathbf{x}} f\) is \(G_2\)-Lipschitz in \(\mathbf{u}\)</td><td>The \(\mathbf{x}\)-gradient is stable under \(\mathbf{u}\) perturbations.</td></tr>
-<tr><td>A6. Universal optimality</td><td>\(\min_{\mathbf{x}} f(\mathbf{x},\mathbf{u}) = f^{\star}\) nearby &mdash; fully optimizing \(\mathbf{x}\) always reaches the global min.</td></tr>
+<tr><td>A6. Universal optimality</td><td>\(\min_{\mathbf{x}} f(\mathbf{x},\mathbf{u}) = f^{\star}\) for every \(\mathbf{u}\) in a small neighborhood around initialization &mdash; fully optimizing \(\mathbf{x}\) at any such \(\mathbf{u}\) already reaches the global min.</td></tr>
 </tbody>
 </table>
 
@@ -796,9 +797,10 @@ the objective is non-convex (because of \(\sigma\), which can be ReLU) and poten
 The non-convexity is controlled by \(\sigma_{\max}(\mathbf{A}_2)\) &mdash; a single knob.</p>
 
 <p><strong>Realization 2: deep fully-connected ReLU networks.</strong> This is the headline.
-Partition the parameters into \(\mathbf{x} = \mathrm{vec}(\mathbf{W}_{\Lambda})\) (last-layer weights)
-and \(\mathbf{u} = (\mathrm{vec}(\mathbf{W}_1), \dots, \mathrm{vec}(\mathbf{W}_{\Lambda-1}))\) (all
-earlier layers). MSE loss is strongly convex in \(\mathbf{x}\) at fixed \(\mathbf{u}\) provided the
+Partition the parameters into \(\mathbf{x} = \mathrm{vec}(\mathbf{W}_{\Lambda})\) (last-layer weights
+&mdash; with some complications for handling the null space induced by over-parameterization; see
+the paper for details) and \(\mathbf{u} = (\mathrm{vec}(\mathbf{W}_1), \dots, \mathrm{vec}(\mathbf{W}_{\Lambda-1}))\)
+(all earlier layers). MSE loss is strongly convex in \(\mathbf{x}\) at fixed \(\mathbf{u}\) provided the
 penultimate-layer feature matrix is full-rank &mdash; which holds at standard Gaussian initialization
 under sufficient width.</p>
 
@@ -821,9 +823,10 @@ neural-network architecture.</p>
 
 <div class="callout caveat">
 <span class="label">What this is, and is not</span>
-<p>The width requirement \(\Omega(n^{4.5})\) is a <em>sufficient condition for the proof</em>
-&mdash; like much of the NTK literature, it is not a claim about what works in practice. The
-same caveat applies to the "sufficiently small \(G_1, G_2\)" conditions: the result tells you
+<p>The width requirement \(\Omega(n^{4.5}\max\{n, d_0^2\})\) &mdash; which simplifies to
+\(\Omega(n^{5.5})\) when \(d_0 \leq n\) &mdash; is a <em>sufficient condition for the proof</em>.
+Like much of the NTK literature, it is not a claim about what works in practice. The same
+caveat applies to the "sufficiently small \(G_1, G_2\)" conditions: the result tells you
 <em>when</em> acceleration is provable, not that your favourite over-parameterized network
 clears the bar. Empirically, networks seem to benefit from momentum well outside this regime;
 proving that requires new ideas.</p>
@@ -922,52 +925,37 @@ are visible above.</p>
 </div>
 
 <article>
-<p>Acceleration is one of the great stories of <em>convex</em> optimization. Since Nesterov's
-1983 result, the \(\sqrt{\kappa}\) speedup on smooth, strongly convex problems has been
-celebrated, generalized, and taught as canonical. The corresponding story for <em>non-convex</em>
-optimization has, by contrast, been a persistent mystery. Neural-network trainers empirically
-reach for momentum; theorists have struggled to say why it should help.</p>
+<p>Acceleration is one of the great stories of <em>convex</em> optimization &mdash; since
+Nesterov's 1983 result, the \(\sqrt{\kappa}\) speedup has been celebrated, generalized, and
+taught as canonical. For <em>non-convex</em> optimization, the story has been a persistent
+mystery. Neural-network trainers empirically reach for momentum; theorists have struggled to
+say why.</p>
 
-<p>The mystery has structural reasons. Under the Polyak&ndash;&#321;ojasiewicz condition &mdash; the standard
-scaffolding for non-convex convergence proofs in deep learning &mdash;
+<p>Two prior negative results explain the difficulty. Under the Polyak&ndash;&#321;ojasiewicz condition
+&mdash; the standard scaffolding for non-convex convergence proofs in deep learning &mdash;
 <a href="https://arxiv.org/abs/2203.08026">Yue et al. (2022)</a> showed that gradient descent is
-already rate-optimal: there is simply no \(\sqrt{\kappa}\) left on the table for momentum to
-collect. For the Heavy Ball method,
-<a href="https://arxiv.org/abs/2308.03006">Goujaud et al. (2023)</a>
-proved it cannot accelerate even on smooth and strongly convex functions. These are hard,
-prior <em>negative</em> results &mdash; they explain why acceleration in the non-convex regime
-has resisted a clean theory for so long.</p>
+already rate-optimal; no \(\sqrt{\kappa}\) left for momentum. For the Heavy Ball method,
+<a href="https://arxiv.org/abs/2308.03006">Goujaud et al. (2023)</a> proved it cannot accelerate
+even on smooth and strongly convex functions.</p>
 
 <div class="pullquote">
 Our hope is to carry the machinery of convex-optimization theory an &#949;-step beyond
 the class of convex functions &mdash; and to keep the speedup intact on the way out.
 </div>
 
-<p>This paper is an attempt to move the frontier by a small, explicit amount. The partition
-model does not claim to cover every non-convex objective &mdash; it covers a specific class of
-objectives that includes at least one architecture of genuine interest: deep ReLU networks
-trained with MSE. Within that class, the convex-optimization proof technique &mdash; Lyapunov
-functions, estimating sequences, \(\sqrt{\kappa}\) acceleration &mdash; survives, after careful
-accounting for the "wild" half of the parameters. To our reading, this is the first time the
-convex toolbox has been extended to a non-shallow, non-linear neural-network setting while
-keeping the accelerated rate.</p>
-
-<p>The honest framing is: one step, not a mile. The partition model requires strong convexity in
-one block, smoothness, universal optimality, and controlled non-convex perturbation. These
-conditions are strictly stronger than PL but strictly weaker than full strong convexity. The
-contribution is showing that this <em>strictly-between</em> class is (a) non-empty in a way that
-includes real neural networks, and (b) already rich enough to support accelerated momentum
-methods. What convex technology can carry across that boundary &mdash; and how much further it
-can be pushed &mdash; is, we think, a generative question.</p>
+<p>The partition model sits strictly between PL and full strong convexity: strong enough to
+support an accelerated Lyapunov argument, weak enough to cover deep ReLU training with MSE.
+To our reading, this is the first time the convex toolbox has been extended to a non-shallow,
+non-linear neural-network setting while keeping the accelerated rate. One step, not a mile.</p>
 
 <div class="callout openq">
 <span class="label">Caveats, one more time</span>
 <p>Everything above is for <em>full-batch</em> gradients, <em>fully-connected</em> ReLU networks,
-and MSE loss, under standard Gaussian initialization with width \(\Omega(n^{4.5})\). We do
-<em>not</em> claim the result applies to practical ResNet training, nor that Nesterov is
-empirically the best optimizer in any given application. What we claim is that theory has caught
-up to a well-known empirical phenomenon in one clean regime, and that the proof technique
-generalizes further than it may initially appear.</p>
+and MSE loss, under standard Gaussian initialization with width \(\Omega(n^{5.5})\) (assuming
+\(d_0 \leq n\)). We do <em>not</em> claim the result applies to practical ResNet training, nor
+that Nesterov is empirically the best optimizer in any given application. What we claim is that
+theory has caught up to a well-known empirical phenomenon in one clean regime, and that the
+proof technique generalizes further than it may initially appear.</p>
 </div>
 
 <hr style="border: 0; border-top: 1px solid var(--rule); margin: 40px 0;">
