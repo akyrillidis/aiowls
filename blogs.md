@@ -11,12 +11,19 @@ layout: default
     padding: 16px 0; border-bottom: 1px solid #e6e1d4;
   }
   .blog-list li:last-child { border-bottom: none; }
-  .blog-list .thumb { flex: 0 0 140px; }
-  .blog-list .thumb a { display: block; }
-  .blog-list .thumb img {
-    width: 140px; height: 90px; object-fit: cover;
+  .blog-list .thumb { flex: 0 0 180px; }
+  .blog-list .thumb a {
+    display: flex; align-items: center; justify-content: center;
+    width: 180px; height: 110px;
+    background: #ffffff;
     border: 1px solid #d8d3c4; border-radius: 4px;
-    background: #fbf7f0;
+    overflow: hidden;
+  }
+  .blog-list .thumb img {
+    max-width: 96%; max-height: 96%;
+    width: auto; height: auto;
+    object-fit: contain;
+    display: block;
   }
   .blog-list .title { line-height: 1.4; }
   .blog-list .title a {
@@ -29,7 +36,7 @@ layout: default
   }
   @media (max-width: 540px) {
     .blog-list li { flex-direction: column; align-items: flex-start; }
-    .blog-list .thumb img { width: 100%; height: auto; max-width: 360px; }
+    .blog-list .thumb, .blog-list .thumb a { width: 100%; max-width: 360px; height: auto; aspect-ratio: 16 / 10; }
   }
 </style>
 
