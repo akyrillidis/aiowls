@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Why SGD Stops Just Short of the Edge — AI-OWLS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400..700;1,400..700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<style>
+  :root{
+    --paper:#fdfcf8;
+    --ink:#21201c;
+    --ink-soft:#5b5953;
+    --rule:#dcd8cc;
+    --gd:#2c3e69;       /* deterministic / GD */
+    --sgd:#c84539;      /* stochastic / SGD  */
+    --gap:#1f8a72;      /* the gap object    */
+    --threshold:#a87a2e;/* 2/eta threshold   */
+    --highlight:#fff3cf;
+    --measure:720px;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0; background:var(--paper); color:var(--ink);
+    font-family:'Lora',Georgia,serif; font-size:18.5px; line-height:1.7;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:var(--measure); margin:0 auto; padding:48px 28px 96px}
+  .meta{
+    font-family:'Inter',sans-serif; font-size:11px; letter-spacing:.18em;
+    text-transform:uppercase; color:var(--ink-soft); font-weight:600;
+  }
+  .masthead{
+    border-top:1px solid var(--ink); border-bottom:1px solid var(--ink);
+    padding:14px 0; display:flex; justify-content:space-between;
+    align-items:center; margin-bottom:54px;
+  }
+  .masthead .title{font-family:'Inter',sans-serif; font-size:13px; letter-spacing:.22em; font-weight:700; text-transform:uppercase}
+  .masthead .right{font-family:'Inter',sans-serif; font-size:11px; letter-spacing:.18em; text-transform:uppercase; color:var(--ink-soft)}
+  h1.hero{
+    font-family:'Lora',serif; font-weight:600; font-style:normal;
+    font-size:46px; line-height:1.1; letter-spacing:-.012em;
+    margin:18px 0 18px;
+  }
+  .dek{
+    font-family:'Lora',serif; font-style:italic; color:var(--ink-soft);
+    font-size:22px; line-height:1.45; margin:0 0 30px; max-width:600px;
+  }
+  .byline{
+    font-family:'Inter',sans-serif; font-size:13px; color:var(--ink-soft);
+    border-top:1px solid var(--rule); border-bottom:1px solid var(--rule);
+    padding:14px 0; margin-bottom:42px;
+  }
+  .byline strong{color:var(--ink); font-weight:600}
+  .byline a{color:var(--gd); text-decoration:none; border-bottom:1px solid var(--rule)}
+
+  .inbrief{
+    background:#f4efe2; border-left:4px solid var(--gap);
+    padding:22px 26px; margin:0 0 48px; border-radius:2px;
+  }
+  .inbrief .label{
+    font-family:'Inter',sans-serif; font-weight:700; font-size:11px;
+    letter-spacing:.22em; text-transform:uppercase; color:var(--gap); margin-bottom:8px;
+  }
+  .inbrief p{margin:0; font-size:17px; line-height:1.6}
+
+  h2{
+    font-family:'Inter',sans-serif; font-weight:600; font-size:22px;
+    letter-spacing:-.005em; margin:60px 0 18px; color:var(--ink);
+  }
+  h2 .num{
+    font-family:'Inter',sans-serif; font-weight:500; color:var(--ink-soft);
+    margin-right:.6em; font-size:15px; letter-spacing:.18em;
+  }
+  p{margin:0 0 22px}
+  p .em-key{color:var(--gap); font-weight:600; font-style:normal; border-bottom:1px dotted var(--gap)}
+
+  blockquote.pull{
+    border-left:none; margin:36px 0; padding:14px 0 14px 26px;
+    border-top:1px solid var(--rule); border-bottom:1px solid var(--rule);
+    font-family:'Lora',serif; font-style:italic; font-size:22px; line-height:1.5;
+    color:var(--ink);
+  }
+
+  .figure{
+    margin:42px -40px;
+  }
+  .figure img{width:100%; display:block; border-radius:2px}
+  .figure .caption{
+    font-family:'Inter',sans-serif; font-size:13.5px; line-height:1.55;
+    color:var(--ink-soft); margin:14px 6px 0; padding-top:10px;
+    border-top:1px solid var(--rule);
+  }
+  .figure .caption .num{font-weight:700; color:var(--ink); margin-right:6px}
+
+  .equation{
+    font-size:17px; padding:20px 24px; margin:30px 0;
+    background:#f4efe2; border-radius:2px; text-align:center;
+    border-left:3px solid var(--threshold);
+  }
+
+  .sidebar{
+    background:#f9f6ec; padding:22px 26px; margin:34px 0;
+    border-radius:2px; border:1px solid var(--rule);
+  }
+  .sidebar .label{
+    font-family:'Inter',sans-serif; font-weight:700; font-size:11px;
+    letter-spacing:.22em; text-transform:uppercase; color:var(--threshold);
+    margin-bottom:10px;
+  }
+  .sidebar p:last-child{margin-bottom:0}
+
+  .scope{
+    background:#fbf7f0; padding:24px 26px; margin:38px 0;
+    border-radius:2px; border:1px dashed #c0bba9;
+  }
+  .scope .label{
+    font-family:'Inter',sans-serif; font-weight:700; font-size:11px;
+    letter-spacing:.22em; text-transform:uppercase; color:var(--sgd); margin-bottom:10px;
+  }
+  .scope ul{margin:0; padding-left:18px}
+  .scope li{margin-bottom:8px; font-size:16.5px; line-height:1.55}
+
+  .footer{
+    margin-top:72px; padding-top:24px; border-top:1px solid var(--ink);
+    font-family:'Inter',sans-serif; font-size:13px; color:var(--ink-soft);
+    display:flex; justify-content:space-between; flex-wrap:wrap; gap:18px;
+  }
+  .footer a{color:var(--gd); text-decoration:none; border-bottom:1px solid var(--rule)}
+  .footer .right{font-size:11px; letter-spacing:.18em; text-transform:uppercase}
+
+  .glossary{
+    margin:50px 0 0; padding:24px 26px; background:#f4efe2; border-radius:2px;
+  }
+  .glossary .label{font-family:'Inter',sans-serif; font-weight:700; font-size:11px; letter-spacing:.22em; text-transform:uppercase; color:var(--gap); margin-bottom:12px}
+  .glossary dl{margin:0; display:grid; grid-template-columns:1fr; gap:12px 18px}
+  .glossary dt{font-family:'Inter',sans-serif; font-weight:600; font-size:14px; color:var(--ink)}
+  .glossary dd{margin:0 0 6px; font-size:15.5px; line-height:1.55; color:var(--ink-soft)}
+
+  @media (max-width:760px){
+    .figure{margin:34px 0}
+    h1.hero{font-size:32px}
+    .dek{font-size:18px}
+    body{font-size:17px}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="masthead">
+    <div class="title">AI-OWLS · Rice University</div>
+    <div class="right">Theory of Optimization · April 2026</div>
+  </div>
+
+  <div class="meta">A research explainer</div>
+  <h1 class="hero">Why Stochastic Gradient Descent Stops Just Short of the Edge</h1>
+  <p class="dek">A closed-form explanation for one of deep learning's most reproducible — and least understood — empirical regularities.</p>
+
+  <div class="byline">
+    <strong>Fangshuo (Jasper) Liao &middot; Afroditi Kolomvaki &middot; Anastasios Kyrillidis</strong> &mdash; Rice University, Department of Computer Science<br>
+    Paper: <a href="https://arxiv.org/abs/2604.21016">arXiv:2604.21016</a> &nbsp;·&nbsp;
+    Code: <a href="https://github.com/akyrillidis/stochastic-eos">github.com/akyrillidis/stochastic-eos</a>
+  </div>
+
+  <div class="inbrief">
+    <div class="label">In Brief</div>
+    <p>When a neural network is trained with full-batch gradient descent, the steepest direction of its loss landscape gets pinned to a specific value set by the step size. With mini-batch SGD, that same quantity sits <em>below</em> the value, and the smaller the batch, the lower it sits. We show why: the gradient noise injected by mini-batches doesn't just perturb the trajectory — it amplifies a restoring force that was already keeping things stable, and the equilibrium quietly drops by an amount we can write in closed form.</p>
+  </div>
+
+  <h2><span class="num">§1</span>The cliff and the catch</h2>
+
+  <p>Train a neural network with vanilla gradient descent and a step size <em>η</em>, and a curious thing happens. The largest eigenvalue of the loss Hessian — a quantity called the <em>sharpness</em>, which measures how steeply the loss curves along its most sensitive direction — climbs steadily during early training. Then it reaches a number, <em>2/η</em>, and refuses to climb further. The loss continues to fall, but the sharpness oscillates in a tight band right at this value.</p>
+
+  <p>This is the <em>Edge of Stability</em>, named by <a href="https://arxiv.org/abs/2103.00065">Cohen and collaborators in 2021</a>, and by now it is one of the most reliably reproducible phenomena in deep learning. The number <em>2/η</em> is not arbitrary: classical optimisation theory says that gradient descent is only guaranteed to decrease a smooth loss when <em>η &lt; 2/S</em>. Past that threshold, in principle, training should diverge. In practice, training proceeds — the network sits at the cliff edge and refuses to fall.</p>
+
+  <p>For a long time this looked like a paradox. In 2023, <a href="https://arxiv.org/abs/2209.15594">Damian, Nichani, and Lee</a> resolved the paradox for full-batch gradient descent. Their argument is geometric: when the iterate starts to oscillate along the most unstable direction, the third derivative of the loss generates a <em>cubic restoring force</em> that pushes the sharpness back down. The system finds a self-correcting equilibrium right at <em>2/η</em>. They proved it as a coupling theorem: the actual gradient-descent trajectory tracks a constrained reference trajectory plus a small oscillation, with controlled error.</p>
+
+  <p>That argument explained gradient descent. It did not explain what happens with <span class="em-key">mini-batch SGD</span>.</p>
+
+  <h2><span class="num">§2</span>An empirical pattern, unexplained</h2>
+
+  <p>If you replace full-batch gradient descent with stochastic gradient descent and a small batch size, the sharpness still rises and then plateaus — but it plateaus <em>below</em> <em>2/η</em>. The smaller the batch, the lower the plateau. Reduce the batch from 1000 to 50 and the equilibrium sharpness drops by a measurable, reproducible amount. This isn't subtle, and it isn't new. Cohen's 2021 paper noted it in passing. <a href="https://arxiv.org/abs/2412.20553">Andreyev and Beneventano (2025)</a> identified a related quantity — the so-called <em>batch sharpness</em>, measured along the direction the mini-batch gradient actually moves — that <em>does</em> sit at <em>2/η</em>. They called this the <em>Edge of Stochastic Stability</em>, and explicitly posed as an open problem the question of <em>why</em> the full-batch sharpness is suppressed and by how much.</p>
+
+  <p>That open problem is what our paper closes.</p>
+
+  <div class="figure">
+    <img src="assets/img/seos_fig1_trajectories.png" alt="Sharpness trajectories during training across batch sizes; smaller batches plateau lower">
+    <p class="caption"><span class="num">Figure 1.</span> Sharpness during training under SGD with different batch sizes. Each line is the largest eigenvalue of the loss Hessian, measured every 50 steps over a 20,000-step run on a small CIFAR-10 subset. Full-batch gradient descent (dashed) plateaus at the classical threshold; SGD plateaus below it, and the smaller the batch, the lower the plateau. Left: a fully-connected tanh network. Right: a small CNN with squared-error loss. The CNN's gap is several times larger than the MLP's — a clue about where the noise enters.</p>
+  </div>
+
+  <h2><span class="num">§3</span>A noisy oscillator</h2>
+
+  <p>The mechanism we propose is a small extension of Damian's. Picture the iterate close to its constrained trajectory — the smooth, deterministic curve it would follow if the unstable direction were artificially clamped. The actual iterate doesn't follow this curve exactly: it oscillates around it, kicked back and forth along the unstable Hessian direction. With full-batch gradient descent, those oscillations are deterministic, and Damian's cubic restoring force is exactly strong enough to keep the average sharpness pinned at <em>2/η</em>.</p>
+
+  <p>Inject mini-batch noise. Now the oscillations have an additional, random component along the unstable direction. The amplitude of those oscillations is, on average, <em>larger</em> — its mean square inflates by an amount proportional to the projected noise variance. The cubic restoring force, which always acts in proportion to the squared amplitude, is now stronger than it needs to be to hold the equilibrium at <em>2/η</em>. To rebalance, the system relaxes downward: the average sharpness drops until the strengthened restoring force is exactly counterbalanced by progressive sharpening from the gradient pulling the iterate uphill.</p>
+
+  <p>This is the heart of <span class="em-key">stochastic self-stabilisation</span>. Noise doesn't break the equilibrium; it strengthens one side of it, and the equilibrium quietly slides.</p>
+
+  <blockquote class="pull">Noise doesn't perturb the equilibrium. It tilts the scales of an existing one, and the system finds a new resting point a measurable distance below the cliff.</blockquote>
+
+  <h2><span class="num">§4</span>A formula</h2>
+
+  <p>Making this rigorous required extending Damian's coupling theorem to the stochastic case. We define a stochastic version of the predicted oscillation, prove that the actual SGD trajectory tracks the constrained reference plus this stochastic oscillation up to controlled error, and then read off the equilibrium from the stationarity conditions of the predicted dynamics. After a frozen-coefficient simplification and a decorrelation closure that we verify empirically, the gap takes a clean form:</p>
+
+  <div class="equation">
+    \[ \mathbb{E}[S_{\mathrm{eq}}] \approx \frac{2}{\eta} \;-\; \underbrace{\frac{\eta\,\beta\,\sigma_u^{2}}{4\alpha}}_{\Delta S} \]
+  </div>
+
+  <p>The three landscape quantities have intuitive roles. <em>α</em> measures the rate of <em>progressive sharpening</em>: the tendency of an unconstrained gradient step to push the sharpness upward. <em>β</em> measures the strength of the restoring force in the directions perpendicular to the unstable one. And <em>σ²<sub>u</sub></em> is the variance of the gradient noise <em>projected onto</em> the most unstable Hessian direction — the only piece of the noise that actually matters for the dynamics in question.</p>
+
+  <p>Three things fall out of this formula immediately. First, when the batch equals the full dataset, mini-batch noise vanishes and the gap collapses to zero — we recover full-batch gradient descent and Damian's earlier result. Second, since the noise of an average over <em>b</em> independent samples scales as <em>1/b</em>, the gap should scale inversely with batch size. Third, the formula identifies which quantity from the noise covariance matters: not the trace, not the largest eigenvalue, but the projection onto the top Hessian eigenvector.</p>
+
+  <h2><span class="num">§5</span>What we measured</h2>
+
+  <p>Two predictions are clean enough to test directly. We trained networks with vanilla SGD on a 5,000-image subset of CIFAR-10 — small enough to make full-batch baselines tractable, large enough to give clean Edge of Stability behaviour with squared-error loss. For each of eleven batch sizes from 50 to 2,500, we measured the equilibrium sharpness across multiple random seeds.</p>
+
+  <div class="figure">
+    <img src="assets/img/seos_fig2_scaling.png" alt="Log-log plot of sharpness gap versus batch size, fitted slope -1.27">
+    <p class="caption"><span class="num">Figure 2.</span> The sharpness gap — the difference between SGD's equilibrium sharpness and full-batch gradient descent's — plotted against batch size on log axes. The fitted slope is &minus;1.27 across more than an order of magnitude in batch size, with a coefficient of determination of 0.98. The theoretical prediction (dotted) is a slope of &minus;1; the small offset is consistent with higher-order corrections to the leading-order formula.</p>
+  </div>
+
+  <p>The data falls almost exactly on the predicted line, with a small residual that the leading-order theory does not pretend to capture. We separately measured the projected gradient-noise variance — the <em>σ²<sub>u</sub></em> appearing in the formula — and found it scales the same way, with a fitted slope of &minus;1.21. The mechanism is therefore self-consistent: smaller batches produce more noise along the unstable direction, and that increased noise produces the predicted suppression of sharpness.</p>
+
+  <p>The same picture holds across architectures. The fully-connected ReLU network shows essentially the same pattern as its tanh counterpart (gap of about seventeen at batch size 50). The CNN with squared-error loss shows a much larger effect — a gap of about seventy at the same batch size — consistent with stronger gradient noise along its unstable direction. None of this is sensitive to choice of activation.</p>
+
+  <h2><span class="num">§6</span>Where it doesn't apply</h2>
+
+  <p>Now the part it would be dishonest to skip. The mechanism predicts sharpness suppression <em>conditional on</em> sustained Edge of Stability dynamics — that is, the iterate has to actually reach <em>2/η</em> in the first place, and stay there long enough to oscillate. When that condition fails, the formula has nothing to say.</p>
+
+  <p>The cleanest example of this failure is, perhaps surprisingly, the same CNN architecture but trained with cross-entropy instead of squared-error loss. On the same 5,000-image dataset, with the same step size and the same batch sizes, the sharpness rises to about a hundred — well below the threshold of two hundred — peaks, and then collapses to about fifteen. Edge of Stability dynamics never emerge. Different batch sizes all collapse to the same low value.</p>
+
+  <div class="figure">
+    <img src="assets/img/seos_fig9_cnn_ce.png" alt="CNN with cross-entropy loss never reaches the edge of stability; CNN with MSE shows the typical pattern">
+    <p class="caption"><span class="num">Figure 3.</span> Loss function matters more than architecture. Left: CNN with cross-entropy loss on a small CIFAR-10 subset never reaches the stability threshold; sharpness peaks at around 95 and collapses to 15. There is no batch-size dependence because there is no Edge of Stability regime to suppress. Right: identical CNN with squared-error loss on the same subset shows the typical batch-size-dependent gap.</p>
+  </div>
+
+  <p>This is a clean negative result. Cross-entropy on a small dataset drives the network rapidly to near-zero loss, the Hessian spectrum flattens, and the conditions our theory needs are simply not present. The mechanism is precisely scoped: <em>where Edge of Stability dynamics hold, here is what happens. Where they don't, you should not expect this formula to apply.</em></p>
+
+  <h2><span class="num">§7</span>What this is — and isn't</h2>
+
+  <p>It is worth being explicit about the boundaries of the claim, because anyone reading about &ldquo;flatter solutions and small batches&rdquo; will reasonably want to know whether this proves what people have informally believed for years. It does not.</p>
+
+  <div class="scope">
+    <div class="label">Boundaries of the claim</div>
+    <ul>
+      <li>We <strong>explain a measurement</strong>: under sustained Edge of Stability dynamics, mini-batch SGD's full-batch sharpness sits below <em>2/η</em> by an amount we predict in closed form. We confirm the prediction's batch-size scaling experimentally.</li>
+      <li>We <strong>do not prove</strong> that lower equilibrium sharpness causes better generalisation. That is a long-standing empirical association in the literature; our work makes the sharpness side of it predictable, not the generalisation side.</li>
+      <li>The closed form requires a frozen-coefficient simplification and a decorrelation closure between the slow and fast variables. We test the closure numerically and it holds; it does not hold trivially.</li>
+      <li>The progressive-sharpening coefficient <em>α</em> is hard to measure cleanly at the oscillating SGD iterate (it can flip sign during the oscillation). The qualitative scaling predictions are robust to this; the absolute quantitative prediction is sensitive to it.</li>
+      <li>We inherit the structural assumptions of the deterministic theory we extend: a single dominant unstable direction, samplewise smoothness, and a non-worst-case eigengap. These are real conditions, not technicalities.</li>
+      <li>The experiments use vanilla SGD on a small CIFAR-10 subset across MLP and small-CNN architectures. We do not study momentum, weight decay, large datasets, or deep ResNets here.</li>
+    </ul>
+  </div>
+
+  <p>Within those boundaries, what we have is, we think, the right kind of result for an empirical regularity that has been visible for years without a satisfying account: a mechanism, a closed-form prediction, a clean scaling experiment that confirms it, and a sharply-defined region outside of which the prediction is not promised to hold.</p>
+
+  <p>It also identifies what the right &ldquo;edge&rdquo; of mini-batch training really is. The full-batch sharpness is a <em>summary statistic</em>; it is not what governs whether a mini-batch update will diverge. The quantity that does — batch sharpness, the curvature seen along the mini-batch gradient direction — does saturate at <em>2/η</em>, and our gap formula is precisely the predicted amount by which the two diverge from each other. The picture, we hope, is one in which mini-batch SGD looks less like a noisy approximation of gradient descent and more like a different equilibrium: living at its own edge, of its own quantity, with full-batch sharpness as a controlled byproduct.</p>
+
+  <div class="glossary">
+    <div class="label">Glossary</div>
+    <dl>
+      <dt>Sharpness <em>S(θ)</em></dt>
+      <dd>The largest eigenvalue of the loss Hessian — a measure of how curved the loss is along its most sensitive direction.</dd>
+      <dt>Edge of Stability (EoS)</dt>
+      <dd>The empirical regime in which sharpness rises to <em>2/η</em> (the classical instability threshold) and remains there while training continues to succeed.</dd>
+      <dt>Self-stabilisation</dt>
+      <dd>A geometric mechanism, identified by Damian, Nichani &amp; Lee (2023), whereby the third derivative of the loss generates a cubic restoring force that prevents the sharpness from drifting above the stability threshold.</dd>
+      <dt>Stochastic self-stabilisation</dt>
+      <dd>This paper's extension: gradient noise increases the variance of the oscillation along the unstable direction, strengthening the cubic restoring force and shifting the equilibrium below <em>2/η</em>.</dd>
+      <dt>Batch sharpness</dt>
+      <dd>The directional curvature of the mini-batch loss measured along the mini-batch gradient — the SGD analogue that <em>does</em> saturate at <em>2/η</em>.</dd>
+    </dl>
+  </div>
+
+  <div class="footer">
+    <div class="left">
+      <strong>Read the paper:</strong> <a href="https://arxiv.org/abs/2604.21016">arXiv:2604.21016</a><br>
+      <strong>Code:</strong> <a href="https://github.com/akyrillidis/stochastic-eos">github.com/akyrillidis/stochastic-eos</a><br>
+      Joint work with Fangshuo (Jasper) Liao and Afroditi Kolomvaki.
+    </div>
+    <div class="right">AI-OWLS · Rice CS · 2026</div>
+  </div>
+
+</div>
+</body>
+</html>
