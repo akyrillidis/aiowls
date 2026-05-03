@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="en-US">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<title>How a little Gaussian dust changes how a network learns &middot; AI-OWLS</title>
+<meta property="og:title" content="How a little Gaussian dust changes how a network learns" />
+<meta property="og:description" content="What happens when every input to a two-layer ReLU network is multiplied by random noise? The math, surprisingly, still goes through." />
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400;1,500&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<script>
+window.MathJax = { tex: { inlineMath: [['$','$'], ['\\(','\\)']] } };
+</script>
+<script type="text/javascript" id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+
+<style>
+:root {
+    --ink:        #21201c;
+    --ink-soft:   #525049;
+    --paper:      #ffffff;
+    --paper-tint: #faf9f6;
+    --rule:       #e6e3da;
+    --rule-soft:  #f0eee7;
+
+    /* Sci-Am editorial accent (used sparingly) */
+    --accent-red: #c72a1e;
+
+    /* Conceptual palette — three colors, used consistently across figures */
+    --data-teal:   #2d8f8a;   /* "the math" / clean ReLU / theory */
+    --data-coral:  #e6725b;   /* "the noise" / κ / perturbation */
+    --data-amber:  #d4a03f;   /* "the result" / smoothed activation */
+    --data-grey:   #8a8780;   /* secondary data */
+
+    --serif:   "Spectral", Georgia, "Times New Roman", serif;
+    --sans:    "IBM Plex Sans", "Helvetica Neue", system-ui, sans-serif;
+    --mono:    "IBM Plex Mono", "JetBrains Mono", Menlo, monospace;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--serif);
+    font-weight: 400;
+    font-size: 18px;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+a { color: inherit; }
+
+/* Masthead — clean, sans-only, very thin rule (Sci-Am editorial) */
+.masthead {
+    border-bottom: 1px solid var(--rule);
+    padding: 16px 32px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    max-width: 1140px;
+    margin: 0 auto;
+}
+.masthead .brand {
+    font-family: var(--sans);
+    font-weight: 700;
+    font-size: 14px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ink);
+    text-decoration: none;
+}
+.masthead .nav {
+    font-family: var(--sans);
+    font-size: 12px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+}
+.masthead .nav a { color: inherit; text-decoration: none; margin-left: 18px; }
+.masthead .nav a:hover { color: var(--accent-red); }
+
+/* Hero */
+.hero {
+    max-width: 880px;
+    margin: 0 auto;
+    padding: 56px 32px 28px;
+    text-align: left;
+}
+.kicker {
+    font-family: var(--sans);
+    font-weight: 600;
+    font-size: 12px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--accent-red);
+    margin-bottom: 18px;
+}
+.kicker .dot { color: var(--ink-soft); margin: 0 8px; font-weight: 400; }
+.hero h1 {
+    font-family: var(--serif);
+    font-weight: 600;
+    font-size: 54px;
+    line-height: 1.06;
+    letter-spacing: -0.012em;
+    margin: 0 0 22px 0;
+    color: var(--ink);
+}
+.dek {
+    font-family: var(--serif);
+    font-style: italic;
+    font-weight: 400;
+    font-size: 22px;
+    line-height: 1.45;
+    color: var(--ink-soft);
+    max-width: 720px;
+    margin: 0 0 28px 0;
+}
+.byline {
+    font-family: var(--sans);
+    font-size: 12px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    border-top: 1px solid var(--rule);
+    padding-top: 14px;
+    margin-top: 22px;
+}
+.byline strong { font-weight: 600; color: var(--ink); }
+.byline .sep { margin: 0 8px; color: var(--rule); }
+
+/* Article body */
+.article {
+    max-width: 880px;
+    margin: 0 auto;
+    padding: 28px 32px 80px;
+}
+.article p { margin: 0 0 18px 0; }
+.article p.lede {
+    font-size: 22px;
+    line-height: 1.55;
+    color: var(--ink);
+    margin-bottom: 36px;
+    border-left: 3px solid var(--accent-red);
+    padding-left: 24px;
+}
+
+/* Section headers */
+.article h2 {
+    font-family: var(--sans);
+    font-weight: 700;
+    font-size: 13px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--accent-red);
+    margin: 56px 0 8px 0;
+}
+.article h2 + h3 { margin-top: 4px; }
+.article h3 {
+    font-family: var(--serif);
+    font-weight: 600;
+    font-size: 30px;
+    line-height: 1.2;
+    letter-spacing: -0.005em;
+    margin: 0 0 18px 0;
+    color: var(--ink);
+}
+
+/* Inline emphasis — sparing red highlight for key terms (Sci-Am) */
+.term { color: var(--accent-red); font-weight: 500; }
+
+/* Pullout: single short sentence, large, between sections */
+.pullout {
+    font-family: var(--serif);
+    font-style: italic;
+    font-weight: 400;
+    font-size: 26px;
+    line-height: 1.35;
+    color: var(--ink);
+    border-top: 1px solid var(--rule);
+    border-bottom: 1px solid var(--rule);
+    padding: 28px 0;
+    margin: 36px 0 36px;
+    text-align: center;
+}
+
+/* Equations */
+.eq {
+    margin: 22px 0;
+    text-align: center;
+    overflow-x: auto;
+}
+
+/* Figures */
+figure {
+    margin: 32px 0 24px 0;
+    padding: 0;
+}
+figure.full { margin-left: -8px; margin-right: -8px; }
+figure img {
+    display: block;
+    max-width: 100%;
+    height: auto;
+    margin: 0 auto;
+    border: 1px solid var(--rule);
+    background: var(--paper);
+}
+figure svg { display: block; max-width: 100%; height: auto; margin: 0 auto; }
+figcaption {
+    font-family: var(--sans);
+    font-size: 15px;
+    line-height: 1.5;
+    color: var(--ink-soft);
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top: 1px solid var(--rule);
+}
+figcaption .fnum {
+    font-weight: 700;
+    color: var(--accent-red);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-right: 8px;
+}
+
+/* Sidebar callout — Sci-Am "How it works" / "What this means" */
+.callout {
+    background: var(--paper-tint);
+    border-left: 4px solid var(--data-teal);
+    padding: 18px 22px;
+    margin: 28px 0;
+    font-size: 17px;
+    line-height: 1.55;
+}
+.callout.coral { border-left-color: var(--data-coral); }
+.callout.amber { border-left-color: var(--data-amber); }
+.callout .label {
+    font-family: var(--sans);
+    font-weight: 700;
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--data-teal);
+    display: block;
+    margin-bottom: 8px;
+}
+.callout.coral .label { color: var(--data-coral); }
+.callout.amber .label { color: var(--data-amber); }
+.callout p:last-child { margin-bottom: 0; }
+
+/* Verdict ledger — two columns: proved / open */
+.ledger {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+    border: 1px solid var(--rule);
+    margin: 28px 0;
+}
+.ledger .col { padding: 22px 24px; }
+.ledger .col + .col { border-left: 1px solid var(--rule); }
+.ledger h4 {
+    font-family: var(--sans);
+    font-weight: 700;
+    font-size: 11px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    margin: 0 0 14px 0;
+}
+.ledger .proved h4 { color: var(--data-teal); }
+.ledger .open   h4 { color: var(--data-coral); }
+.ledger ul { margin: 0; padding-left: 18px; }
+.ledger li { margin-bottom: 8px; font-size: 16px; line-height: 1.5; }
+
+@media (max-width: 700px) {
+    .ledger { grid-template-columns: 1fr; }
+    .ledger .col + .col { border-left: none; border-top: 1px solid var(--rule); }
+    .hero h1 { font-size: 38px; }
+    .dek { font-size: 19px; }
+    .pullout { font-size: 20px; }
+    .article h3 { font-size: 24px; }
+}
+
+/* Glossary */
+.glossary {
+    background: var(--paper-tint);
+    border: 1px solid var(--rule);
+    padding: 24px 28px;
+    margin-top: 48px;
+}
+.glossary h4 {
+    font-family: var(--sans);
+    font-weight: 700;
+    font-size: 12px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--ink);
+    margin: 0 0 14px 0;
+}
+.glossary dl { margin: 0; }
+.glossary dt {
+    font-family: var(--sans);
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--data-teal);
+    margin-top: 12px;
+}
+.glossary dt:first-of-type { margin-top: 0; }
+.glossary dd {
+    margin: 4px 0 10px 0;
+    font-size: 16px;
+    line-height: 1.5;
+    color: var(--ink);
+}
+
+/* Footer / colophon */
+.colophon {
+    border-top: 1px solid var(--rule);
+    padding: 28px 0 0;
+    margin-top: 48px;
+    font-family: var(--sans);
+    font-size: 13px;
+    color: var(--ink-soft);
+    line-height: 1.5;
+}
+.colophon a { color: var(--accent-red); text-decoration: none; }
+.colophon a:hover { text-decoration: underline; }
+.colophon .row { margin-bottom: 10px; }
+.colophon strong { color: var(--ink); font-weight: 600; }
+
+/* Inline math sizing */
+mjx-container { font-size: 1em !important; }
+</style>
+</head>
+<body>
+
+<!-- Masthead -->
+<header class="masthead">
+    <a class="brand" href="./index.html">AI-OWLS</a>
+    <nav class="nav">
+        <a href="./index.html">About</a>
+        <a href="./blogs.html">Blog</a>
+        <a href="./publications.html">Papers</a>
+    </nav>
+</header>
+
+<!-- Hero -->
+<section class="hero">
+    <div class="kicker">
+        Theory<span class="dot">·</span>Two-Layer Networks<span class="dot">·</span>Multiplicative Noise
+    </div>
+    <h1>How a little Gaussian dust changes how a network learns</h1>
+    <p class="dek">
+        Take a two-layer ReLU network whose every input coordinate is scaled by an independent
+        Gaussian close to one — <em>multiplicative</em> noise, not the additive kind that thirty
+        years of theory has mostly studied. Training does not blow up. It converges, in a
+        controlled way, to a target whose distance from the global minimum we can write down.
+        The math behind why is, on its own, kind of pretty.
+    </p>
+    <div class="byline">
+        <strong>Afroditi Kolomvaki</strong> &middot;
+        <strong>Fangshuo Liao</strong> &middot;
+        <strong>Evan Dramko</strong> &middot;
+        <strong>Ziyun Guang</strong> &middot;
+        <strong>Anastasios Kyrillidis</strong>
+        <span class="sep">|</span> Rice University CS
+        <span class="sep">|</span> <a href="https://arxiv.org/abs/2602.17423">arXiv 2602.17423</a>
+    </div>
+</section>
+
+<!-- Article -->
+<article class="article">
+
+<p class="lede">
+Standard convergence analyses for neural network training assume the data behaves. The inputs are clean,
+the gradients are unbiased, the loss is smooth enough. When the literature does engage with noisy
+training data, the noise is almost always <em>additive</em> — a small Gaussian shift dropped on
+top of every input. We look at the structurally harder version: noise that <em>multiplies</em>
+every input instead, and ReLU networks instead of smooth ones. The math, surprisingly, still
+goes through.
+</p>
+
+<!-- §1 -->
+<h2>§1 &middot; The setup</h2>
+<h3>What if every input pixel is randomly stretched?</h3>
+
+<p>
+Pick a two-layer ReLU network — the simplest non-trivial neural net you can write down.
+Its input is a vector $\mathbf{x}$. Now do something almost trivial to that input before
+the network sees it: multiply each coordinate by an independent Gaussian random number,
+centered at $1$, with a small standard deviation $\kappa$.
+</p>
+
+<div class="eq">
+$$\mathbf{x} \ \longmapsto \ \mathbf{x} \odot \mathbf{c}, \qquad \mathbf{c} \sim \mathcal{N}(\mathbf{1},\,\kappa^2\mathbf{I}).$$
+</div>
+
+<p>
+Each entry $c_i$ is on average $1$ but jitters around it. The bigger $\kappa$, the larger
+the jitter. This is multiplicative noise — and unlike additive noise, it does not just
+shift the input, it scales it. Every batch sees a slightly different version of every example.
+</p>
+
+<p>
+The general question — <em>what does training with noise actually do to the loss
+landscape?</em> — has a long history. In 1995, Chris Bishop showed that, for a
+smooth network, training on inputs corrupted by additive Gaussian noise is
+approximately equivalent to training without noise but with a Tikhonov-style
+penalty on the network's behaviour. Noise is implicit regularization. We are
+asking the same kind of question, but for <span class="term">multiplicative</span> noise rather than
+additive, and for ReLU networks — which are not smooth, and so are exactly the
+case Bishop's Taylor-expansion argument cannot reach.
+</p>
+
+<!-- Figure 1: schematic -->
+<figure>
+<svg viewBox="0 0 880 240" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Schematic: clean input multiplied elementwise by a Gaussian mask, fed to a two-layer ReLU network">
+    <defs>
+        <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+            <path d="M0,0 L0,6 L8,3 z" fill="#525049"/>
+        </marker>
+    </defs>
+    <style>
+        .lab  { font-family: 'IBM Plex Sans', sans-serif; font-size: 13px; fill: #525049; }
+        .labb { font-family: 'IBM Plex Sans', sans-serif; font-size: 14px; font-weight: 600; fill: #21201c; }
+        .math { font-family: 'Spectral', serif; font-style: italic; font-size: 18px; fill: #21201c; }
+        .op   { font-family: 'Spectral', serif; font-size: 28px; fill: #525049; }
+        .grid rect { stroke: #21201c; stroke-width: 1; fill-opacity: 1; }
+    </style>
+
+    <!-- 1. clean input x -->
+    <g transform="translate(20,40)">
+        <text class="labb" x="60" y="-12" text-anchor="middle">Input  $x$</text>
+        <g class="grid">
+            <rect x="0"  y="0"  width="40" height="40" fill="#2d8f8a" fill-opacity="0.95"/>
+            <rect x="40" y="0"  width="40" height="40" fill="#2d8f8a" fill-opacity="0.55"/>
+            <rect x="80" y="0"  width="40" height="40" fill="#2d8f8a" fill-opacity="0.78"/>
+            <rect x="0"  y="40" width="40" height="40" fill="#2d8f8a" fill-opacity="0.30"/>
+            <rect x="40" y="40" width="40" height="40" fill="#2d8f8a" fill-opacity="0.85"/>
+            <rect x="80" y="40" width="40" height="40" fill="#2d8f8a" fill-opacity="0.65"/>
+            <rect x="0"  y="80" width="40" height="40" fill="#2d8f8a" fill-opacity="0.70"/>
+            <rect x="40" y="80" width="40" height="40" fill="#2d8f8a" fill-opacity="0.40"/>
+            <rect x="80" y="80" width="40" height="40" fill="#2d8f8a" fill-opacity="0.92"/>
+        </g>
+        <text class="lab" x="60" y="142" text-anchor="middle">clean signal</text>
+    </g>
+
+    <text class="op" x="180" y="100" text-anchor="middle">⊙</text>
+
+    <!-- 2. mask c -->
+    <g transform="translate(210,40)">
+        <text class="labb" x="60" y="-12" text-anchor="middle">Mask  $c \sim \mathcal{N}(1,\kappa^2 I)$</text>
+        <g class="grid">
+            <rect x="0"  y="0"  width="40" height="40" fill="#e6725b" fill-opacity="0.95"/>
+            <rect x="40" y="0"  width="40" height="40" fill="#e6725b" fill-opacity="1.05"/>
+            <rect x="80" y="0"  width="40" height="40" fill="#e6725b" fill-opacity="0.92"/>
+            <rect x="0"  y="40" width="40" height="40" fill="#e6725b" fill-opacity="1.08"/>
+            <rect x="40" y="40" width="40" height="40" fill="#e6725b" fill-opacity="0.97"/>
+            <rect x="80" y="40" width="40" height="40" fill="#e6725b" fill-opacity="1.10"/>
+            <rect x="0"  y="80" width="40" height="40" fill="#e6725b" fill-opacity="0.90"/>
+            <rect x="40" y="80" width="40" height="40" fill="#e6725b" fill-opacity="1.02"/>
+            <rect x="80" y="80" width="40" height="40" fill="#e6725b" fill-opacity="1.06"/>
+        </g>
+        <text class="lab" x="60" y="142" text-anchor="middle">jitters around 1</text>
+    </g>
+
+    <text class="op" x="370" y="100" text-anchor="middle">=</text>
+
+    <!-- 3. noisy input x ⊙ c -->
+    <g transform="translate(400,40)">
+        <text class="labb" x="60" y="-12" text-anchor="middle">Noisy  $x \odot c$</text>
+        <g class="grid">
+            <rect x="0"  y="0"  width="40" height="40" fill="#2d8f8a" fill-opacity="0.92"/>
+            <rect x="40" y="0"  width="40" height="40" fill="#2d8f8a" fill-opacity="0.60"/>
+            <rect x="80" y="0"  width="40" height="40" fill="#2d8f8a" fill-opacity="0.74"/>
+            <rect x="0"  y="40" width="40" height="40" fill="#2d8f8a" fill-opacity="0.34"/>
+            <rect x="40" y="40" width="40" height="40" fill="#2d8f8a" fill-opacity="0.83"/>
+            <rect x="80" y="40" width="40" height="40" fill="#2d8f8a" fill-opacity="0.72"/>
+            <rect x="0"  y="80" width="40" height="40" fill="#2d8f8a" fill-opacity="0.65"/>
+            <rect x="40" y="80" width="40" height="40" fill="#2d8f8a" fill-opacity="0.42"/>
+            <rect x="80" y="80" width="40" height="40" fill="#2d8f8a" fill-opacity="0.96"/>
+        </g>
+        <text class="lab" x="60" y="142" text-anchor="middle">close to clean — but never the same twice</text>
+    </g>
+
+    <line x1="528" y1="100" x2="582" y2="100" stroke="#525049" stroke-width="1.4" marker-end="url(#arrow)"/>
+
+    <!-- 4. mini network -->
+    <g transform="translate(595,30)">
+        <text class="labb" x="120" y="-2" text-anchor="middle">Two-layer ReLU net</text>
+        <!-- Inputs -->
+        <circle cx="20"  cy="40" r="6" fill="#2d8f8a"/>
+        <circle cx="20"  cy="80" r="6" fill="#2d8f8a"/>
+        <circle cx="20"  cy="120" r="6" fill="#2d8f8a"/>
+        <!-- Hidden -->
+        <circle cx="120" cy="20" r="7" fill="#d4a03f" stroke="#21201c" stroke-width="0.8"/>
+        <circle cx="120" cy="60" r="7" fill="#d4a03f" stroke="#21201c" stroke-width="0.8"/>
+        <circle cx="120" cy="100" r="7" fill="#d4a03f" stroke="#21201c" stroke-width="0.8"/>
+        <circle cx="120" cy="140" r="7" fill="#d4a03f" stroke="#21201c" stroke-width="0.8"/>
+        <!-- Output -->
+        <circle cx="220" cy="80" r="8" fill="#21201c"/>
+        <!-- Edges (sparse) -->
+        <g stroke="#525049" stroke-width="0.6" stroke-opacity="0.55">
+            <line x1="26" y1="40" x2="113" y2="20"/>
+            <line x1="26" y1="40" x2="113" y2="60"/>
+            <line x1="26" y1="40" x2="113" y2="100"/>
+            <line x1="26" y1="80" x2="113" y2="20"/>
+            <line x1="26" y1="80" x2="113" y2="60"/>
+            <line x1="26" y1="80" x2="113" y2="100"/>
+            <line x1="26" y1="80" x2="113" y2="140"/>
+            <line x1="26" y1="120" x2="113" y2="60"/>
+            <line x1="26" y1="120" x2="113" y2="100"/>
+            <line x1="26" y1="120" x2="113" y2="140"/>
+            <line x1="127" y1="20"  x2="212" y2="80"/>
+            <line x1="127" y1="60"  x2="212" y2="80"/>
+            <line x1="127" y1="100" x2="212" y2="80"/>
+            <line x1="127" y1="140" x2="212" y2="80"/>
+        </g>
+        <text class="math" x="240" y="84">$f(W,\,x \odot c)$</text>
+    </g>
+</svg>
+<figcaption>
+    <span class="fnum">Figure 1.</span>
+    The setup. The clean input $\mathbf{x}$ is multiplied element-wise by an independent
+    Gaussian mask $\mathbf{c}$ (centered at $\mathbf{1}$, standard deviation $\kappa$).
+    The two-layer ReLU MLP only ever sees the noisy version $\mathbf{x} \odot \mathbf{c}$,
+    and a fresh mask is drawn at every gradient step.
+</figcaption>
+</figure>
+
+<!-- §2 -->
+<h2>§2 &middot; The smoothed activation</h2>
+<h3>A new ReLU appears, on its own, out of the math</h3>
+
+<p>
+Here is the technical move that makes the rest of the analysis possible.
+We need to compute the <em>expected</em> behaviour of a ReLU when its argument
+is a Gaussian random variable. That expectation has a closed form. It is not
+ReLU. It is something smoother:
+</p>
+
+<div class="eq">
+$$
+\mathbb{E}_{\mathbf{c}}\big[\,\sigma\!\big(\mathbf{w}^\top(\mathbf{x}\odot\mathbf{c})\big)\,\big]
+\ =\ z\,\Phi\!\Big(\tfrac{z}{\sigma}\Big) \;+\; \sigma\,\varphi\!\Big(\tfrac{z}{\sigma}\Big),
+\qquad z=\mathbf{w}^\top\mathbf{x},\ \ \sigma=\kappa\,\|\mathbf{w}\odot\mathbf{x}\|_2.
+$$
+</div>
+
+<p>
+$\Phi$ is the Gaussian CDF, $\varphi$ its density. Set $\kappa = 0$ and the right-hand side
+collapses back to ReLU. Crank $\kappa$ up and the kink at the origin softens. We call this
+the <span class="term">smoothed ReLU</span>: an activation function the math <em>produces</em>
+from the noise model, not one we stipulated.
+</p>
+
+<p>
+A statistician will recognize this expression. It is the mean of a <em>rectified
+Gaussian</em> — the closed form that has lived in the Tobit model of censored
+regression since Tobin (1958), and is built from the same components as
+the <span class="term">inverse Mills ratio</span> $\varphi/\Phi$ from
+selection-bias econometrics. What is new here is not the formula but its
+role: it turns out to be exactly the keystone you need to ask "what does the
+loss look like, in expectation, when a ReLU network is trained on randomly
+perturbed inputs?" — and once you have that keystone, a convergence proof
+falls out behind it.
+</p>
+
+<p>
+For the convergence analysis we actually work with a slightly simpler proxy,
+$\hat\sigma(\mathbf{w},\mathbf{x}) = z\,\Phi(z/\sigma)$, which drops the $\sigma\,\varphi(z/\sigma)$
+term. The two agree everywhere except in a small neighbourhood of $z = 0$, and the gap
+shrinks at rate $O(\sigma\,\varphi(z/\sigma))$ — small enough that the downstream theorems are not affected.
+</p>
+
+<figure>
+<img src="./assets/img/mgi_smoothed_relu_exact.png" alt="Closed-form smoothed ReLU vs Monte Carlo estimate, with standard ReLU baseline">
+<figcaption>
+    <span class="fnum">Figure 2.</span>
+    The closed-form expectation (markers + solid line) lands on top of a Monte-Carlo estimate
+    (markers + dashed) of the same quantity, sample for sample, across the input range.
+    Standard ReLU (dotted) is the limit at $\kappa = 0$. The bigger the noise, the more the kink
+    at the origin smooths out.
+</figcaption>
+</figure>
+
+<div class="callout">
+    <span class="label">How it works</span>
+    <p>
+        The trick is to notice that $\mathbf{w}^\top(\mathbf{x} \odot \mathbf{c}) = \mathbf{c}^\top(\mathbf{w} \odot \mathbf{x})$ — a
+        Gaussian random variable with mean $z = \mathbf{w}^\top\mathbf{x}$ and standard deviation $\sigma = \kappa\|\mathbf{w}\odot\mathbf{x}\|_2$.
+        The expected ReLU of a Gaussian is a textbook integral. Plugging it in turns the
+        non-smooth, randomness-inside-the-nonlinearity object into a smooth, deterministic function of
+        $z$ and $\sigma$. The expected-loss decomposition (and with it, the regularizer identification)
+        leans on this single resolution.
+    </p>
+</div>
+
+<p class="pullout">
+    The activation function we end up analyzing is not the one we put in.
+</p>
+
+<!-- §3 -->
+<h2>§3 &middot; Training dynamics</h2>
+<h3>The loss converges. Where it converges depends on the noise.</h3>
+
+<p>
+Plug the smoothed ReLU back into the loss and the expected loss decomposes
+into two clean pieces: an MSE on a smoothed network, plus a
+<span class="term">data-dependent regularizer</span> that scales as $\kappa^2$.
+This is the explicit, ReLU-specific instance of the noise-is-regularization
+picture Bishop sketched in 1995 — except that here, because we have the closed
+form for the rectified-Gaussian mean, we get the regularizer exactly, without
+any small-noise approximation. It is also the kind of decomposition that lets
+you write down a convergence proof.
+</p>
+
+<p>
+What comes out is the following picture. With enough hidden neurons (the standard
+NTK overparameterization), small enough learning rate, and small enough $\kappa$,
+gradient descent on the noisy objective converges <em>linearly</em> — but not to zero.
+It converges to a ball around the global minimum whose radius shrinks as $\kappa$
+shrinks. Send the noise to zero, get clean GD back. Crank the noise up, the ball gets bigger.
+</p>
+
+<figure>
+<img src="./assets/img/mgi_training_trajectories.png" alt="Training loss trajectories under different noise standard deviations κ">
+<figcaption>
+    <span class="fnum">Figure 3.</span>
+    Training loss for a two-layer ReLU MLP ($n{=}500$ samples, $d{=}20$, $m{=}100$ hidden units,
+    full-batch GD, lr ${=}0.005$). Each curve is a different mask variance $\kappa$.
+    All curves descend at the same initial linear rate. Each one plateaus at a height
+    that grows with $\kappa$. The clean run ($\kappa{=}0$, dotted) keeps going down.
+</figcaption>
+</figure>
+
+<div class="callout coral">
+    <span class="label">What this means</span>
+    <p>
+        Linear convergence to a noise-controlled error ball is a strong promise. It says
+        you are not navigating a chaotic surface — you are descending toward a target whose
+        location you can write down in terms of the network width, the number of samples, and
+        the noise level. You will not reach the global optimum, but you will not wander either.
+    </p>
+</div>
+
+<!-- §4 -->
+<h2>§4 &middot; Why this is interesting beyond the obvious</h2>
+<h3>The deeper contribution is about biased gradients</h3>
+
+<p>
+The headline result is about Gaussian masking, but the engine underneath
+is more general. To make the convergence proof work, we needed a generic
+theorem for SGD with a <em>biased</em> gradient estimator under a relaxed
+smoothness condition. That theorem (the paper labels it Theorem 5.1, in §5) does not care that
+the bias comes from a Gaussian mask — it only cares about the bounds. Drop in
+a different mask, a different smoothing, a different family of input
+perturbations, and the theorem still applies.
+</p>
+
+<p>
+This sits in a small but active line of work on biased SGD — the
+self-bounded-gradient property of Srebro, Sridharan, and Tewari (2010), the
+strong-growth and expected-smoothness conditions of Vaswani–Bach–Schmidt
+(2019) and Gower et al. (2019), the unifying "Biased ABC" framework of
+Demidovich et al. (2023). Our theorem is one more entry in that lineage,
+specialized to the regime where the network is overparameterized enough that
+training stays close to its initialization (the so-called Neural Tangent
+Kernel regime).
+</p>
+
+<p>
+This is the part of the paper we expect to outlive the specific application.
+Most NTK analyses assume unbiased gradients because that is the easy case.
+Many real settings — quantization, structured masking, noisy embeddings,
+channel-coded features — give you a biased estimator instead, and biased estimators are
+where most off-the-shelf theory breaks. Now there is a tool that does not.
+</p>
+
+<!-- §5 -->
+<h2>§5 &middot; The verdict</h2>
+<h3>What we proved, and what we did not</h3>
+
+<div class="ledger">
+    <div class="col proved">
+        <h4>Proven</h4>
+        <ul>
+            <li>Closed-form expected loss decomposes into smoothed MSE + adaptive regularizer (Theorem 4.1).</li>
+            <li>General SGD framework for biased gradient estimators with relaxed smoothness (Theorem 5.1).</li>
+            <li>Linear convergence to a $\kappa$-controlled error ball under sufficient overparameterization (Theorem 5.5).</li>
+            <li>Closed-form for a smoothed ReLU activation that emerges naturally from the analysis.</li>
+        </ul>
+    </div>
+    <div class="col open">
+        <h4>Open</h4>
+        <ul>
+            <li>Deep networks. The proof is two layers; whether the picture survives depth is unknown.</li>
+            <li>Large $\kappa$. The bound is meaningful for small noise; the high-noise regime is not yet covered.</li>
+            <li>Correlated masks. Independence across iterations is load-bearing; on-device single-mask training is not yet covered.</li>
+            <li>Formal differential privacy. Empirical privacy curves are not the same thing as $(\varepsilon,\delta)$-DP.</li>
+        </ul>
+    </div>
+</div>
+
+<p>
+The honest framing: this paper is a fundamental result on a clean
+mathematical object. The applications it touches — privacy, federated
+learning over wireless channels, dropout-as-regularization — all
+deserve a fuller treatment that we did not finish here. We did not
+want to oversell those connections. The pieces that we believe will
+compound are the smoothed-activation derivation and the biased-SGD
+framework underneath.
+</p>
+
+<!-- Glossary -->
+<aside class="glossary">
+    <h4>Glossary</h4>
+    <dl>
+        <dt>Multiplicative mask $\mathbf{c}$</dt>
+        <dd>A random vector applied elementwise to the input. Centered at $\mathbf{1}$ in our setting, with standard deviation $\kappa$ per coordinate. Multiplicative, not additive — it scales each input feature.</dd>
+
+        <dt>NTK regime</dt>
+        <dd>"Neural tangent kernel": a regime where the network is wide enough that, during training, weights stay close to initialization and the network behaves like a linear model in a feature map. Lets you write down convergence proofs.</dd>
+
+        <dt>Smoothed ReLU $\hat\sigma$</dt>
+        <dd>The closed form of the expected ReLU under the Gaussian mask. Equal to ReLU when $\kappa = 0$; smoother and smoother as $\kappa$ grows.</dd>
+
+        <dt>Linear convergence</dt>
+        <dd>The loss decreases by a constant fraction at every iteration. Geometric, not just monotone — fast.</dd>
+
+        <dt>Error ball</dt>
+        <dd>The neighborhood of the global minimum that the iterates fall into and stay in. Its radius depends explicitly on $\kappa$, the network width $m$, the number of training points $n$, and the initialization scale.</dd>
+
+        <dt>Biased gradient estimator</dt>
+        <dd>An SGD step whose <em>expectation</em> is not the true gradient. Standard SGD uses an unbiased estimator (mini-batch averaging); we needed a theorem that still works when the bias is bounded but nonzero.</dd>
+
+        <dt>Overparameterization</dt>
+        <dd>Having more network parameters than training samples. Required to keep the iterates inside the NTK regime throughout training.</dd>
+    </dl>
+</aside>
+
+<!-- Colophon -->
+<footer class="colophon">
+    <div class="row">
+        <strong>Paper.</strong>
+        <em>Convergence Analysis of Two-Layer Neural Networks under Gaussian Input Masking.</em>
+        Kolomvaki, Liao, Dramko, Guang, Kyrillidis. Rice University CS, 2026.
+        <a href="https://arxiv.org/abs/2602.17423">arXiv:2602.17423</a> &middot;
+        <a href="https://arxiv.org/pdf/2602.17423v1">PDF</a>.
+    </div>
+    <div class="row">
+        <strong>Code.</strong>
+        <a href="https://github.com/akyrillidis/multiplicative-gaussian-input-noise">github.com/akyrillidis/multiplicative-gaussian-input-noise</a>
+        — runnable smoothed-ReLU validator + 5 experiment notebooks.
+    </div>
+    <div class="row">
+        <strong>Acknowledgements.</strong>
+        Rice CS Department; NSF (CAREER, K2I); Welch Foundation.
+    </div>
+    <div class="row" style="margin-top: 18px;">
+        <a href="./blogs.html">← Back to AI-OWLS blog</a>
+    </div>
+</footer>
+
+</article>
+
+</body>
+</html>

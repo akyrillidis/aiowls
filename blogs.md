@@ -44,6 +44,18 @@ layout: default
 
   <li>
     <span class="thumb">
+      <a href="./multiplicative_gaussian_input.html">
+        <img src="./assets/img/mgi_thumbnail.png" alt="Smoothed ReLU under multiplicative Gaussian input noise">
+      </a>
+    </span>
+    <span class="title">
+      <a href="./multiplicative_gaussian_input.html">How a little Gaussian dust changes how a network learns</a>
+      <span class="meta">Multiply every input by random noise. Training still converges — to a target whose distance from the global minimum we can write down.</span>
+    </span>
+  </li>
+
+  <li>
+    <span class="thumb">
       <a href="./stochastic_self_stabilization.html">
         <img src="./assets/img/seos_fig1_trajectories.png" alt="Sharpness trajectories under SGD">
       </a>
