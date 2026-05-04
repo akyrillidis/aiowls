@@ -396,7 +396,7 @@ centered at $1$, with a small standard deviation $\kappa$.
 </p>
 
 <div class="eq">
-$$\mathbf{x} \ \longmapsto \ \mathbf{x} \odot \mathbf{c}, \qquad \mathbf{c} \sim \mathcal{N}(\mathbf{1},\,\kappa^2\mathbf{I}).$$
+$$\mathbf{x} \ \longmapsto \ \mathbf{x} \odot \mathbf{c}, \qquad \mathbf{c} \sim \mathcal{N}(\mathbf{1},\kappa^2\mathbf{I}).$$
 </div>
 
 <p>
@@ -414,6 +414,16 @@ penalty on the network's behaviour. Noise is implicit regularization. We are
 asking the same kind of question, but for <span class="term">multiplicative</span> noise rather than
 additive, and for ReLU networks — which are not smooth, and so are exactly the
 case Bishop's Taylor-expansion argument cannot reach.
+</p>
+
+<p>
+A second lineage point worth flagging up front. The activation that will drop
+out of our analysis in §2 is a parametric generalization of <span class="term">GELU</span> —
+the activation Hendrycks and Gimpel introduced in 2016 and that now sits inside
+BERT, GPT, and most modern transformers. GELU was derived from a Bernoulli
+stochastic-gating argument; the multiplicative-Gaussian-mask story we tell here
+is structurally different but produces the same functional form, with one extra
+free parameter — the noise scale.
 </p>
 
 <!-- Figure 1: schematic -->
@@ -520,7 +530,7 @@ case Bishop's Taylor-expansion argument cannot reach.
             <line x1="127" y1="100" x2="212" y2="80"/>
             <line x1="127" y1="140" x2="212" y2="80"/>
         </g>
-        <text class="math" x="240" y="84">$f(W,\,x \odot c)$</text>
+        <text class="math" x="240" y="84">$f(W,x \odot c)$</text>
     </g>
 </svg>
 <figcaption>
@@ -545,9 +555,9 @@ ReLU. It is something smoother:
 
 <div class="eq">
 $$
-\mathbb{E}_{\mathbf{c}}\big[\,\sigma\!\big(\mathbf{w}^\top(\mathbf{x}\odot\mathbf{c})\big)\,\big]
-\ =\ z\,\Phi\!\Big(\tfrac{z}{\sigma}\Big) \;+\; \sigma\,\varphi\!\Big(\tfrac{z}{\sigma}\Big),
-\qquad z=\mathbf{w}^\top\mathbf{x},\ \ \sigma=\kappa\,\|\mathbf{w}\odot\mathbf{x}\|_2.
+\mathbb{E}_{\mathbf{c}}\big[\sigma\big(\mathbf{w}^\top(\mathbf{x}\odot\mathbf{c})\big)\big]
+\ =\ z\Phi\Big(\tfrac{z}{\sigma}\Big) + \sigma\varphi\Big(\tfrac{z}{\sigma}\Big),
+\qquad z=\mathbf{w}^\top\mathbf{x},\ \ \sigma=\kappa\|\mathbf{w}\odot\mathbf{x}\|_2.
 $$
 </div>
 
@@ -572,9 +582,9 @@ falls out behind it.
 
 <p>
 For the convergence analysis we actually work with a slightly simpler proxy,
-$\hat\sigma(\mathbf{w},\mathbf{x}) = z\,\Phi(z/\sigma)$, which drops the $\sigma\,\varphi(z/\sigma)$
+$\hat\sigma(\mathbf{w},\mathbf{x}) = z\Phi(z/\sigma)$, which drops the $\sigma\varphi(z/\sigma)$
 term. The two agree everywhere except in a small neighbourhood of $z = 0$, and the gap
-shrinks at rate $O(\sigma\,\varphi(z/\sigma))$ — small enough that the downstream theorems are not affected.
+shrinks at rate $O(\sigma\varphi(z/\sigma))$ — small enough that the downstream theorems are not affected.
 </p>
 
 <figure>
