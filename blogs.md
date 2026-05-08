@@ -44,6 +44,18 @@ layout: default
 
   <li>
     <span class="thumb">
+      <a href="./ghost_mamba2.html">
+        <img src="./assets/img/ghost_thumbnail.png" alt="Phantom and corporeal hidden states in Mamba2-1.3B">
+      </a>
+    </span>
+    <span class="title">
+      <a href="./ghost_mamba2.html">GHOST: pruning Mamba2 by the numbers</a>
+      <span class="meta">Forty-one percent of the channels magnitude pruning kills are the wrong ones. A forward-only state pruner for Mamba2 — no backprop, 15 GB, survives 70% sparsity.</span>
+    </span>
+  </li>
+
+  <li>
+    <span class="thumb">
       <a href="./multiplicative_gaussian_input.html">
         <img src="./assets/img/mgi_thumbnail.png" alt="Smoothed ReLU under multiplicative Gaussian input noise">
       </a>
