@@ -5,10 +5,10 @@
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
-<title>GHOST: pruning Mamba2 by the numbers &middot; AI-OWLS</title>
-<meta property="og:title" content="GHOST: pruning Mamba2 by the numbers" />
-<meta property="og:description" content="A control-theoretic state pruner for Mamba2. No backpropagation. 15 GB instead of 45+. Survives 70% sparsity where gradient-based pruners explode by a factor of 300." />
-<meta property="og:image" content="https://akyrillidis.github.io/aiowls/assets/img/ghost_weight_energy.png" />
+<title>GHOST: pruning Mamba2 by what each channel does &middot; AI-OWLS</title>
+<meta property="og:title" content="GHOST: pruning Mamba2 by what each channel does" />
+<meta property="og:description" content="A forward-only state pruner for Mamba2 selective SSMs (ICML 2026). Two forward passes, 15 GB peak VRAM, balanced-truncation provenance — and the four limitations we don't paper over." />
+<meta property="og:image" content="https://akyrillidis.github.io/aiowls/assets/img/ghost_main_diagram.png" />
 <meta property="og:type" content="article" />
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -295,7 +295,7 @@ a:hover { background: var(--bb-yellow); text-decoration: none; }
     text-transform: uppercase;
     color: var(--ink-soft);
     margin: 24px 0;
-    border-left: 3px solid var(--bb-red);
+    border-left: 3px solid var(--bb-blue);
     padding-left: 14px;
 }
 
@@ -381,8 +381,8 @@ figure figcaption .lead {
 }
 .scoreboard tr.us td { background: var(--bb-yellow); }
 .scoreboard tr.us td:first-child { font-weight: 900; }
-.scoreboard td.collapse { background: var(--bb-red); color: var(--paper); font-weight: 700; }
 .scoreboard td.win      { font-weight: 800; color: var(--ink); }
+.scoreboard td.muted    { color: var(--grey-3); }
 
 /* ----------- INFO BOX ----------- */
 .box {
@@ -488,20 +488,20 @@ figure figcaption .lead {
 <!-- HERO -->
 <section class="hero">
     <div class="hero-inner">
-        <span class="kicker">ICML 2026 &middot; State-Space Compression &middot; Issue 04</span>
+        <span class="kicker">ICML 2026 &middot; State-Space Compression &middot; Mamba2</span>
         <h1>
-            <span class="red">41%</span> of the channels<br>
-            magnitude pruning kills<br>
-            <span class="underline">are the wrong ones.</span>
+            <span class="red">Half</span> the state.<br>
+            <span class="blue">One</span> perplexity point.<br>
+            <span class="underline">Zero</span> gradients.
         </h1>
         <p class="dek">
-            Mamba2 ships with an 8&times;-bigger recurrent state than its predecessor. Cutting that state should be cheap. It isn't &mdash; the standard tools either dilute the state without making it smaller, lose the plot under stress, or demand more VRAM than an A100 has. We built a forward-pass-only state pruner for Mamba2 from a control-theory primitive and tracked every place it does and doesn't work.
+            Mamba2 ships with an 8&times;-bigger recurrent state than its predecessor. We built a forward-pass-only state pruner for it from a forty-year-old control-theory idea &mdash; balanced truncation. <strong>GHOST</strong> scores each hidden-state channel by how strongly inputs drive it and how strongly it drives the output, all from forward-pass statistics. No backpropagation. Roughly 15&nbsp;GB peak VRAM on Mamba2-1.3B. Plus four limitations we don't paper over.
         </p>
         <p class="byline">
             By <span>Michael Menezes</span> &amp; <span>Anastasios Kyrillidis</span> &middot; Rice CS &middot; May 2026
         </p>
         <div class="chips">
-            <a class="chip" href="{ARXIV_TBD}">Read the paper &rarr;</a>
+            <a class="chip" href="https://arxiv.org/abs/2602.11408">Read the paper &rarr;</a>
             <a class="chip outline" href="https://github.com/Menezmic21/mamba2_ghost">Code on GitHub</a>
             <a class="chip outline" href="https://akyrillidis.github.io/aiowls/blogs.html">More AI-OWLS posts</a>
         </div>
@@ -515,27 +515,27 @@ figure figcaption .lead {
     Between Mamba1 and Mamba2 the state-space dimension $N$ jumped from 16 to 128. For a 1.3-billion-parameter model, that pushed the recurrent state from about 12&nbsp;MB to roughly <strong>100&nbsp;MB</strong>. The model got better at long-range temporal modelling and worse at autoregressive throughput &mdash; decode is now memory-bandwidth-bound, and the 100&nbsp;MB sloshes through cache on every token.
 </p>
 <p>
-    The obvious move is to prune that state. The non-obvious part is that none of the standard pruning recipes do the job cleanly:
+    The obvious move is to prune that state. Each existing tool brings its own tradeoff:
 </p>
 <p>
-    <strong>Unstructured weight pruners</strong> (SparseGPT, Wanda) zero out individual weights but leave activations dense. The recurrent state $\bm{H}_t$ stays fully populated; bandwidth doesn't drop.
-    <strong>Magnitude pruning</strong> looks at the input/output projection weights $\bm{W}_B,\bm{W}_C$ and asks which channels have small norms. As we'll show, this is wrong about 41% of the time.
-    <strong>Gradient-based pruning</strong> (Taylor scoring) is more accurate but needs to backprop through the whole graph &mdash; that's 45+&nbsp;GB of VRAM for a 1.3B model and falls apart under length and scale stress.
+    <strong>Unstructured weight pruners</strong> (SparseGPT, Wanda) zero out individual weights but leave activations dense. The recurrent state $H_t$ stays fully populated; bandwidth doesn't drop.
+    <strong>Magnitude pruning</strong> looks at the input/output projection weights $W_B,W_C$ and asks which channels have small norms. As we'll show, the static norm and the runtime energy turn out to be different signals; magnitude has a structural blind spot.
+    <strong>Gradient-based pruning</strong> (Taylor scoring) is more accurate at moderate sparsity but needs to backprop through the whole graph &mdash; that's 45+&nbsp;GB of VRAM for a 1.3B model, beyond an A100 40&nbsp;GB. At higher sparsity and on smaller models, the one-shot scoring also runs into the masked-distribution-shift issue: upstream pruning lands first, and the downstream gradients no longer reflect the active model.
 </p>
 <p>
-    We wanted something with magnitude pruning's price tag, Taylor's fidelity, and an honest answer when pushed to 70% sparsity. We called it <strong>GHOST</strong> &mdash; <em>Grouped Hidden-state Output-aware Selection and Truncation</em>.
+    We wanted something with magnitude pruning's price tag, gradient-method-level fidelity at moderate sparsity, graceful behaviour at high sparsity, and an honest answer in regimes where any single proxy will struggle. We called it <strong>GHOST</strong> &mdash; <em>Grouped Hidden-state Output-aware Selection and Truncation</em>.
 </p>
 
-<!-- DIVIDER 1 -->
+<!-- DIVIDER 1: GHOST result -->
 <aside class="divider yellow">
     <div class="divider-inner">
         <div class="bignum">
-            41%
-            <span class="sub">Misclassification rate of magnitude pruning at 50% sparsity</span>
+            50%
+            <span class="sub">State-dimension reduction at +1.06 ppl on WikiText-2</span>
         </div>
         <div class="label">
-            The proxy failure
-            <span class="light">Static weight magnitude is anti-correlated (Pearson&nbsp;$-0.19$) with what each channel actually <em>does</em> at runtime. Half the channels you'd save on weight grounds are inert. Half the ones you'd kill are doing real work.</span>
+            The headline trade
+            <span class="light">Mamba2-1.3B at 50% sparsity: dense perplexity 13.17, GHOST perplexity 14.23. Halving the recurrent state directly halves the per-token activation memory and bandwidth budget during decode.</span>
         </div>
     </div>
 </aside>
@@ -543,33 +543,33 @@ figure figcaption .lead {
 <h2>Phantoms and corporeals</h2>
 
 <p>
-    A Mamba2 hidden state is a coordinate in a recurrent memory bank. Each of Mamba2-1.3B's <strong>6,144</strong> hidden states ($48$ layers $\times$ $128$ states each) is fed by a row of $\bm{W}_B$ and read out by a column of $\bm{W}_C$. The natural &mdash; and naive &mdash; importance proxy is the product of those two weight norms.
+    A Mamba2 hidden state is a coordinate in a recurrent memory bank. Each of Mamba2-1.3B's <strong>6,144</strong> hidden states ($48$ layers $\times$ $128$ states each) is fed by a row of $W_B$ and read out by a column of $W_C$. The natural &mdash; and naive &mdash; importance proxy is the product of those two weight norms.
 </p>
 <p>
-    We plotted that static score against the channel's <em>dynamic</em> energy across a calibration corpus, standardized both axes, and looked at the Pearson correlation. It's <strong>$-0.19$</strong>. Not anti-correlated enough for a clean inversion to fix it. Just&hellip; uncorrelated, leaning slightly the wrong way.
+    We plotted that static score against the channel's <em>dynamic</em> energy across a calibration corpus, standardized both axes, and looked at the Pearson correlation. It's <strong>$-0.19$</strong>. Roughly uncorrelated, leaning slightly the wrong way &mdash; not anti-correlated enough for a clean inversion to fix it.
 </p>
 
 <figure>
     <img src="./assets/img/ghost_weight_energy.png" alt="Scatter of 6,144 Mamba2-1.3B hidden states; static weight magnitude on the x-axis, dynamic energy on the y-axis; Pearson −0.19; phantom states in the top-left, corporeal states in the bottom-right">
-    <figcaption><span class="lead">Figure 1. The proxy failure.</span> Each dot is one of Mamba2-1.3B's 6,144 hidden states. <strong>Phantom states</strong> (top-left, 20.66%) have low weight norms but high runtime activity. <strong>Corporeal states</strong> (bottom-right, 20.64%) carry large weights but rarely fire. Magnitude pruning at 50% sparsity preserves the corporeals and kills the phantoms &mdash; exactly backwards.</figcaption>
+    <figcaption><span class="lead">Figure 1. The proxy gap.</span> Each dot is one of Mamba2-1.3B's 6,144 hidden states. <strong>Phantom states</strong> (top-left, 20.66%) have low weight norms but high runtime activity. <strong>Corporeal states</strong> (bottom-right, 20.64%) carry large weights but rarely fire. At 50% sparsity, the static rank and the dynamic rank disagree on 41.3% of channels &mdash; both populations are doing something the static proxy doesn't see.</figcaption>
 </figure>
 
 <p>
-    Two failure modes, two new vocabulary words. <em>Phantom states</em> &mdash; high activity, low weight norm, false negatives that magnitude pruning would kill. <em>Corporeal states</em> &mdash; large weights, low utilisation, false positives that magnitude pruning would keep. At 50% sparsity, magnitude pruning misclassifies 41.3% of the population, almost evenly split.
+    Two channel populations, two new vocabulary words. <em>Phantom states</em> &mdash; high activity, low weight norm. <em>Corporeal states</em> &mdash; large weights, low utilisation. At 50% sparsity, the static rank and the runtime rank diverge for <strong>41.3%</strong> of channels, almost evenly split between the two populations (20.66% phantoms + 20.64% corporeals). Anything that picks channels by static norm alone is missing one of the two energies that determine actual contribution.
 </p>
 
-<p class="pullquote-tiny">The metric you'd reach for is the metric that's wrong about half its calls. Anything you build on top of it inherits that error.</p>
+<p class="pullquote-tiny">Static weight norm and runtime channel energy are different signals. The phantom/corporeal distinction is the visible shape of that gap.</p>
 
-<!-- DIVIDER 2 -->
+<!-- DIVIDER 2: forward-only -->
 <aside class="divider blue">
     <div class="divider-inner">
         <div class="bignum">
-            0
-            <span class="sub">Backward passes required by GHOST</span>
+            2
+            <span class="sub">Forward passes &mdash; the entire calibration cost</span>
         </div>
         <div class="label">
             Forward-only physics
-            <span class="light">Two forward passes through the calibration data is all GHOST needs. The score is a control-theoretic quantity, not a gradient. That's where the 15&nbsp;GB vs 45+&nbsp;GB asymmetry comes from.</span>
+            <span class="light">Two forward passes through the calibration data is all GHOST needs to score every channel. The score is a control-theoretic quantity, not a gradient. That's where the &asymp; 15&nbsp;GB peak VRAM comes from.</span>
         </div>
     </div>
 </aside>
@@ -577,44 +577,44 @@ figure figcaption .lead {
 <h2>The control-theory side door</h2>
 
 <p>
-    There's a forty-year-old idea from system identification called <em>balanced truncation</em> (Moore, 1981). For a linear time-invariant system, you measure two things: how strongly the input drives each internal state (controllability), and how strongly each state drives the output (observability). The product of those two quantities &mdash; the Hankel singular values &mdash; ranks the states by how much they actually contribute to the input&ndash;output behaviour. Truncating the lowest of them is provably the best low-order approximation in operator norm.
+    There's a forty-year-old idea from system identification called <em>balanced truncation</em> (Moore, 1981). For a linear time-invariant system, you measure two things: how strongly the input drives each internal state (controllability), and how strongly each state drives the output (observability). The product of those two quantities &mdash; the Hankel singular values &mdash; ranks the states by how much they actually contribute to the input&ndash;output behaviour, and truncating the lowest of them is provably the best low-order approximation in operator norm.
 </p>
 <p>
-    Mamba2 is not linear time-invariant. The recurrence is input-dependent (selective), which is why &mdash; according to the orthodoxy &mdash; balanced truncation doesn't apply. We argue it does, with one substitution: instead of solving a Lyapunov equation for the Gramians, estimate them from a calibration corpus.
+    Mamba2 is not linear time-invariant. The recurrence is input-dependent (selective), which is why &mdash; in the orthodoxy &mdash; closed-form balanced truncation doesn't apply. We argue the principle still does, with one substitution: instead of solving a Lyapunov equation for the Gramians, estimate them from a calibration corpus.
 </p>
 <p>
-    For a state channel $n$ in group $g$, define two empirical scalars at each timestep: the squared hidden state value $\bm{P}^{(g)}_{k,n,p}(t) = (\bm{H}_{t,h_k,n,p})^2$ (controllability proxy &mdash; how excited is this channel?) and the squared output projection $\bm{Q}^{(g)}_{n}(t) = (\bm{C}'_{t,g,n})^2$ (observability proxy &mdash; how loudly will it speak to the output?). GHOST's saliency is their average product, square-rooted to recover the dimensionality of a singular value:
+    For a state channel $n$ in group $g$, define two empirical scalars at each timestep: the squared hidden-state value $P^{(g)}_{k,n,p}(t) = (H_{t,h_k,n,p})^2$ (controllability proxy &mdash; how excited is this channel?) and the squared output projection $Q^{(g)}_{n}(t) = (C'_{t,g,n})^2$ (observability proxy &mdash; how loudly will it speak to the output?). GHOST's saliency is their average product, square-rooted to recover the dimensionality of a singular value:
 </p>
 
 <div class="eqn">
 $$
-\bm{S}^{(g)}_n \;=\; \sqrt{\frac{1}{Z}\sum_{d=1}^{|\mathcal{D}_{\text{cal}}|}\sum_{t=1}^{L}\sum_{k=1}^{K}\sum_{p=1}^{P}\big(\bm{H}_{t|d,h_k,n,p}\big)^2\big(\bm{C}'_{t|d,g,n}\big)^2.}
+S^{(g)}_n \;=\; \sqrt{\frac{1}{Z}\sum_{d=1}^{|\mathcal{D}_{\text{cal}}|}\sum_{t=1}^{L}\sum_{k=1}^{K}\sum_{p=1}^{P} \big(H_{t|d,h_k,n,p}\big)^2\big(C'_{t|d,g,n}\big)^2 }.
 $$
 </div>
 
 <p>
-    There's a second, independent reading of the same expression: it's exactly the local mean-squared error you'd incur from setting that channel to zero. Minimise the saliency, minimise the local damage. The two perspectives &mdash; control-theoretic and loss-preservation &mdash; arrive at the same scoring rule from opposite directions.
+    There's a second, independent reading of the same expression: it's exactly the local mean-squared error you'd incur from setting that channel to zero. The control-theoretic interpretation (balanced truncation) and the loss-preservation interpretation (local MSE) arrive at the same scoring rule from different starting points. That equivalence is also what corrected an earlier prototype: an initial implementation took the average controllability and the average observability and only multiplied at the end, which loses the cross-correlation. The paper-faithful score &mdash; named <code>ghost2</code> in the repo &mdash; does the multiplication <em>per sample</em>, then averages, which is what the local-MSE derivation actually wants.
 </p>
 
 <figure>
     <img src="./assets/img/ghost_main_diagram.png" alt="GHOST mechanism: controllability times observability scoring computed forward-only, pooled inter-group, then thresholded to produce a hard mask">
-    <figcaption><span class="lead">Figure 2. GHOST in one diagram.</span> Score every channel by controllability $\times$ observability from forward-pass statistics. Pool scores across the GQA groups <em>within a layer</em>. Threshold globally to a target sparsity $\kappa$. Hard-prune by sliced-tensor surgery on $\bm{W}_B,\bm{W}_C$, then update the next layer's calibration on the new activations.</figcaption>
+    <figcaption><span class="lead">Figure 2. GHOST in one diagram.</span> Score every channel by controllability $\times$ observability from forward-pass statistics. Pool scores across the GQA groups <em>within a layer</em>. Threshold globally to a target sparsity $\kappa$. Hard-prune by sliced-tensor surgery on $W_B,W_C$, then update the next layer's calibration on the new activations.</figcaption>
 </figure>
 
 <p>
-    Two operational details matter. First, GHOST <strong>pools across GQA groups within a layer</strong> before thresholding &mdash; complex groups keep more channels, redundant groups get hammered. No per-layer rate has to be tuned by hand. Second, GHOST runs <strong>sequentially</strong> down the model, recalibrating each layer's activations after pruning the previous one. That's what stops the "the layer below me changed under my feet" failure mode that haunts one-shot gradient methods.
+    Two operational details matter. First, GHOST <strong>pools across GQA groups within a layer</strong> before thresholding &mdash; complex groups end up keeping more channels, redundant ones less. No per-layer rate has to be tuned by hand. Second, GHOST runs <strong>sequentially</strong> down the model, recalibrating each layer's activations after pruning the previous one. That mitigates the masked-distribution-shift issue that one-shot gradient methods see at high sparsity: the layer underneath has changed, so the score should change too.
 </p>
 
-<!-- DIVIDER 3 -->
+<!-- DIVIDER 3: GHOST stability -->
 <aside class="divider red">
     <div class="divider-inner">
         <div class="bignum">
-            4255
-            <span class="sub">Taylor's perplexity at 70% sparsity. GHOST's: 16.16.</span>
+            16.16
+            <span class="sub">GHOST perplexity at 70% sparsity (dense: 13.17)</span>
         </div>
         <div class="label">
-            The scoreboard
-            <span class="light">Five sparsity levels, five model sizes, two distribution shifts. The interesting column is always the one where everything else stops working.</span>
+            Graceful at high sparsity
+            <span class="light">Dropping 70% of the recurrent state, GHOST's perplexity rises by about 3 points. This is the regime where one-shot gradient scoring runs into the masked-distribution-shift problem most sharply, so the comparison curve diverges; the GHOST number is the one we'd actually deploy.</span>
         </div>
     </div>
 </aside>
@@ -651,8 +651,8 @@ $$
             <td class="win">13.18</td>
             <td class="win">13.26</td>
             <td class="win">13.94</td>
-            <td class="collapse">4255</td>
-            <td class="collapse">4690</td>
+            <td class="muted">4255</td>
+            <td class="muted">4690</td>
         </tr>
         <tr class="us">
             <td>GHOST</td>
@@ -665,28 +665,28 @@ $$
     </tbody>
 </table>
 <p style="font-size:13px; color:var(--ink-soft); margin-top:6px;">
-    *SparseGPT is unstructured &mdash; an <em>optimistic</em> baseline, not a structured pruning peer. It can re-optimise remaining weights to recover; GHOST cannot.
+    *SparseGPT is unstructured &mdash; an <em>optimistic</em> reference, not a structured peer; it can re-optimise remaining weights to recover, which structured pruners cannot.
 </p>
 
 <p>
-    At 50% sparsity Taylor wins on perplexity. That story flips at 70%, where Taylor jumps by a factor of 300; at 90% it goes to 4690. GHOST stays at 16.16 and 25.07. Taylor's collapse is structural &mdash; one-shot scoring on the full graph means the upstream pruning has invalidated the downstream gradients before the downstream pruning happens. Sequential recalibration is what saves GHOST.
+    At 50% sparsity Taylor wins on perplexity by about 0.3 points. At 70% sparsity Taylor's one-shot scoring runs into the masked-distribution-shift problem &mdash; upstream pruning has changed the state distribution before the downstream gradients are computed &mdash; and GHOST's sequential recalibration is what stays usable. Both methods are in their natural operating regime up to about 50%; past that, GHOST is the curve that holds.
 </p>
 
 <h3>Length generalisation</h3>
 
 <p>
-    Calibrate at $L_{\text{cal}}=128$ tokens, evaluate up to $L_{\text{eval}}=2048$. The dense model and SparseGPT both improve with longer context (more bits). Magnitude and Random degrade gracefully. Taylor diverges to <strong>1613</strong> at $L_{\text{eval}}=2048$ &mdash; a Taylor score computed on short contexts plain doesn't transfer to long-range dependencies. GHOST tracks the dense curve.
+    Calibrate at $L_{\text{cal}}=128$ tokens, evaluate up to $L_{\text{eval}}=2048$. The dense model and SparseGPT both improve with longer context (more bits available). Magnitude and Random degrade gracefully. Taylor's perplexity climbs to <strong>1613</strong> at $L_{\text{eval}}=2048$ &mdash; gradient-based scores computed on short contexts seem not to transfer to long-range dependencies. GHOST's score, being closer to a per-channel energy budget, transfers across context lengths and tracks the dense baseline.
 </p>
 
 <figure>
     <img src="./assets/img/ghost_length_robust.png" alt="Length-robustness comparison: GHOST tracks Dense across sequence lengths; Taylor diverges sharply for L between 16 and 512">
-    <figcaption><span class="lead">Figure 3. Length robustness.</span> Calibrate and test on the same length, sweeping from short to long. GHOST tracks Dense and SparseGPT. Taylor has an anomalous instability window at $L \in [16, 512]$ where it underperforms even Random.</figcaption>
+    <figcaption><span class="lead">Figure 3. Length robustness.</span> Calibrate and test on the same length, sweeping from short to long. GHOST tracks Dense and SparseGPT. Taylor has an anomalous instability window at $L \in [16, 512]$ where it drops below trivial baselines; we expect this window to narrow with iterative gradient methods, but the GHOST curve is the one that doesn't have it in the first place.</figcaption>
 </figure>
 
 <h3>Scaling</h3>
 
 <p>
-    Five model sizes, 130M to 2.7B, all at 50% sparsity. Smaller models have less redundancy, so pruning bites harder. Taylor is unusable on the small end &mdash; <strong>$\sim 10^{16}$</strong> on 130M, 12647 on 370M &mdash; before recovering at 1.3B and 2.7B. GHOST is the only structured method that's <em>actually deployable</em> across the entire range:
+    Five model sizes, 130M to 2.7B, all at 50% sparsity. Smaller models have less representational redundancy, so any pruning method bites harder. GHOST is the only structured method we tested that stays usable across the entire range; Taylor recovers nicely on the 1.3B and 2.7B models where gradient signals are more stable, but is unusable on the 130M and 370M ends:
 </p>
 
 <table class="scoreboard">
@@ -699,8 +699,8 @@ $$
     <tbody>
         <tr><td>Dense</td><td>25.85</td><td>18.13</td><td>14.97</td><td>13.17</td><td>11.46</td></tr>
         <tr><td>Magnitude</td><td>910.0</td><td>120.3</td><td>30.57</td><td>29.34</td><td>20.04</td></tr>
-        <tr><td>Random</td><td>45.60</td><td>23.71</td><td class="collapse">5197</td><td>17.77</td><td>15.93</td></tr>
-        <tr><td>Taylor</td><td class="collapse">10<sup>16</sup></td><td class="collapse">12647</td><td class="win">15.13</td><td class="win">13.94</td><td class="win">11.50</td></tr>
+        <tr><td>Random</td><td>45.60</td><td>23.71</td><td class="muted">5197</td><td>17.77</td><td>15.93</td></tr>
+        <tr><td>Taylor</td><td class="muted">10<sup>16</sup></td><td class="muted">12647</td><td class="win">15.13</td><td class="win">13.94</td><td class="win">11.50</td></tr>
         <tr class="us"><td>GHOST</td><td class="win">29.06</td><td class="win">19.96</td><td>16.13</td><td>14.23</td><td>12.14</td></tr>
     </tbody>
 </table>
@@ -708,18 +708,22 @@ $$
 <h3>Memory and compute</h3>
 
 <p>
-    Per the paper's complexity analysis: GHOST scales linearly in input dimension $M$, where SparseGPT scales quadratically. The headline VRAM number is the one that decides what hardware you can run on:
+    Per the paper's complexity analysis: GHOST scales linearly in input dimension $M$, where SparseGPT scales quadratically. Calibration time on Mamba2-1.3B is about 8 minutes for either GHOST or Taylor (both make two passes over 128 calibration samples). The difference is peak VRAM &mdash; <strong>roughly 15&nbsp;GB</strong> for GHOST, <strong>45+&nbsp;GB</strong> for Taylor. That puts GHOST inside a single 16&nbsp;GB consumer GPU's budget; Taylor needs an 80&nbsp;GB card.
 </p>
 
 <figure>
     <img src="./assets/img/ghost_flops_vram.png" alt="FLOPs and VRAM comparison: GHOST and Magnitude/Random fit on a 16 GB or 40 GB GPU; Taylor exceeds the 40 GB A100 capacity">
-    <figcaption><span class="lead">Figure 4. Memory and compute.</span> (Left) Normalised FLOPs per method. (Right) Peak VRAM. GHOST runs in roughly 15&nbsp;GB on Mamba2-1.3B; Taylor needs 45+&nbsp;GB and exceeds the 40&nbsp;GB A100 capacity entirely. Calibration takes 8 minutes for either &mdash; the difference is which GPU you can use.</figcaption>
+    <figcaption><span class="lead">Figure 4. Memory and compute.</span> (Left) Normalised FLOPs per method. (Right) Peak VRAM. GHOST's footprint is set by the size of the activations it caches; gradient methods additionally hold the backward graph.</figcaption>
 </figure>
 
-<h3>Out of distribution</h3>
+<h3>Out-of-distribution behaviour</h3>
 
 <p>
-    A separate question: do the channels GHOST keeps look like English-text channels, or like Mamba2 channels? We calibrated on WikiText-2 (English text) and tested zero-shot on code (HumanEval) and math (MMLU Elementary Mathematics). Among structured methods, GHOST has the smallest in-domain vs out-of-domain gap, ties Taylor on code, and matches the dense baseline on the math task. The pruned channels are fundamentally important to the SSM, not just to next-word prediction.
+    A separate question: do the channels GHOST keeps look like English-text channels, or like Mamba2 channels? We calibrated on WikiText-2 (English text) and tested zero-shot on code (HumanEval) and math (MMLU Elementary Mathematics). On code, GHOST's pass@1 is <strong>5.49%</strong> &mdash; matching SparseGPT and ahead of Taylor's 4.88%, with the dense baseline at 6.71%. On the math benchmark, GHOST scores <strong>25.66%</strong> &mdash; tied with Magnitude (which is otherwise the worst structured method on text) and ahead of both Taylor (22.49%) and the dense baseline (21.43%). Among structured methods, GHOST has the smallest in-domain&ndash;to&ndash;out-of-domain gap.
+</p>
+
+<p>
+    The reading we offer is conservative: GHOST tends to keep channels that are intrinsic to Mamba2's operation rather than channels that happen to encode English-text distributions. The Magnitude tie on math is a useful caution &mdash; small benchmarks can flip in surprising ways, and a single number from one OOD task is not the same as broad OOD generalisation.
 </p>
 
 <!-- DIVIDER 4 (HONEST SCOPE) -->
@@ -727,11 +731,11 @@ $$
     <div class="divider-inner">
         <div class="bignum">
             14
-            <span class="sub">Lambada accuracy points lost &mdash; the cost we don't paper over</span>
+            <span class="sub">Lambada accuracy points GHOST gives up</span>
         </div>
         <div class="label">
             Honest scope
-            <span class="light">GHOST is not a free lunch. Pruning the recurrent state limits exact-match retrieval. Aggregate zero-shot stays within 2.5 points of dense; specific recall tasks pay more.</span>
+            <span class="light">Pruning the recurrent state limits exact-match retrieval. Aggregate zero-shot stays within 2.5 points of dense; specific recall tasks pay more. We don't paper over the cost.</span>
         </div>
     </div>
 </aside>
@@ -763,25 +767,22 @@ $$
 <div class="box">
     <p class="box-kicker">Limitation 4 &middot; Architecture-specific</p>
     <p class="box-title">This is a Mamba2 result.</p>
-    <p>GHOST exploits Mamba2's scalar-identity $\bm{A}$ and grouped-query (GQA) structure. The same control-theoretic principle should apply to S4, H3, Mamba1, hybrid Jamba-style models &mdash; but the specific Gramian approximations have to be re-derived. Drop-in transfer is not promised. (We do show one transfer experiment in the paper: Zamba2, a Mamba2+Transformer hybrid.)</p>
+    <p>GHOST exploits Mamba2's scalar-identity $A$ and grouped-query (GQA) structure. The same control-theoretic principle should apply to S4, H3, Mamba1, hybrid Jamba-style models &mdash; but the specific Gramian approximations have to be re-derived. Drop-in transfer is not promised. We do show one transfer experiment in the paper: Zamba2, a Mamba2&nbsp;+&nbsp;Transformer hybrid, where GHOST continues to work.</p>
 </div>
 
 <h2>What this is really about</h2>
 
 <p>
-    The narrow win is a state pruner for Mamba2 that lets a 1.3-billion-parameter model fit on the kind of GPU sitting in academic labs, not just industrial clouds. The broader bet is that <strong>forward-only Gramian estimation is a general principle for identifying functionally-important channels in deep networks</strong> &mdash; one we expect to outlive this specific paper.
+    The narrow win is a state pruner for Mamba2 that lets a 1.3-billion-parameter model fit on the kind of GPU sitting in academic labs, not just industrial clouds. The broader bet is that <strong>forward-only Gramian estimation is a general principle for identifying functionally-important channels in deep networks</strong> &mdash; a direction we expect to pursue beyond Mamba2.
 </p>
 <p>
-    Two follow-ups we're already drafting. <em>GHOST-Cache</em>: a controllability&nbsp;$\times$&nbsp;observability score for KV-cache row eviction in transformers, going head-to-head with H2O and SnapKV. <em>Provable balanced-truncation bounds</em>: closing the empirical&ndash;theoretical gap with operator-norm guarantees for the selective LTV regime. The first targets a transformer audience an order of magnitude bigger than the SSM one. The second turns the empirical scoring rule into a theorem.
-</p>
-<p>
-    For the GHOST paper itself, the right way to read it is as a worked example of a general claim. Forward passes carry more information about which channels do real work than the field has been giving them credit for. A back-of-the-envelope expectation, taken seriously, replaces an expensive Hessian. We expect to see versions of this argument show up in places we haven't written about yet.
+    The technical equivalence we keep returning to is the one that earned <code>ghost2</code> its name. The same scoring rule arrives from two different places: a control-theoretic argument (balanced truncation, Hankel singular values) and a loss-preservation argument (the local MSE you'd incur from zeroing a channel). When a heuristic admits two independent derivations, that's usually a signal worth following.
 </p>
 
-<p class="pullquote-giant">A back-of-the-envelope expectation, taken seriously, replaces an expensive Hessian.</p>
+<p class="pullquote-giant">Minimising the GHOST saliency is, term-for-term, minimising the expected local mean-squared error.</p>
 
 <p>
-    Code, configs, and 22 SLURM scripts that reproduce every paper figure are at <a href="https://github.com/Menezmic21/mamba2_ghost">github.com/Menezmic21/mamba2_ghost</a>. Two compressors (<code>ghost</code>, <code>ghost2</code>) live next to seven baselines (Wanda, SparseGPT, Mamba-Shedder, Magnitude, Random, Taylor, plus Mamba1-targeted variants). Pull, run, swap baselines via Hydra overrides, file issues.
+    Code, configs, and 22 SLURM scripts that reproduce every paper figure are at <a href="https://github.com/Menezmic21/mamba2_ghost">github.com/Menezmic21/mamba2_ghost</a>. The supported compressors are <code>ghost2</code> (the paper-faithful implementation, with <code>is_hard: true/false</code> for hard or soft pruning) and <code>ghost</code> (the legacy implementation that motivated <code>ghost2</code>). Structured baselines: <code>magnitude</code>, <code>random</code>, <code>taylor</code>. Unstructured optimistic-comparison anchor: <code>sparsegpt</code>. <code>wanda</code> and <code>mamba_shedder</code> wrappers are present but only lightly supported. Pull, run, swap baselines via Hydra overrides, file issues.
 </p>
 
 <h3>Joint work</h3>

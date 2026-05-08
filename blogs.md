@@ -49,8 +49,8 @@ layout: default
       </a>
     </span>
     <span class="title">
-      <a href="./ghost_mamba2.html">GHOST: pruning Mamba2 by the numbers</a>
-      <span class="meta">Forty-one percent of the channels magnitude pruning kills are the wrong ones. A forward-only state pruner for Mamba2 — no backprop, 15 GB, survives 70% sparsity.</span>
+      <a href="./ghost_mamba2.html">GHOST: pruning Mamba2 by what each channel does</a>
+      <span class="meta">A forward-only state pruner for Mamba2 selective SSMs — controllability × observability, two forward passes, ~15 GB peak VRAM. ICML 2026.</span>
     </span>
   </li>
 
