@@ -34,6 +34,10 @@ layout: default
     display: block; margin-top: 4px;
     font-size: 0.86em; color: #6c6960;
   }
+  .blog-list .credits {
+    display: block; margin-top: 4px;
+    font-size: 0.82em; color: #8a8780; font-style: italic;
+  }
   @media (max-width: 540px) {
     .blog-list li { flex-direction: column; align-items: flex-start; }
     .blog-list .thumb, .blog-list .thumb a { width: 100%; max-width: 360px; height: auto; aspect-ratio: 16 / 10; }
@@ -51,6 +55,7 @@ layout: default
     <span class="title">
       <a href="./ghost_mamba2.html">GHOST: pruning Mamba2 by what each channel does</a>
       <span class="meta">A forward-only state pruner for Mamba2 selective SSMs — controllability × observability, two forward passes, ~15 GB peak VRAM. ICML 2026.</span>
+      <span class="credits">With <a href="https://github.com/Menezmic21">Michael Menezes</a> (Rice CS).</span>
     </span>
   </li>
 
@@ -63,6 +68,7 @@ layout: default
     <span class="title">
       <a href="./multiplicative_gaussian_input.html">How a little Gaussian dust changes how a network learns</a>
       <span class="meta">Multiply every input by random noise. Training still converges — to a target whose distance from the global minimum we can write down.</span>
+      <span class="credits">With Afroditi Kolomvaki, <a href="https://jasperliao.github.io/">Fangshuo (Jasper) Liao</a>, Evan Dramko, Ziyun Guang (Rice CS).</span>
     </span>
   </li>
 
@@ -75,6 +81,7 @@ layout: default
     <span class="title">
       <a href="./stochastic_self_stabilization.html">Why Stochastic Gradient Descent Stops Just Short of the Edge</a>
       <span class="meta">A closed-form sharpness gap explains a long-observed property of mini-batch training.</span>
+      <span class="credits">With <a href="https://jasperliao.github.io/">Fangshuo (Jasper) Liao</a>, Afroditi Kolomvaki (Rice CS).</span>
     </span>
   </li>
 
@@ -87,18 +94,20 @@ layout: default
     <span class="title">
       <a href="./accelerated_nesterov_deepReLU.html">Provable Acceleration of Nesterov's Momentum for Deep ReLU Networks</a>
       <span class="meta">A new objective class that makes Nesterov provably accelerated for non-trivial neural architectures.</span>
+      <span class="credits">With <a href="https://jasperliao.github.io/">Fangshuo (Jasper) Liao</a> (Rice CS).</span>
     </span>
   </li>
 
   <li>
     <span class="thumb">
       <a href="./parallel_deflation.html">
-        <img src="./assets/img/ParallelDeflationDiagram.png" alt="Parallel Deflation diagram">
+        <img src="./assets/img/ParallelDeflationDiagram.png" alt="Parallel deflation diagram">
       </a>
     </span>
     <span class="title">
       <a href="./parallel_deflation.html">Provable Model-Parallel Distributed Principal Component Analysis with Parallel Deflation</a>
       <span class="meta">A self-correcting parallel deflation scheme for distributed PCA, with convergence guarantees.</span>
+      <span class="credits">With <a href="https://jasperliao.github.io/">Fangshuo (Jasper) Liao</a>, Wenyi Su (Rice CS).</span>
     </span>
   </li>
 
