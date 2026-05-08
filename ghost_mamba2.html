@@ -226,17 +226,20 @@ a:hover { background: var(--bb-yellow); text-decoration: none; }
     max-width: 880px;
     margin: 0 auto;
     display: grid;
-    grid-template-columns: 1fr 2fr;
+    grid-template-columns: auto minmax(280px, 1fr);
     gap: 36px;
     align-items: end;
 }
 .divider .bignum {
     font-family: var(--display);
     font-weight: 900;
-    font-size: clamp(120px, 16vw, 240px);
+    font-size: clamp(64px, 10vw, 144px);
     line-height: 0.85;
-    letter-spacing: -0.04em;
-    text-align: right;
+    letter-spacing: -0.03em;
+    text-align: left;
+    font-variant-numeric: tabular-nums;
+    min-width: 0;
+    overflow-wrap: anywhere;
 }
 .divider .bignum .sub {
     display: block;
@@ -247,6 +250,7 @@ a:hover { background: var(--bb-yellow); text-decoration: none; }
     text-transform: uppercase;
     margin-top: 14px;
     line-height: 1.2;
+    max-width: 320px;
 }
 .divider .label {
     font-family: var(--display);
@@ -495,7 +499,7 @@ figure figcaption .lead {
             <span class="underline">Zero</span> gradients.
         </h1>
         <p class="dek">
-            Mamba2 ships with an 8&times;-bigger recurrent state than its predecessor. We built a forward-pass-only state pruner for it from a forty-year-old control-theory idea &mdash; balanced truncation. <strong>GHOST</strong> scores each hidden-state channel by how strongly inputs drive it and how strongly it drives the output, all from forward-pass statistics. No backpropagation. Roughly 15&nbsp;GB peak VRAM on Mamba2-1.3B. Plus four limitations we don't paper over.
+            Most large language models today are <em>transformers</em>. <strong>State-space models</strong> like Mamba2 are an alternative architecture &mdash; a fixed-size internal memory that updates as the model reads. They're better suited to very long contexts, but Mamba2's internal memory is large enough to bottleneck text generation. We built <strong>GHOST</strong>: a tool that compresses that memory by half with about a one-perplexity-point cost, scoring each channel from forward-pass statistics &mdash; no backpropagation, fits on a single 16&nbsp;GB GPU. Plus four limitations we don't paper over.
         </p>
         <p class="byline">
             By <span>Michael Menezes</span> &amp; <span>Anastasios Kyrillidis</span> &middot; Rice CS &middot; May 2026
@@ -512,10 +516,16 @@ figure figcaption .lead {
 <article class="body">
 
 <p>
-    Between Mamba1 and Mamba2 the state-space dimension $N$ jumped from 16 to 128. For a 1.3-billion-parameter model, that pushed the recurrent state from about 12&nbsp;MB to roughly <strong>100&nbsp;MB</strong>. The model got better at long-range temporal modelling and worse at autoregressive throughput &mdash; decode is now memory-bandwidth-bound, and the 100&nbsp;MB sloshes through cache on every token.
+    Most of today's headline AI &mdash; ChatGPT, Claude, Gemini, the open-weights LLaMA and Qwen models &mdash; is built on the <em>transformer</em>. A transformer reads a sequence of tokens by, at every step of generation, looking back at every previous token. That's mathematically elegant and trains beautifully at scale; it's also expensive at inference time. Generating the $n$-th token costs work proportional to $n$, and the per-token "KV cache" the model has to keep around grows linearly with context length too. For long contexts &mdash; legal documents, codebases, hundreds of thousands of tokens &mdash; that quadratic cost is what stops a transformer from being practical.
 </p>
 <p>
-    The obvious move is to prune that state. Each existing tool brings its own tradeoff:
+    A separate line of work bets differently. <strong>State-space models</strong> carry a fixed-size internal "state" that updates as the model reads, recurrent-network style. Done right, they give <em>constant-memory</em> and <em>linear-time</em> sequence processing. The leading recent design &mdash; <strong>Mamba</strong>, and its successor <strong>Mamba2</strong> &mdash; is competitive with transformers on language modelling quality while keeping that recurrence advantage. It's the kind of architecture that matters most when context windows stretch into the hundreds of thousands of tokens, where the transformer's cost starts to bite.
+</p>
+<p>
+    Mamba2 inherited one practical headache from its own design choices. To improve quality, the authors expanded the size of the internal state by a factor of eight over Mamba1: the state-space dimension $N$ went from 16 to 128. For a 1.3-billion-parameter model, that pushed the recurrent state from about 12&nbsp;MB to roughly <strong>100&nbsp;MB</strong>. The weights themselves sit in GPU memory once and are fine. The recurrent state, by contrast, has to be re-read for every generated token, and 100&nbsp;MB of traffic per token is enough to saturate a modern GPU's memory bandwidth and slow autoregressive decoding to a crawl.
+</p>
+<p>
+    The natural response is to <em>prune</em> the state &mdash; keep the channels that matter, drop the ones that don't, and hope quality holds. The catch is that the standard pruning toolkit was developed for transformer weights, and it doesn't transfer cleanly to Mamba2's recurrent state. Each existing tool brings its own tradeoff:
 </p>
 <p>
     <strong>Unstructured weight pruners</strong> (SparseGPT, Wanda) zero out individual weights but leave activations dense. The recurrent state $H_t$ stays fully populated; bandwidth doesn't drop.
