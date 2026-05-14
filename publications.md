@@ -8,7 +8,7 @@ Recent work from the AI-OWLS / OptimaLab group at Rice CS, in reverse chronologi
 
 #### 2026
 
-+ **AdaPaD: Adaptive Parallel Deflation for PEFT with Self-Correcting Rank Discovery.** *Barbara Su, Fangshuo Liao, Anastasios Kyrillidis.* Submitted to Conference on Neural Information Processing Systems (NeurIPS), 2026. [[arXiv]](https://arxiv.org/abs/2605.10741) &middot; [[code]](https://github.com/barbara-su/ParallelLinearRegression) &middot; [[blog]](https://akyrillidis.github.io/aiowls/adapad.html)
++ **AdaPaD: Adaptive Parallel Deflation for PEFT with Self-Correcting Rank Discovery.** *Barbara Su, Fangshuo Liao, Anastasios Kyrillidis.* Preprint, arXiv:2605.10741, 2026. [[arXiv]](https://arxiv.org/abs/2605.10741) &middot; [[code]](https://github.com/barbara-su/ParallelLinearRegression) &middot; [[blog]](https://akyrillidis.github.io/aiowls/adapad.html)
 
 + **GHOST: Grouped Hidden-state Output-aware Selection and Truncation.** *Michael Menezes, Anastasios Kyrillidis.* International Conference on Machine Learning (ICML), 2026. [[arXiv]](https://arxiv.org/abs/2602.11408) &middot; [[code]](https://github.com/Menezmic21/mamba2_ghost) &middot; [[blog]](https://akyrillidis.github.io/aiowls/ghost_mamba2.html)
 
