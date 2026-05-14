@@ -1,0 +1,29 @@
+<svg viewBox="0 0 360 220" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Five worker error envelopes converging across communication rounds — the self-correction property of parallel deflation">
+  <rect width="360" height="220" fill="#f5f1e3"/>
+
+  <!-- decorative rule -->
+  <line x1="30" y1="46" x2="330" y2="46" stroke="#a8842e" stroke-width="0.5"/>
+  <line x1="30" y1="48" x2="330" y2="48" stroke="#a8842e" stroke-width="0.5"/>
+
+  <!-- title -->
+  <text x="180" y="38" text-anchor="middle" font-family="Playfair Display, Bodoni Moda, Didot, Times New Roman, serif" font-size="22" font-style="italic" font-weight="700" fill="#2a1e1a">AdaPaD</text>
+
+  <!-- axes -->
+  <line x1="44" y1="180" x2="324" y2="180" stroke="#7a6a60" stroke-width="0.7"/>
+  <line x1="44" y1="68" x2="44" y2="180" stroke="#7a6a60" stroke-width="0.7"/>
+
+  <!-- gridlines -->
+  <line x1="44" y1="100" x2="324" y2="100" stroke="#c6b896" stroke-width="0.4" stroke-dasharray="2,3"/>
+  <line x1="44" y1="140" x2="324" y2="140" stroke="#c6b896" stroke-width="0.4" stroke-dasharray="2,3"/>
+
+  <!-- 5 staggered worker curves, each decaying exponentially -->
+  <path d="M 60 90 C 100 92, 150 110, 200 145 S 305 172, 320 175" stroke="#a8842e" fill="none" stroke-width="2.2" stroke-linecap="round"/>
+  <path d="M 85 95 C 130 105, 175 125, 220 155 S 308 173, 320 176" stroke="#7a4a2c" fill="none" stroke-width="2.2" stroke-linecap="round"/>
+  <path d="M 110 102 C 155 115, 200 135, 240 162 S 310 174, 320 177" stroke="#5a3e54" fill="none" stroke-width="2.2" stroke-linecap="round"/>
+  <path d="M 135 110 C 175 125, 215 145, 255 167 S 312 175, 320 178" stroke="#3a5a68" fill="none" stroke-width="2.2" stroke-linecap="round"/>
+  <path d="M 160 120 C 195 135, 230 152, 265 170 S 314 176, 320 178" stroke="#2a6650" fill="none" stroke-width="2.2" stroke-linecap="round"/>
+
+  <!-- axis labels -->
+  <text x="184" y="200" text-anchor="middle" font-family="IM Fell English, serif" font-size="10" letter-spacing="2" fill="#7a6a60">COMMUNICATION ROUND</text>
+  <text x="30" y="125" text-anchor="middle" font-family="IM Fell English, serif" font-size="10" letter-spacing="2" fill="#7a6a60" transform="rotate(-90 30 125)">ERROR</text>
+</svg>

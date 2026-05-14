@@ -48,6 +48,19 @@ layout: default
 
   <li>
     <span class="thumb">
+      <a href="./adapad.html">
+        <img src="./assets/img/adapad_thumbnail.svg" alt="Five worker error envelopes converging across communication rounds — the self-correction property of AdaPaD">
+      </a>
+    </span>
+    <span class="title">
+      <a href="./adapad.html">From PCA to LoRA: Why Fine-Tuning Could Have Been Parallel All Along</a>
+      <span class="meta">A 1933 deflation convention let rank-1 errors compound in LoRA fine-tuning. AdaPaD does it in parallel — and the errors correct themselves, provably. Best GLUE average (89.34) at matched 0.34M parameter budget; 3.62× per-batch speedup on 4 H200 GPUs.</span>
+      <span class="credits">With <a href="https://github.com/barbara-su">Barbara Su</a>, <a href="https://jasperliao.github.io/">Fangshuo (Jasper) Liao</a> (Rice CS).</span>
+    </span>
+  </li>
+
+  <li>
+    <span class="thumb">
       <a href="./ghost_mamba2.html">
         <img src="./assets/img/ghost_thumbnail.png" alt="Phantom and corporeal hidden states in Mamba2-1.3B">
       </a>
