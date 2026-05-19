@@ -48,6 +48,19 @@ layout: default
 
   <li>
     <span class="thumb">
+      <a href="./asymmetric_input.html">
+        <img src="./assets/img/air_thumbnail.svg" alt="The AIR architecture: one shared Transformer block, two latent roles — input injected in the L-update, absent in the H-update">
+      </a>
+    </span>
+    <span class="title">
+      <a href="./asymmetric_input.html">One Model, Two Roles: Emergent Specialization in a Shared Recurrent Transformer</a>
+      <span class="meta">A minimal architectural asymmetry — the input enters one update but not the other — is enough to make a shared-weight recurrent Transformer behave like two. Matches the two-network HRM baseline with half the parameters on Sudoku-Extreme (60.0% vs 55.0%) and Maze-30&times;30 (75.6% vs 74.5%). <a href="https://arxiv.org/abs/2605.17811">arXiv:2605.17811</a>.</span>
+      <span class="credits">With <a href="https://juchengshen.github.io/">Jucheng Shen</a> and <a href="https://www.linkedin.com/in/barbara-su-966314268/">Barbara Su</a> (Rice CS).</span>
+    </span>
+  </li>
+
+  <li>
+    <span class="thumb">
       <a href="./adapad.html">
         <img src="./assets/img/adapad_thumbnail.svg" alt="Five worker error envelopes converging across communication rounds — the self-correction property of AdaPaD">
       </a>

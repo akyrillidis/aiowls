@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 110" role="img" aria-label="AIR: one shared Transformer block, two latent roles">
+  <defs>
+    <marker id="arr" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+      <path d="M0,0 L6,3 L0,6 z" fill="#21201c"/>
+    </marker>
+    <style><![CDATA[
+      .lbl { font-family: 'IBM Plex Sans', 'Helvetica Neue', sans-serif; font-size: 8.5px; font-weight: 600; }
+      .lbl-light { fill: #fbfaf6; }
+      .lbl-ink { fill: #21201c; }
+      .lbl-amber { fill: #b8852b; }
+      .lbl-faint { fill: #8b8579; }
+      .stk { stroke: #21201c; stroke-width: 1.1; fill: none; }
+      .stk-soft { stroke: #21201c; stroke-width: 0.7; fill: none; }
+    ]]></style>
+  </defs>
+  <rect width="180" height="110" fill="#fbfaf6"/>
+
+  <!-- Shared block (the one model) -->
+  <rect x="62" y="30" width="56" height="50" rx="2" fill="#fbfaf6" stroke="#21201c" stroke-width="1.2"/>
+  <text x="90" y="60" text-anchor="middle" font-family="Source Serif 4, Georgia, serif" font-style="italic" font-size="22" fill="#21201c">f</text>
+  <text x="90" y="73" text-anchor="middle" class="lbl lbl-faint">one block</text>
+
+  <!-- L-update arrow (with input injection) -->
+  <path d="M 32 38 L 60 38" class="stk" marker-end="url(#arr)"/>
+  <text x="46" y="32" text-anchor="middle" class="lbl lbl-amber">+ x̃</text>
+
+  <!-- H-update arrow (no input) -->
+  <path d="M 32 72 L 60 72" class="stk-soft" marker-end="url(#arr)"/>
+  <text x="46" y="84" text-anchor="middle" class="lbl lbl-faint">∅</text>
+
+  <!-- zL coral output (top — L-update writes to zL) -->
+  <path d="M 120 38 L 144 38" class="stk" marker-end="url(#arr)"/>
+  <circle cx="158" cy="38" r="10" fill="#e6725b"/>
+  <text x="158" y="41" text-anchor="middle" class="lbl lbl-light">z_L</text>
+
+  <!-- zH teal output (bottom — H-update writes to zH) -->
+  <path d="M 120 72 L 144 72" class="stk" marker-end="url(#arr)"/>
+  <circle cx="158" cy="72" r="10" fill="#2d8f8a"/>
+  <text x="158" y="75" text-anchor="middle" class="lbl lbl-light">z_H</text>
+
+  <!-- Title overlay -->
+  <text x="90" y="20" text-anchor="middle" font-family="Source Serif 4, Georgia, serif" font-style="italic" font-size="11" fill="#21201c">one model, two roles</text>
+  <text x="90" y="102" text-anchor="middle" class="lbl lbl-faint">asymmetric input recurrence</text>
+</svg>

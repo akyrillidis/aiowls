@@ -1,0 +1,1060 @@
+<!DOCTYPE html>
+<html lang="en-US">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<title>One Model, Two Roles &middot; AI-OWLS</title>
+<meta name="description" content="A shared-weight recurrent Transformer develops a fully-committed proposal state and a shifting scratchpad state when the only built-in asymmetry is whether the input is injected. Matches the two-network baseline with half the parameters.">
+<meta property="og:title" content="One Model, Two Roles: Emergent Specialization in a Shared Recurrent Transformer" />
+<meta property="og:description" content="A minimal architectural asymmetry &mdash; inject the input into one update but not the other &mdash; is enough to make a shared model behave like two. Sudoku and Maze, with half the parameters of the prior two-network baseline." />
+<meta property="og:image" content="https://akyrillidis.github.io/aiowls/assets/img/air_architecture.png" />
+<meta property="og:type" content="article" />
+<meta name="twitter:card" content="summary_large_image">
+<meta name="citation_title" content="One Model, Two Roles: Emergent Specialization in a Shared Recurrent Transformer">
+<meta name="citation_author" content="Shen, Jucheng">
+<meta name="citation_author" content="Su, Wenyi (Barbara)">
+<meta name="citation_author" content="Kyrillidis, Anastasios">
+<meta name="citation_arxiv_id" content="2605.17811">
+<meta name="citation_public_url" content="https://arxiv.org/abs/2605.17811">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;0,8..60,500;0,8..60,600;0,8..60,700;1,8..60,400;1,8..60,500&family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+<!-- MathJax — config MUST come before the script tag. tex-mml-chtml is the broadest loader. -->
+<script>
+window.MathJax = {
+    tex: {
+        inlineMath:  [['\\(', '\\)'], ['$', '$']],
+        displayMath: [['\\[', '\\]'], ['$$', '$$']],
+        processEscapes: true,
+        processEnvironments: true,
+        packages: { '[+]': ['ams', 'newcommand', 'configmacros'] }
+    },
+    options: { skipHtmlTags: ['script','noscript','style','textarea','pre','code'] },
+    chtml: { displayAlign: 'left', displayIndent: '0' }
+};
+</script>
+<script type="text/javascript" id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+<style>
+:root {
+    /* ============== PALETTE (cool modern, NOT warm cream) ============== */
+    --paper:        #ffffff;
+    --paper-soft:   #f4f3ef;    /* faint near-white for blocks */
+    --paper-deep:   #1a1a1a;    /* near-black, for inversion blocks */
+    --ink:          #111111;
+    --ink-soft:     #4a4a4a;
+    --ink-faint:    #8a8a8a;
+    --rule:         #e8e6e0;
+    --rule-strong:  #111111;
+
+    /* Two-role conceptual palette — used as STRUCTURAL design colors */
+    --zH:           #1f7a73;    /* deeper teal */
+    --zH-soft:      #d9ece9;
+    --zL:           #d65437;    /* deeper coral */
+    --zL-soft:      #f7dcd1;
+
+    /* Chrome accent — used sparingly */
+    --accent:       #b8852b;
+
+    /* Typography — deliberately Plex-led, NOT Playfair/Garamond */
+    --display:      "IBM Plex Sans", "Inter", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    --display-cond: "IBM Plex Sans Condensed", "IBM Plex Sans", sans-serif;
+    --body:         "Source Serif 4", "Iowan Old Style", "Georgia", serif;
+    --mono:         "IBM Plex Mono", "JetBrains Mono", Menlo, monospace;
+
+    --measure:      760px;
+    --measure-wide: 1000px;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--body);
+    font-weight: 400;
+    font-size: 19px;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+a {
+    color: var(--ink);
+    text-decoration: none;
+    border-bottom: 1.5px solid var(--zH);
+    transition: border-color .15s, background .15s;
+}
+a:hover { border-bottom-color: var(--zL); background: rgba(214,84,55,0.08); }
+
+/* ============== TOPBAR — MINIMAL, NOT MASTHEAD ============== */
+.topbar {
+    max-width: var(--measure-wide);
+    margin: 0 auto;
+    padding: 22px 40px 22px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+.topbar-brand {
+    font-family: var(--display);
+    font-weight: 700;
+    font-size: 14px;
+    letter-spacing: 0.02em;
+    color: var(--ink);
+}
+.topbar-brand a { color: var(--ink); border: none; }
+.topbar-brand .dot { color: var(--zL); margin: 0 6px; }
+.topbar-meta {
+    font-family: var(--display);
+    font-weight: 500;
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+}
+
+/* ============== HERO / TITLE BLOCK — LEFT-ALIGNED, NOT CENTERED ============== */
+.hero {
+    max-width: var(--measure-wide);
+    margin: 24px auto 0;
+    padding: 0 40px 0;
+}
+.tag-strip {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 28px;
+    font-family: var(--display);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+}
+.tag-strip .tag-zH { color: var(--zH); }
+.tag-strip .tag-sep { color: var(--ink-faint); font-weight: 400; letter-spacing: 0; }
+.tag-strip .tag-zL { color: var(--zL); }
+.tag-strip .tag-meta { color: var(--ink-faint); font-weight: 500; }
+
+h1.title {
+    font-family: var(--display);
+    font-weight: 700;
+    font-size: 64px;
+    line-height: 1.04;
+    color: var(--ink);
+    margin: 0 0 22px;
+    letter-spacing: -0.025em;
+    max-width: 900px;
+}
+h1.title .accent-zH { color: var(--zH); }
+h1.title .accent-zL { color: var(--zL); }
+
+.dek {
+    font-family: var(--body);
+    font-style: italic;
+    font-weight: 400;
+    font-size: 22px;
+    line-height: 1.5;
+    color: var(--ink-soft);
+    margin: 0 0 30px;
+    max-width: 760px;
+}
+
+.byline {
+    font-family: var(--display);
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    color: var(--ink);
+    margin: 0;
+}
+.byline a { color: var(--ink); border-bottom: 1px dotted var(--ink-faint); }
+.byline a:hover { border-bottom-color: var(--zL); background: transparent; }
+.byline .sep { color: var(--ink-faint); margin: 0 8px; }
+.byline .affil { color: var(--ink-faint); font-weight: 500; font-style: italic; }
+
+.chip-links {
+    margin: 22px 0 0;
+}
+.chip-links a {
+    display: inline-block;
+    margin: 0 10px 8px 0;
+    padding: 10px 18px;
+    border: 1.5px solid var(--ink);
+    color: var(--ink);
+    background: var(--paper);
+    font-family: var(--display);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    transition: all 0.15s ease;
+}
+.chip-links a:hover { background: var(--ink); color: var(--paper); }
+.chip-links a .arrow { margin-left: 6px; }
+
+/* ============== HERO FIGURE — dominant, immediately under title ============== */
+.hero-figure {
+    max-width: var(--measure-wide);
+    margin: 56px auto 0;
+    padding: 0 40px;
+}
+.hero-figure img {
+    width: 100%;
+    height: auto;
+    display: block;
+    background: var(--paper-soft);
+    padding: 24px;
+}
+.hero-figure figcaption {
+    font-family: var(--display);
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--ink-soft);
+    margin-top: 12px;
+    padding-left: 0;
+    max-width: 760px;
+}
+.hero-figure figcaption .fignum {
+    font-weight: 700;
+    color: var(--zL);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    font-size: 12px;
+    display: block;
+    margin-bottom: 4px;
+}
+
+/* ============== UPSHOT — inverted block, full bleed ============== */
+.upshot {
+    background: var(--paper-deep);
+    color: var(--paper);
+    margin: 80px 0 0;
+    padding: 64px 40px;
+}
+.upshot-inner {
+    max-width: var(--measure);
+    margin: 0 auto;
+}
+.upshot-label {
+    font-family: var(--display);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: var(--zH);
+    margin-bottom: 18px;
+}
+.upshot-body {
+    font-family: var(--body);
+    font-style: italic;
+    font-weight: 400;
+    font-size: 28px;
+    line-height: 1.4;
+    color: var(--paper);
+    margin: 0;
+    letter-spacing: -0.005em;
+}
+.upshot-body .hl-zH { color: var(--zH); font-style: normal; }
+.upshot-body .hl-zL { color: var(--zL); font-style: normal; }
+
+/* ============== ARTICLE BODY ============== */
+.article {
+    max-width: var(--measure);
+    margin: 0 auto;
+    padding: 80px 40px 96px;
+    position: relative;
+}
+
+.article section { margin-top: 88px; }
+.article section:first-of-type { margin-top: 0; }
+
+/* Section header — oversized numeral + left-aligned bold sans title */
+.article .section-head {
+    display: flex;
+    align-items: baseline;
+    gap: 22px;
+    margin: 0 0 32px;
+    border-top: 3px solid var(--ink);
+    padding-top: 22px;
+}
+.article .section-head .numeral {
+    font-family: var(--display-cond);
+    font-weight: 700;
+    font-size: 92px;
+    line-height: 0.85;
+    color: var(--zL);
+    letter-spacing: -0.04em;
+    flex-shrink: 0;
+    min-width: 110px;
+}
+.article section:nth-of-type(2n) .section-head .numeral { color: var(--zH); }
+.article h2 {
+    font-family: var(--display);
+    font-weight: 700;
+    font-size: 36px;
+    line-height: 1.12;
+    color: var(--ink);
+    margin: 0;
+    letter-spacing: -0.018em;
+}
+.article h3 {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 18px;
+    letter-spacing: 0.02em;
+    color: var(--ink);
+    margin: 40px 0 12px;
+    text-transform: none;
+}
+.article h3::before {
+    content: "";
+    display: inline-block;
+    width: 24px;
+    height: 3px;
+    background: var(--zH);
+    margin-right: 10px;
+    vertical-align: middle;
+    transform: translateY(-3px);
+}
+
+.article p {
+    font-size: 19px;
+    line-height: 1.7;
+    color: var(--ink);
+    margin: 0 0 1.15em;
+}
+.article p.lead {
+    font-size: 23px;
+    line-height: 1.5;
+    color: var(--ink);
+    font-weight: 400;
+    margin-bottom: 1.4em;
+}
+.article ul {
+    font-size: 19px;
+    line-height: 1.6;
+    padding-left: 24px;
+    margin: 1em 0 1.5em;
+}
+.article ul li { margin-bottom: 0.55em; }
+.article ul li::marker { color: var(--zL); }
+
+/* Inline color-coded state labels */
+.zH-label { color: var(--zH); font-weight: 700; font-style: normal; }
+.zL-label { color: var(--zL); font-weight: 700; font-style: normal; }
+code {
+    font-family: var(--mono);
+    font-size: 0.88em;
+    background: var(--paper-soft);
+    padding: 2px 6px;
+    border-radius: 2px;
+    color: var(--ink);
+}
+
+/* ============== PULL QUOTE ============== */
+.pullquote {
+    margin: 56px -40px;
+    padding: 36px 40px 36px 56px;
+    border-left: 8px solid var(--zH);
+    background: var(--paper-soft);
+    font-family: var(--body);
+    font-style: italic;
+    font-weight: 400;
+    font-size: 28px;
+    line-height: 1.35;
+    color: var(--ink);
+    letter-spacing: -0.005em;
+}
+.pullquote.coral { border-left-color: var(--zL); }
+.pullquote-attrib {
+    display: block;
+    font-family: var(--display);
+    font-style: normal;
+    font-weight: 600;
+    font-size: 12px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin-top: 16px;
+}
+
+/* ============== CALLOUT ============== */
+.callout {
+    margin: 36px -20px;
+    padding: 26px 30px;
+    background: var(--paper-soft);
+    border-top: 3px solid var(--accent);
+}
+.callout.zH-tint { border-top-color: var(--zH); background: rgba(217,236,233,0.45); }
+.callout.zL-tint { border-top-color: var(--zL); background: rgba(247,220,209,0.45); }
+.callout-label {
+    font-family: var(--display);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 10px;
+}
+.callout.zH-tint .callout-label { color: var(--zH); }
+.callout.zL-tint .callout-label { color: var(--zL); }
+.callout p { font-size: 17px; line-height: 1.6; color: var(--ink-soft); margin: 0; }
+.callout p + p { margin-top: 10px; }
+
+/* ============== FIGURES ============== */
+figure.full {
+    margin: 44px -80px;
+    text-align: center;
+}
+figure.full img {
+    width: 100%;
+    max-width: 1000px;
+    height: auto;
+    display: block;
+    margin: 0 auto;
+    background: var(--paper);
+    padding: 18px;
+    border: 1px solid var(--rule);
+}
+figure.full figcaption {
+    font-family: var(--display);
+    font-size: 14px;
+    line-height: 1.55;
+    color: var(--ink-soft);
+    text-align: left;
+    margin: 16px auto 0;
+    max-width: 800px;
+    padding: 0 18px;
+}
+figure.full figcaption .fignum {
+    font-weight: 700;
+    color: var(--zL);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    font-size: 11px;
+    display: inline-block;
+    margin-right: 10px;
+}
+
+figure.inline { margin: 36px 0; text-align: center; }
+figure.inline img {
+    max-width: 100%;
+    height: auto;
+    background: var(--paper);
+    padding: 14px;
+    border: 1px solid var(--rule);
+}
+figure.inline figcaption {
+    font-family: var(--display);
+    font-size: 14px;
+    line-height: 1.55;
+    color: var(--ink-soft);
+    margin-top: 14px;
+    text-align: left;
+}
+figure.inline figcaption .fignum {
+    font-weight: 700;
+    color: var(--zL);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    font-size: 11px;
+    margin-right: 10px;
+}
+
+figure.two-up { margin: 44px -40px; }
+figure.two-up .panel-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+    align-items: end;
+}
+figure.two-up .panel-grid img {
+    width: 100%;
+    height: auto;
+    background: var(--paper);
+    padding: 12px;
+    border: 1px solid var(--rule);
+}
+figure.two-up .panel-label {
+    font-family: var(--display);
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: var(--ink-soft);
+    text-align: center;
+    margin-top: 8px;
+}
+figure.two-up figcaption {
+    font-family: var(--display);
+    font-size: 14px;
+    line-height: 1.55;
+    color: var(--ink-soft);
+    margin-top: 16px;
+    padding: 0 40px;
+    text-align: left;
+}
+figure.two-up figcaption .fignum {
+    font-weight: 700;
+    color: var(--zL);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    font-size: 11px;
+    margin-right: 10px;
+}
+
+/* ============== EQUATION BLOCK ============== */
+.eqblock {
+    margin: 36px -20px;
+    padding: 24px 30px;
+    background: var(--paper-soft);
+    border-left: 4px solid var(--ink);
+    overflow-x: auto;
+    font-size: 18px;
+}
+.eqblock .eq-label {
+    font-family: var(--display);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin-bottom: 12px;
+}
+.eqblock .l-tag { color: var(--zL); font-weight: 700; font-family: var(--display); font-size: 14px; letter-spacing: 0.06em; }
+.eqblock .h-tag { color: var(--zH); font-weight: 700; font-family: var(--display); font-size: 14px; letter-spacing: 0.06em; }
+.eqblock .eq-row { margin: 10px 0; display: flex; align-items: center; gap: 18px; flex-wrap: wrap; }
+.eqblock .eq-row mjx-container { display: inline-block; vertical-align: middle; }
+
+mjx-container { font-size: 1em !important; }
+mjx-container[display="true"] { margin: 0 !important; }
+
+/* ============== TABLES — modern, with subtle striping ============== */
+.results-wrap {
+    margin: 36px -20px 28px;
+    overflow-x: auto;
+}
+.results-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: var(--display);
+    font-size: 15px;
+    color: var(--ink);
+}
+.results-table caption {
+    font-family: var(--display);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--zL);
+    text-align: left;
+    margin-bottom: 12px;
+    caption-side: top;
+}
+.results-table thead th {
+    font-family: var(--display);
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    font-size: 12px;
+    text-transform: uppercase;
+    color: var(--ink);
+    border-top: 3px solid var(--ink);
+    border-bottom: 1.5px solid var(--ink);
+    padding: 12px 8px;
+    text-align: right;
+    background: var(--paper);
+}
+.results-table thead th:first-child { text-align: left; }
+.results-table tbody td {
+    padding: 10px 8px;
+    border-bottom: 1px solid var(--rule);
+    text-align: right;
+    font-feature-settings: "tnum";
+    font-variant-numeric: tabular-nums;
+}
+.results-table tbody td:first-child { text-align: left; font-family: var(--body); font-size: 16px; }
+.results-table tbody tr.group-head td {
+    font-family: var(--display);
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    color: var(--ink-faint);
+    text-align: left;
+    padding-top: 18px;
+    border-bottom: none;
+}
+.results-table tbody tr:last-child td { border-bottom: 2px solid var(--ink); }
+.results-table tbody tr.zebra td { background: var(--paper-soft); }
+.results-table .best { color: var(--zL); font-weight: 700; }
+.results-table .ours td { background: var(--zH-soft); }
+.results-table .ours td:first-child { font-weight: 700; color: var(--zH); }
+.results-table .pm { color: var(--ink-faint); font-weight: 400; margin: 0 2px; }
+
+/* ============== FOOTER ============== */
+.footer {
+    max-width: var(--measure-wide);
+    margin: 80px auto 0;
+    padding: 32px 40px 60px;
+    border-top: 1px solid var(--rule);
+}
+.footer-row {
+    display: flex; justify-content: space-between; align-items: baseline;
+    flex-wrap: wrap; gap: 14px;
+    font-family: var(--display);
+    font-size: 12px; letter-spacing: 0.06em;
+    color: var(--ink-soft); font-weight: 500;
+}
+.footer a { color: var(--ink-soft); border-bottom: 1px dotted var(--ink-faint); }
+.footer a:hover { border-bottom-color: var(--zL); background: transparent; }
+
+/* ============== RESPONSIVE ============== */
+@media (max-width: 900px) {
+    figure.full { margin-left: 0; margin-right: 0; }
+    figure.two-up { margin-left: 0; margin-right: 0; }
+    figure.two-up figcaption { padding: 0; }
+    .article .section-head .numeral { font-size: 64px; min-width: 80px; }
+    .pullquote { margin-left: 0; margin-right: 0; font-size: 22px; padding: 28px 28px 28px 36px; }
+    .callout { margin-left: 0; margin-right: 0; }
+    .eqblock { margin-left: 0; margin-right: 0; }
+    .results-wrap { margin-left: 0; margin-right: 0; }
+}
+@media (max-width: 720px) {
+    h1.title { font-size: 40px; }
+    .dek { font-size: 19px; }
+    .article h2 { font-size: 28px; }
+    .article p { font-size: 18px; }
+    .article p.lead { font-size: 20px; }
+    .upshot-body { font-size: 22px; }
+    .upshot { padding: 48px 32px; }
+    .article .section-head { gap: 14px; }
+    .article .section-head .numeral { font-size: 52px; min-width: 64px; }
+    figure.two-up .panel-grid { grid-template-columns: 1fr; }
+    .hero { padding: 0 24px; }
+    .topbar { padding: 18px 24px; }
+    .article { padding: 60px 24px 80px; }
+}
+</style>
+</head>
+
+<body>
+
+<!-- ============== TOPBAR ============== -->
+<header class="topbar">
+    <div class="topbar-brand"><a href="./blogs.html">AI<span class="dot">·</span>OWLS</a></div>
+    <div class="topbar-meta">Mechanism &middot; 2026</div>
+</header>
+
+<!-- ============== HERO ============== -->
+<section class="hero">
+    <div class="tag-strip">
+        <span class="tag-zH">z_H</span>
+        <span class="tag-sep">/</span>
+        <span class="tag-zL">z_L</span>
+        <span class="tag-sep">&middot;</span>
+        <span class="tag-meta">Shared-weight recurrent Transformers</span>
+    </div>
+
+    <h1 class="title">One model,<br><span class="accent-zH">two</span> <span class="accent-zL">roles</span>.</h1>
+
+    <p class="dek">A minimal architectural asymmetry — the input enters one update but not the other — is enough to make a shared-weight recurrent Transformer behave like two. With half the parameters of the prior two-network baseline, it matches its accuracy on Sudoku and Maze.</p>
+
+    <p class="byline">
+        <a href="https://juchengshen.github.io/">Jucheng Shen</a><span class="sep">&middot;</span>
+        <a href="https://www.linkedin.com/in/barbara-su-966314268/">Barbara Su</a><span class="sep">&middot;</span>
+        <a href="https://akyrillidis.github.io/">Anastasios Kyrillidis</a><span class="sep">&middot;</span>
+        <span class="affil">Rice University</span>
+    </p>
+
+    <p class="chip-links">
+        <a href="https://arxiv.org/abs/2605.17811">Paper on arXiv<span class="arrow">→</span></a>
+        <a href="https://github.com/juchengshen/air">Code on GitHub<span class="arrow">→</span></a>
+        <a href="./blogs.html">More AI-OWLS<span class="arrow">→</span></a>
+    </p>
+</section>
+
+<!-- ============== HERO FIGURE ============== -->
+<figure class="hero-figure">
+    <img src="./assets/img/air_architecture.png" alt="The AIR architecture: one shared Transformer block applied with input injection for the L-update and without it for the H-update, driving two recurrent latent states.">
+    <figcaption>
+        <span class="fignum">Figure 1 &middot; The AIR architecture</span>
+        The same Transformer \(f(\cdot;\theta)\) is applied twice per cycle. The encoded input \(\tilde{\mathbf{x}}\) appears in the <span class="zL-label">L-update</span> (top) and is absent from the <span class="zH-label">H-update</span> (bottom). The two recurrent states are summed before each call; only the input wiring breaks symmetry.
+    </figcaption>
+</figure>
+
+<!-- ============== UPSHOT ============== -->
+<aside class="upshot">
+    <div class="upshot-inner">
+        <div class="upshot-label">In Brief</div>
+        <p class="upshot-body">When a single shared Transformer is reused for two latent updates, and the only built-in difference is whether the input is injected, it learns to play two roles — <span class="hl-zH">a committed proposal state</span> and <span class="hl-zL">a shifting scratchpad</span> — without ever being told which is which. Half the parameters of the two-network baseline; the same accuracy.</p>
+    </div>
+</aside>
+
+<!-- ============== ARTICLE ============== -->
+<article class="article">
+
+<!-- ============== I ============== -->
+<section id="question">
+    <header class="section-head">
+        <span class="numeral">01</span>
+        <h2>The question</h2>
+    </header>
+
+    <p class="lead">Most of the abilities a modern reasoning model has are bought with more parameters. Bigger models, more weights, more roles. The question we asked is the inverse: can one set of weights play <em>more than one</em> role on its own?</p>
+
+    <p>The setting is small recurrent Transformers — networks that read a puzzle, then quietly turn it over in their heads for a fixed number of cycles before answering. A recent paper, the Hierarchical Reasoning Model (HRM), showed that this kind of architecture — only a few million parameters, but allowed to recur — can do surprisingly well on hard combinatorial puzzles like Sudoku-Extreme and 30&times;30 mazes. HRM's recipe is structural: it carries <em>two</em> latent recurrent states, a high-level <span class="zH-label">z_H</span> and a low-level <span class="zL-label">z_L</span>, and assigns each to its own Transformer with its own parameters. The two networks, the paper reports, end up doing visibly different things.</p>
+
+    <p>A follow-up paper (the Tiny Reasoning Model, TRM) made a striking observation: you don't actually need two networks. Replace both with a single shared Transformer that's called twice per cycle, and the model still works. So a natural question follows. If the two recurrent states are now driven by <em>identical</em> parameters, do they still develop distinct roles? Or does the shared model treat the two updates as essentially the same operation?</p>
+
+    <p>Our paper, with Jucheng Shen and Barbara Su, asks this question carefully and answers it: <em>yes</em>, specialization survives the move to a single shared model — but only when the model has some way to tell which of the two states it is currently updating. The most minimal such signal, and the one we focus on, is whether the encoded input is injected into the update at all.</p>
+</section>
+
+<!-- ============== II ============== -->
+<section id="architecture">
+    <header class="section-head">
+        <span class="numeral">02</span>
+        <h2>A minimal architecture</h2>
+    </header>
+
+    <p>The architecture, which we call <strong>AIR</strong> (Asymmetric Input Recurrence), keeps the two-state scaffold of HRM but ties the two updates to a single Transformer block. Per cycle it performs <em>six sub-steps</em> in a fixed pattern — <code>L, L, H, L, L, H</code> — and the gradient is taken only through the last L and the last H of each cycle, so backpropagation traverses the shared block exactly twice per training step. The only difference between the two update types is built into the input wiring:</p>
+
+    <div class="eqblock">
+        <div class="eq-label">Update rules</div>
+        <div class="eq-row">
+            <span class="l-tag">L &mdash; with input</span>
+            <span>\( \mathbf{z}_L \;\leftarrow\; f\!\big(\mathbf{z}_L + \mathbf{z}_H + \tilde{\mathbf{x}}\,;\; \theta\big) \)</span>
+        </div>
+        <div class="eq-row">
+            <span class="h-tag">H &mdash; without input</span>
+            <span>\( \mathbf{z}_H \;\leftarrow\; f\!\big(\mathbf{z}_H + \mathbf{z}_L\,;\; \theta\big) \)</span>
+        </div>
+    </div>
+
+    <p>Both updates use the <em>same</em> Transformer \(f(\cdot;\theta)\); the encoded input \(\tilde{\mathbf{x}}\) appears in one and is absent from the other. Nothing else distinguishes them. The output head sits on top of <span class="zH-label">z_H</span>, so the training signal supervises <span class="zH-label">z_H</span> directly while <span class="zL-label">z_L</span> is shaped only by the recurrence. Each Transformer is four layers, eight heads, hidden dimension 512 — deliberately small.</p>
+
+    <div class="callout">
+        <div class="callout-label">Why this can work, in principle</div>
+        <p>The encoded input \(\tilde{\mathbf{x}}\) is a deterministic, structured function of the puzzle tokens. So the two update types — "with \(\tilde{\mathbf{x}}\)" and "without" — occupy distinguishable regions of the shared block's input space. A sufficiently expressive Transformer can therefore implement two different update maps by conditioning on the presence or absence of \(\tilde{\mathbf{x}}\). That is an existence statement. The rest of the paper asks whether training actually finds such a separation, and what it looks like when it does.</p>
+    </div>
+</section>
+
+<!-- ============== III ============== -->
+<section id="behavior">
+    <header class="section-head">
+        <span class="numeral">03</span>
+        <h2>What the two states do</h2>
+    </header>
+
+    <p>To see what each state is doing, we use the trick that mechanistic-interpretability work has been using for some time: apply the trained output head not just to the final <span class="zH-label">z_H</span>, but to <em>every</em> intermediate state, at every sub-step, and read out what the model would have said if asked to stop right then. The output is a Sudoku grid in one experiment and a maze in the other. We can simply look.</p>
+
+    <h3>Sudoku</h3>
+    <p>The decoded picture is consistent across puzzles and across the five random seeds we trained. <span class="zH-label">z_H</span> always renders a <em>complete</em> Sudoku board — every cell filled with a digit, even when several of those digits are still wrong. <span class="zL-label">z_L</span> renders an <em>incomplete</em> board — some cells held back as a special <code>BLANK</code> token while the model is still uncertain about them — and the locations of those held-back cells shift across sub-steps as the puzzle is worked.</p>
+
+    <figure class="full">
+        <img src="./assets/img/air_sudoku_decode.png" alt="Decoded Sudoku states from zH (left, fully committed) and zL (right, with shifting BLANK cells).">
+        <figcaption>
+            <span class="fignum">Figure 2 &middot; Sudoku decoded states</span>
+            Left columns: <span class="zH-label">z_H</span> — always a fully filled board. Right columns: <span class="zL-label">z_L</span> — some cells (grey) held as <code>BLANK</code>, with the held-back set <em>changing</em> from one sub-step to the next.
+        </figcaption>
+    </figure>
+
+    <h3>Maze</h3>
+    <p>The same split appears on 30&times;30 maze navigation, in the vocabulary appropriate to that task. <span class="zH-label">z_H</span> commits to a complete layout of walls, paths, and solution. <span class="zL-label">z_L</span> leaves regions undecided (the <code>PAD</code> token) and rearranges its uncertainty locally as the rollout progresses.</p>
+
+    <figure class="full">
+        <img src="./assets/img/air_maze_decode.png" alt="Decoded maze states: zH committed layout vs zL with PAD regions and shifting local structure.">
+        <figcaption>
+            <span class="fignum">Figure 3 &middot; Maze decoded states</span>
+            Black = wall, white = open, blue = solution path, red = start, green = goal; grey = undecided (<code>PAD</code>). <span class="zH-label">z_H</span> commits; <span class="zL-label">z_L</span> hesitates and revises.
+        </figcaption>
+    </figure>
+
+    <div class="pullquote">
+        One state is a <em>proposal</em> — always present, always complete, sometimes wrong. The other is a <em>workspace</em> — keeps a few things open, shifts what it is open about as the model thinks. Neither side was told to behave this way.
+    </div>
+</section>
+
+<!-- ============== IV ============== -->
+<section id="control">
+    <header class="section-head">
+        <span class="numeral">04</span>
+        <h2>What if the asymmetry were removed?</h2>
+    </header>
+
+    <p>The cleanest test of whether the asymmetry is doing the work is to take it away. We trained a symmetric variant — call it <code>Lx_Hx</code> — in which the input \(\tilde{\mathbf{x}}\) is injected into <em>both</em> the L- and the H-update with equal weight. Same number of parameters, same architecture, same training procedure. The only thing different is the input wiring.</p>
+
+    <p>The decoded division of labour goes away.</p>
+
+    <figure class="full">
+        <img src="./assets/img/air_sudoku_decode_symmetric.png" alt="Decoded states for the symmetric Lx_Hx variant on Sudoku: zL no longer shows visible BLANK cells, and zH no longer commits early.">
+        <figcaption>
+            <span class="fignum">Figure 4 &middot; Symmetric variant on Sudoku</span>
+            Once the input enters both updates, <span class="zL-label">z_L</span>'s decoded board stops showing the changing <code>BLANK</code> pattern of Figure 2, and <span class="zH-label">z_H</span> loses its early commitment. The two states look like two copies of the same thing.
+        </figcaption>
+    </figure>
+
+    <p>The same flattening happens on Maze, in its own vocabulary: the symmetric <span class="zL-label">z_L</span> no longer shows the <code>PAD</code>-bearing intermediate structure of Figure 3; the two states converge to versions of the same picture.</p>
+
+    <p>So the picture above is not just a consequence of having two recurrent buffers and a recurrent training schedule. It is a consequence of the one architectural detail that makes the two update types distinguishable to the shared model.</p>
+</section>
+
+<!-- ============== V ============== -->
+<section id="numbers">
+    <header class="section-head">
+        <span class="numeral">05</span>
+        <h2>The numbers</h2>
+    </header>
+
+    <p>What does this asymmetry buy? We measured final test accuracy across a small grid of input-injection configurations, varying \((n_L, n_H)\) — the number of copies of \(\tilde{\mathbf{x}}\) added to each update type. The asymmetry level is \(\Delta = |n_L - n_H|\), so the symmetric controls have \(\Delta = 0\) and the canonical AIR variants have \(\Delta = 1\) or \(\Delta = 2\). All numbers are mean &plusmn; standard deviation across five training seeds, evaluated on the full held-out test set (422,786 Sudoku puzzles; 1,000 mazes).</p>
+
+    <div class="results-wrap">
+    <table class="results-table">
+        <caption>Injection-asymmetry ablation. Asymmetric &gt; symmetric on both tasks.</caption>
+        <thead>
+            <tr>
+                <th>Variant</th>
+                <th>(n_L, n_H)</th>
+                <th>Δ</th>
+                <th>Sudoku&nbsp;(%)</th>
+                <th>Maze&nbsp;(%)</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr class="group-head"><td colspan="5">Asymmetric (Δ &gt; 0)</td></tr>
+            <tr><td>L_Hx</td><td>(0, 1)</td><td>1</td><td>58.7 <span class="pm">±</span> 3.3</td><td>75.3 <span class="pm">±</span> 3.2</td></tr>
+            <tr class="ours"><td>Lx_H (default)</td><td>(1, 0)</td><td>1</td><td><span class="best">60.0</span> <span class="pm">±</span> 2.0</td><td>71.0 <span class="pm">±</span> 6.3</td></tr>
+            <tr><td>L_H2x</td><td>(0, 2)</td><td>2</td><td>58.6 <span class="pm">±</span> 1.9</td><td><span class="best">75.6</span> <span class="pm">±</span> 1.9</td></tr>
+            <tr><td>L2x_H</td><td>(2, 0)</td><td>2</td><td>59.1 <span class="pm">±</span> 2.4</td><td>71.1 <span class="pm">±</span> 6.4</td></tr>
+            <tr><td>Lx_H2x</td><td>(1, 2)</td><td>1</td><td>59.6 <span class="pm">±</span> 0.9</td><td>70.9 <span class="pm">±</span> 2.4</td></tr>
+            <tr><td>L2x_Hx</td><td>(2, 1)</td><td>1</td><td>58.6 <span class="pm">±</span> 2.9</td><td>74.5 <span class="pm">±</span> 1.6</td></tr>
+            <tr><td><em>Group mean</em></td><td>—</td><td>—</td><td><em>59.1</em></td><td><em>73.1</em></td></tr>
+            <tr class="group-head"><td colspan="5">Symmetric (Δ = 0)</td></tr>
+            <tr class="zebra"><td>Lx_Hx</td><td>(1, 1)</td><td>0</td><td>52.1 <span class="pm">±</span> 1.6</td><td>69.4 <span class="pm">±</span> 2.5</td></tr>
+            <tr class="zebra"><td>L2x_H2x</td><td>(2, 2)</td><td>0</td><td>50.9 <span class="pm">±</span> 2.9</td><td>70.3 <span class="pm">±</span> 4.2</td></tr>
+            <tr><td><em>Group mean</em></td><td>—</td><td>—</td><td><em>51.5</em></td><td><em>69.9</em></td></tr>
+            <tr class="group-head"><td colspan="5">Two-network baseline (separate parameters)</td></tr>
+            <tr><td>HRM <span style="color:var(--ink-faint);">(Wang et al. 2025)</span></td><td>—</td><td>—</td><td>55.0</td><td>74.5</td></tr>
+        </tbody>
+    </table>
+    </div>
+
+    <p>The pattern is the same on both tasks: every asymmetric configuration sits above every symmetric one. On Sudoku the gap is roughly eight points (~59% vs ~51.5%); on Maze it is narrower but in the same direction (~73% vs ~70%). And the best AIR variants are also at or above the original two-network HRM baseline — Sudoku +5 points, Maze +1 point — with <em>half</em> the parameter count, since the L- and H-Transformers are now one shared block instead of two.</p>
+
+    <div class="callout">
+        <div class="callout-label">A small honesty check</div>
+        <p>The Sudoku gap is real and replicates across seeds. The Maze gap is smaller and the within-group spread is wider — some asymmetric configurations (Lx_H, L2x_H, Lx_H2x) are statistically indistinguishable from the symmetric ones. We don't claim asymmetric input is universally better on Maze; we claim the directional effect is consistent, and that the best asymmetric configurations match the two-network baseline at half the parameters.</p>
+    </div>
+
+    <h3>Can a different signal do the same job?</h3>
+    <p>The follow-up question is whether <em>input injection</em> specifically is the load-bearing part, or whether any signal that tells the shared model "you are doing an L-update right now" would do. We tested this by starting from the symmetric base and adding a small learned <em>level token</em> in three different ways:</p>
+
+    <div class="results-wrap">
+    <table class="results-table">
+        <caption>Level-token control on Sudoku, built on the symmetric L2x_H2x base.</caption>
+        <thead>
+            <tr>
+                <th>Variant</th>
+                <th>Mechanism</th>
+                <th>Sudoku&nbsp;(%)</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr><td>L2x_H2x (base, no token)</td><td>—</td><td>50.9 <span class="pm">±</span> 2.9</td></tr>
+            <tr><td>&nbsp;+ Addition</td><td>element-wise add to every token</td><td>50.0 <span class="pm">±</span> 1.9</td></tr>
+            <tr class="ours"><td>&nbsp;+ Prepend (strip)</td><td>prepend, attend, then strip</td><td><span class="best">57.5</span> <span class="pm">±</span> 1.3</td></tr>
+            <tr><td>&nbsp;+ Prepend (no strip)</td><td>prepend, persist across cycles</td><td>47.8 <span class="pm">±</span> 1.6</td></tr>
+            <tr><td><em>For reference:</em> asymmetric Δ=1</td><td>—</td><td><em>~59.0</em></td></tr>
+        </tbody>
+    </table>
+    </div>
+
+    <p>The patterns are revealing. Element-wise <em>addition</em> of a level vector to every content token does nothing — the signal is mixed in with the content and the shared model cannot disentangle it. Prepending a level token but letting it <em>persist</em> across cycles is worse than the symmetric base, presumably because the persistent token accumulates content and so the per-sub-step signal is no longer clean. What works is the structurally cleanest of the three: prepend the level token, let it participate in self-attention, then <em>strip it out</em> before the next sub-step. That variant recovers a substantial fraction of the asymmetric-injection benefit and lifts the symmetric base by ~7 points.</p>
+
+    <div class="pullquote coral">
+        The shared model needs a <em>structurally separable</em> state-identity signal — one that occupies its own place in the sequence and does not bleed into the content. Asymmetric input is one way. Prepend-and-strip is another. The mixing alternatives do not work.
+    </div>
+</section>
+
+<!-- ============== VI ============== -->
+<section id="freeze">
+    <header class="section-head">
+        <span class="numeral">06</span>
+        <h2>Are the two states related?</h2>
+    </header>
+
+    <p>It is one thing for two states to look different when you decode them. It is another for those states to be doing complementary work — for each one to be holding up some part of the computation that the other depends on. We test this directly. During inference, we <em>freeze</em> one of the two states (hold it constant across sub-steps) and let the other update normally, then measure how the unfrozen state behaves.</p>
+
+    <p>The metric is what we call <em>content change</em>: the number of decoded-token positions that change from one sub-step to the next. Lots of content change means the unfrozen state is busily revising; little change means it has gone quiet.</p>
+
+    <figure class="two-up">
+        <div class="panel-grid">
+            <div>
+                <img src="./assets/img/air_sudoku_freeze_zH.png" alt="Freezing zH suppresses zL's content changes in Sudoku.">
+                <div class="panel-label">Sudoku — freeze z_H, measure z_L</div>
+            </div>
+            <div>
+                <img src="./assets/img/air_sudoku_freeze_zL.png" alt="Freezing zL increases zH's content changes in Sudoku.">
+                <div class="panel-label">Sudoku — freeze z_L, measure z_H</div>
+            </div>
+        </div>
+        <figcaption>
+            <span class="fignum">Figure 5 &middot; Sudoku freeze experiments</span>
+            Freezing one state changes the other's dynamics, but the direction differs. Freezing <span class="zH-label">z_H</span> <em>quiets</em> <span class="zL-label">z_L</span> (total content change drops from 1,235 to 323); freezing <span class="zL-label">z_L</span> makes <span class="zH-label">z_H</span> <em>more</em> active (275 &rarr; 551). Blue is normal, orange is the freeze condition.
+        </figcaption>
+    </figure>
+
+    <p>On Sudoku the dynamics tell a coherent story: <span class="zH-label">z_H</span> is in some sense the <em>driver</em> of <span class="zL-label">z_L</span>'s revisions — take <span class="zH-label">z_H</span> away and <span class="zL-label">z_L</span> goes quiet — while <span class="zL-label">z_L</span> is in some sense the <em>stabilizer</em> of <span class="zH-label">z_H</span> — take it away and <span class="zH-label">z_H</span> flails. They are not two parallel buffers; they are two ends of a feedback loop.</p>
+
+    <figure class="two-up">
+        <div class="panel-grid">
+            <div>
+                <img src="./assets/img/air_maze_freeze_zH.png" alt="Freezing zH increases zL's content changes in Maze.">
+                <div class="panel-label">Maze — freeze z_H, measure z_L</div>
+            </div>
+            <div>
+                <img src="./assets/img/air_maze_freeze_zL.png" alt="Freezing zL increases zH's content changes in Maze.">
+                <div class="panel-label">Maze — freeze z_L, measure z_H</div>
+            </div>
+        </div>
+        <figcaption>
+            <span class="fignum">Figure 6 &middot; Maze freeze experiments</span>
+            On Maze the freezing effect goes the same direction in both panels: freezing either state <em>amplifies</em> the other's content change (1,290 &rarr; 2,305 and 825 &rarr; 2,880, respectively). The coupling is bidirectional in a stabilizing sense — each state relies on the other to settle.
+        </figcaption>
+    </figure>
+
+    <p>On Maze the picture is symmetric in shape but opposite in sign: freezing either state amplifies the other's revisions. The two tasks differ in the geometry of their state coupling — Sudoku's seems hierarchical, Maze's seems mutual — but in both, the freeze tests demonstrate that the two states are genuinely doing complementary work. The decoded role split is not just a visual artefact; it is a property of how the model's dynamics depend on each part.</p>
+
+    <p>The symmetric <code>Lx_Hx</code> control, by contrast, does not show this organized freeze response — freezing either state in the symmetric model produces unstructured perturbation rather than a role-consistent pattern. The two pictures are coherent only when the asymmetry is present.</p>
+
+    <div class="callout zL-tint">
+        <div class="callout-label">Both halves matter</div>
+        <p>Freezing either state collapses final task accuracy to zero on both Sudoku and Maze. The asymmetric model is not just a proposal network with a decorative scratchpad — every part is load-bearing.</p>
+    </div>
+</section>
+
+<!-- ============== VII ============== -->
+<section id="mechanism">
+    <header class="section-head">
+        <span class="numeral">07</span>
+        <h2>The mechanism: local and global</h2>
+    </header>
+
+    <p>The decoded behaviour and the freeze responses are downstream of something happening <em>inside</em> the Transformer. To get at that, we looked at the attention. Each sub-step has its own attention pattern; we measured, for every blank query cell, how much attention mass lands inside the cell's local neighbourhood, and compared the L-update with the H-update.</p>
+
+    <p>On Sudoku, every blank cell has a natural neighbourhood: the twenty other cells that share its row, its column, or its 3&times;3 box — the cells whose values constrain it. Before any aggregate statistics, it is worth just looking at a single example.</p>
+
+    <figure class="full">
+        <img src="./assets/img/air_attention_sudoku_example1.png" alt="Attention heatmaps on a single Sudoku puzzle showing L-update concentrating inside the cell's neighborhood while H-update spreads attention across the whole board.">
+        <figcaption>
+            <span class="fignum">Figure 7 &middot; A single puzzle, two attention maps</span>
+            One blank query cell (puzzle <code>p0121</code>, query <code>r2c6</code>) in the first cycle, viewed at the shallowest layer. The <span class="zL-label">L-update</span> places about <strong>0.81</strong> of its attention mass inside the constraint neighbourhood (the same row, column, and 3&times;3 box as the query); the <span class="zH-label">H-update</span> places only <strong>0.24</strong>. Same puzzle, same query, same head — only the update type differs.
+        </figcaption>
+    </figure>
+
+    <p>The picture above is not cherry-picked geometry; the same pattern recurs on different puzzles and different queries. Here is a second example, where L's attention happens to concentrate along the query's row inside the neighbourhood, while H's attention drifts off-board:</p>
+
+    <figure class="full">
+        <img src="./assets/img/air_attention_sudoku_example2.png" alt="A second Sudoku attention example showing L-update concentrating along the query row while H-update is more global.">
+        <figcaption>
+            <span class="fignum">Figure 8 &middot; A second example, same split</span>
+            A different puzzle (<code>p0025</code>, cycle 4, query <code>r1c3</code>). The local-versus-global split survives a change of puzzle, cycle, head, and query cell.
+        </figcaption>
+    </figure>
+
+    <p>To check that this is not an artefact of a particular sub-step or a particular cycle, we tracked one query cell, head, and layer across the full cycle schedule. The L/H separation persists; it is a property of <em>which update type</em> is being performed, not of <em>when</em>.</p>
+
+    <figure class="full">
+        <img src="./assets/img/air_attention_sudoku_temporal.png" alt="Temporal evolution of L and H attention maps across cycles 2-15 for one query cell, showing the local-vs-global split persists at every cycle.">
+        <figcaption>
+            <span class="fignum">Figure 9 &middot; The split is temporally persistent</span>
+            One query cell (puzzle <code>p0829</code>, query <code>r1c9</code>) tracked across cycles 2 through 15. At every cycle, the L-update (top row) attends more locally and the H-update (bottom row) attends more globally. The role assignment is not a one-cycle artefact.
+        </figcaption>
+    </figure>
+
+    <p>Now the aggregate picture. We computed three L&minus;H contrasts at every layer of the Transformer, averaging over the eight attention heads and 1,000 test puzzles:</p>
+
+    <figure class="full">
+        <img src="./assets/img/air_sudoku_attention.png" alt="Sudoku L-minus-H attention contrasts across all four Transformer layers, for violation-adjacent and control queries.">
+        <figcaption>
+            <span class="fignum">Figure 10 &middot; Sudoku attention contrasts across layers</span>
+            Across all four Transformer layers and across both query classes (violation-adjacent vs control), <span class="zL-label">L</span> places more attention inside the constraint neighbourhood than <span class="zH-label">H</span> (Δ<sub>nbr</sub> &gt; 0) and is more concentrated overall (Δ<sub>ent</sub> &gt; 0). The violation-specific signal (Δ<sub>viol</sub>) is small at shallow layers and grows in the deeper ones.
+        </figcaption>
+    </figure>
+
+    <p>The largest gap appears at the deepest layer, where L places about 47% more attention mass inside the neighbourhood than H does. The same direction holds at every layer of the network. There is a corresponding entropy gap: L's attention distribution is more concentrated than H's. A second signal — call it the <em>violation</em> signal — looks at whether L attends disproportionately to cells whose current decoded value already conflicts with another cell in the same row/column/box. This signal emerges only in the deeper layers and is small but reliable.</p>
+
+    <p>Maze tells the locality half of the same story. We constructed three neighbourhoods of increasing size around each blank cell (4-cardinal, 8-surround, and the centred 5&times;5 window) and measured the per-cell density contrast between L and H. The density is positive across every neighbourhood size and every layer; the smaller the neighbourhood, the larger the L &minus; H gap.</p>
+
+    <figure class="full">
+        <img src="./assets/img/air_maze_attention.png" alt="Maze per-cell density contrasts at three neighbourhood sizes (4, 8, 5x5), plus entropy contrast.">
+        <figcaption>
+            <span class="fignum">Figure 11 &middot; Maze attention contrasts</span>
+            The per-cell density contrast Δρ<sup>(k)</sup> is positive at every neighbourhood size \(k\) and every layer for both error-adjacent and control queries. L is consistently more local than H. There is no separate violation-specific signal on Maze — what extra attention L puts on local errors is explained by locality alone.
+        </figcaption>
+    </figure>
+
+    <p>Two readings:</p>
+    <ul>
+        <li><strong>Local vs global.</strong> When the shared Transformer is asked to update <span class="zL-label">z_L</span>, it attends locally; when asked to update <span class="zH-label">z_H</span>, it attends globally. The split is consistent across both tasks and across all layers we measured.</li>
+        <li><strong>Task-specific specialization.</strong> Sudoku, whose constraints span the board, additionally develops a deeper-layer signal that routes extra attention to <em>violated</em> cells. Maze, whose interactions are inherently local, does not — once the model attends locally, there is no further signal to add.</li>
+    </ul>
+
+    <p>The picture in attention is the same picture we saw in the decoded states and in the freeze experiments, just expressed in a different observable. One shared model, two update types, two distinguishable computational behaviours.</p>
+</section>
+
+<!-- ============== VIII ============== -->
+<section id="why">
+    <header class="section-head">
+        <span class="numeral">08</span>
+        <h2>Why this matters</h2>
+    </header>
+
+    <p>There is a common assumption in modern architecture design that if you want a network to play multiple roles, you build it with multiple parameter sets — multiple experts, multiple modules, multiple heads, multiple LoRA adapters. Functional modularity is implemented as <em>parameter</em> modularity, by construction.</p>
+
+    <p>What this work suggests, in a small and carefully controlled setting, is that the relationship is more relaxed than that. A single set of parameters can play more than one role <em>if</em> it has a clean signal at update time telling it which role it is in. The signal can be very thin — in our case, the mere presence or absence of the input vector is enough. What it cannot be is mixed indistinguishably into the content.</p>
+
+    <p>That has two implications worth thinking about. The first is design-economic: the same task can be solved by a model with half the parameters of the obvious modular alternative, if the architecture exposes a sufficient state-identity signal. The second is mechanistic: when we ask what a shared model is "really doing," the answer can be "two different things at two different invocations," and that is detectable by the kinds of probes that mechanistic-interpretability work has been using to read inside transformer LLMs.</p>
+
+    <p>It is also a small but pointed counterpoint to a tempting narrative about specialization. Specialization does not need to be hard-wired into the weights; it can be a property the shared weights <em>learn</em>, given a clean enough invocation signal. Whether this scales — to deeper models, to natural-language reasoning, to non-grid combinatorial structure — is the next round of questions.</p>
+</section>
+
+<!-- ============== IX ============== -->
+<section id="scope">
+    <header class="section-head">
+        <span class="numeral">09</span>
+        <h2>Honest scope</h2>
+    </header>
+
+    <p>We are explicit about where this evidence comes from. The experiments use two synthetic, fully observable, grid-structured combinatorial tasks (Sudoku-Extreme with 17 givens; Maze on a 30&times;30 grid). The model is a 4-layer Transformer with two recurrent latent states and \(C_L = C_H = 2\) sub-steps per cycle. Mechanistic evidence is strongest on Sudoku. Attention weights are only a partial view of what a network is computing. None of this generalizes for free.</p>
+
+    <p>What we have shown is that, in this controlled setting, a single shared recurrent block develops stable, related, mechanistically-distinguishable functional roles when its update types are made distinguishable. Whether the same pattern persists in deeper architectures, in language modelling, in partial-observability tasks, in continuous domains — those are the natural next questions, and we have not answered them here.</p>
+
+    <p>What we suspect — and we are deliberately stating this as a suspicion, not a finding — is that the principle is more general than the proof. Wherever a network is asked to play multiple roles inside a shared computation, providing a clean per-invocation identity signal is likely to be a cheap and effective way to elicit specialization without paying for it in parameters. That is a hypothesis. The evidence in this paper is suggestive, not conclusive.</p>
+
+    <div class="callout zH-tint">
+        <div class="callout-label">Open questions</div>
+        <p><strong>1. Beyond grids.</strong> Does the proposal-and-scratchpad split survive when tokens are not grid cells — for instance in a small Transformer-LM trained on iterated reasoning?</p>
+        <p><strong>2. More than two roles.</strong> Does \(k &gt; 2\) latent states with \(k\) distinct invocation signals layer cleanly, or do the roles collide?</p>
+        <p><strong>3. Sharp theory.</strong> The universal-approximation argument is only an existence statement. Under what conditions on the data and the optimization does training <em>provably</em> recover the split?</p>
+        <p><strong>4. Other signals.</strong> Position, modality, and conditioning vectors are other forms of asymmetry. Which kinds of identity signal work, and which collapse?</p>
+    </div>
+</section>
+
+</article>
+
+<!-- ============== FOOTER ============== -->
+<footer class="footer">
+    <div class="footer-row">
+        <span>AI&middot;OWLS &middot; Rice University</span>
+        <span><a href="./blogs.html">All posts</a> &middot; <a href="https://akyrillidis.github.io/">Anastasios Kyrillidis</a></span>
+    </div>
+</footer>
+
+</body>
+</html>
