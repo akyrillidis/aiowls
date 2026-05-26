@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>One Rank at a Time — AI-OWLS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<!-- MathJax for LaTeX rendering -->
+<script>
+window.MathJax = {
+  tex: {
+    inlineMath: [['$', '$'], ['\\(', '\\)']],
+    displayMath: [['$$', '$$'], ['\\[', '\\]']],
+    processEscapes: true,
+    tags: 'none',
+    packages: {'[+]': ['ams', 'boldsymbol', 'color']},
+    macros: {
+      // \bm is not a default MathJax command — bind it to \boldsymbol so
+      // any \bm{...} from the paper renders correctly.
+      bm: ['{\\boldsymbol{#1}}', 1],
+      RR: '\\mathbb{R}'
+    }
+  },
+  loader: { load: ['[tex]/ams', '[tex]/boldsymbol', '[tex]/color'] },
+  svg: { fontCache: 'global' },
+  options: { skipHtmlTags: ['script','noscript','style','textarea','pre','code'] }
+};
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js" id="MathJax-script" async></script>
+<style>
+:root {
+  --paper:#f6f6f4;
+  --grid:#e6e6e3;
+  --ink:#101012;
+  --soft:#5b5b5e;
+  --rule:#1d1d20;
+  --accent:#c84539;      /* error / cascade */
+  --gain:#1a5f3c;         /* proven / contained */
+  --warn:#a07000;         /* caveat / open */
+  --hl:#fff3a0;
+}
+* { box-sizing: border-box; }
+html, body {
+  margin:0; padding:0; background:var(--paper); color:var(--ink);
+  font-family:'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size:14px; line-height:1.55;
+  -webkit-font-smoothing:antialiased;
+}
+body {
+  max-width: 1080px; margin:0 auto; padding: 48px 56px 96px 56px;
+  background-image:
+    linear-gradient(var(--grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size: 24px 24px;
+  background-position: -1px -1px;
+}
+.sheet {
+  background: var(--paper);
+  padding: 28px 36px;
+  border: 1.4px solid var(--rule);
+}
+.masthead {
+  display:flex; justify-content:space-between; align-items:baseline;
+  border-bottom: 2px solid var(--rule); padding-bottom: 8px; margin-bottom: 24px;
+  font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase;
+  font-weight: 600;
+}
+.masthead .lhs { color: var(--ink); }
+.masthead .rhs { color: var(--soft); }
+.kicker {
+  font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--accent); font-weight: 700; margin-bottom: 4px;
+}
+h1.title {
+  font-family: 'Inter', sans-serif; font-weight: 700;
+  font-size: 38px; line-height: 1.08; margin: 0 0 12px 0;
+  letter-spacing: -0.015em;
+}
+h1.title em { font-style: italic; color: var(--soft); }
+.dek {
+  font-family: 'Inter', sans-serif; font-weight: 400; font-style: italic;
+  font-size: 19px; line-height: 1.4; color: var(--ink); margin-bottom: 18px;
+  max-width: 760px;
+}
+.byline {
+  font-size: 12px; color: var(--soft); letter-spacing: 0.04em;
+  padding: 8px 0; border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule);
+  margin-bottom: 32px;
+  display:flex; gap: 24px; flex-wrap: wrap;
+}
+.byline a { color: var(--accent); text-decoration: none; font-weight: 600; }
+.byline a:hover { text-decoration: underline; }
+
+/* Upshot — the lab-notebook "result of the day" banner */
+.upshot {
+  background: var(--ink); color: var(--paper);
+  padding: 18px 24px; margin: 0 0 36px 0;
+  font-family: 'Inter', sans-serif; font-size: 16px; line-height: 1.5;
+  font-weight: 500;
+}
+.upshot strong { color: var(--paper); font-weight: 700; }
+.upshot .label {
+  display: block; font-family: 'JetBrains Mono', monospace; font-size: 11px;
+  letter-spacing: 0.18em; text-transform: uppercase; color: #9aa0a6;
+  margin-bottom: 6px; font-weight: 600;
+}
+
+/* Section headings — chunk index style */
+h2 {
+  font-family: 'JetBrains Mono', monospace; font-size: 14px;
+  letter-spacing: 0.1em; text-transform: uppercase; font-weight: 700;
+  margin: 40px 0 8px 0; padding-bottom: 4px;
+  border-bottom: 1.2px solid var(--rule); color: var(--ink);
+}
+h2 .idx { color: var(--accent); margin-right: 12px; }
+
+/* Body prose */
+p {
+  font-family: 'Inter', sans-serif; font-size: 16px; line-height: 1.62;
+  margin: 12px 0;
+}
+p code, li code, table code {
+  font-family: 'JetBrains Mono', monospace;
+  background: #ececea; padding: 1px 5px; border-radius: 2px;
+  font-size: 0.92em;
+}
+
+ul, ol {
+  font-family: 'Inter', sans-serif; font-size: 16px; line-height: 1.55;
+  padding-left: 20px;
+}
+li { margin-bottom: 6px; }
+
+/* Callouts (notebook-style boxes) */
+.callout {
+  border-left: 4px solid var(--ink);
+  background: rgba(0,0,0,0.025);
+  padding: 14px 18px; margin: 20px 0;
+  font-family: 'Inter', sans-serif; font-size: 15px; line-height: 1.5;
+}
+.callout.thm  { border-color: var(--gain); }
+.callout.warn { border-color: var(--warn); background: rgba(160,112,0,0.06); }
+.callout.cav  { border-color: var(--accent); background: rgba(200,69,57,0.05); }
+.callout .label {
+  display: inline-block;
+  font-family: 'JetBrains Mono', monospace; font-size: 11px;
+  letter-spacing: 0.18em; text-transform: uppercase; font-weight: 700;
+  margin-right: 8px;
+}
+.callout.thm  .label { color: var(--gain); }
+.callout.warn .label { color: var(--warn); }
+.callout.cav  .label { color: var(--accent); }
+
+/* Tables */
+table { width: 100%; border-collapse: collapse; margin: 16px 0; font-family: 'JetBrains Mono', monospace; font-size: 13px; }
+th, td { padding: 7px 12px; text-align: left; border-bottom: 1px solid var(--grid); }
+th { background: var(--ink); color: var(--paper); font-weight: 600; letter-spacing: 0.06em; }
+tr:last-child td { border-bottom: 1.4px solid var(--rule); }
+td.num { text-align: right; font-variant-numeric: tabular-nums; }
+
+/* Two-column grid */
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; margin: 24px 0; }
+@media (max-width: 760px) { .grid2 { grid-template-columns: 1fr; } }
+
+.figpanel {
+  background: rgba(0,0,0,0.025); border: 1px solid var(--grid);
+  padding: 14px 16px; font-size: 13px;
+}
+.figpanel .figlabel {
+  font-family: 'JetBrains Mono', monospace; font-size: 11px;
+  letter-spacing: 0.16em; text-transform: uppercase; color: var(--soft);
+  margin-bottom: 6px;
+}
+
+/* Math eqn block — MathJax renders. Left-aligned (default body alignment). */
+.eq {
+  font-size: 15px;
+  text-align: left;
+  padding: 14px 18px; margin: 14px 0;
+  background: rgba(0,0,0,0.03);
+  border-top: 1px solid var(--grid); border-bottom: 1px solid var(--grid);
+  overflow-x: auto;
+}
+.eq mjx-container { text-align: left !important; }
+
+/* Final notebook footer */
+.footer {
+  margin-top: 56px; padding-top: 18px;
+  border-top: 2px solid var(--rule);
+  font-size: 12px; color: var(--soft); letter-spacing: 0.04em;
+  display: flex; justify-content: space-between; flex-wrap: wrap;
+}
+.footer a { color: var(--accent); }
+
+/* Highlight pen */
+mark { background: var(--hl); padding: 0 2px; }
+</style>
+</head>
+<body>
+
+<div class="sheet">
+
+<div class="masthead">
+  <span class="lhs">AI-OWLS LAB NOTEBOOK · Theory desk</span>
+  <span class="rhs">Entry No. 014 · TMLR (accepted, in press)</span>
+</div>
+
+<div class="kicker">Sequential learning · low-rank regression · error propagation</div>
+
+<h1 class="title">One Rank at a Time:<br><em>Cascading Error Dynamics in Sequential Learning</em></h1>
+
+<p class="dek">When models are built up one piece at a time, mistakes in the first piece don't stay there — this paper pins down, mathematically, how they cascade.</p>
+
+<div class="byline">
+  <span><strong>Authors:</strong> Mahtab Alizadeh Vandchali · Fangshuo (Jasper) Liao · Anastasios Kyrillidis</span>
+  <span><strong>Venue:</strong> TMLR (accepted, in press)</span>
+  <span><a href="https://arxiv.org/abs/2505.22602">arXiv:2505.22602</a></span>
+  <span><a href="https://arxiv.org/pdf/2505.22602">PDF</a></span>
+  <span><em>Code · coming soon</em></span>
+</div>
+
+<div class="upshot">
+  <span class="label">The Upshot ▸</span>
+  Sequential rank-1 deflation amplifies early numerical error through every later step. The amplification factor is governed by the <em>spectral gaps</em> of the data; when gaps are large the cascade is damped, when gaps are small it can blow up. The result gives a quantitative answer to the practical question: <strong>how should you allocate compute across the steps when training one rank at a time?</strong>
+</div>
+
+<!-- ============================================================ -->
+<h2><span class="idx">§01</span>Setup</h2>
+
+<p>Many modern training schemes — low-rank adaptation (LoRA) being the canonical example — proceed in stages. You fit a small low-rank update, freeze it, then fit another, and so on. Each subsequent step learns on the <em>residual</em> left by the previous ones. It is convenient. It is widely used. And it is largely uncharacterized: how does a numerical mistake in step 1 leak into step 2, 3, … $r$? (A companion piece, <a href="./adapad.html">AdaPaD: From PCA to LoRA</a>, asks what changes if you do this same deflation <em>in parallel</em> instead — the present paper is the sequential half of that picture.)</p>
+
+<p>This paper studies that question in the cleanest non-trivial setting where the math goes through. Consider linear low-rank regression:</p>
+
+<div class="eq">$$\mathbf{Y} \;\approx\; \mathbf{W} \mathbf{X}, \qquad \mathbf{W} = \mathbf{B}\mathbf{A}, \qquad \mathrm{rank}(\mathbf{W}) = r \ll \min(m, d).$$</div>
+
+<p>Instead of solving for $\mathbf{W}$ jointly, the sequential algorithm peels off the dominant rank-1 component, subtracts its prediction from the target, and repeats:</p>
+
+<div class="eq">$$(\mathbf{a}_k, \mathbf{b}_k) \;=\; \arg\min_{\mathbf{a},\,\mathbf{b}} \tfrac{1}{2}\big\| \mathbf{Y}_k - \mathbf{b}\,\mathbf{a}^\top \mathbf{X} \big\|_F^2, \qquad \mathbf{Y}_{k+1} \leftarrow \mathbf{Y}_k - \mathbf{b}_k\,\mathbf{a}_k^\top \mathbf{X}.$$</div>
+
+<p>Two observations make this worth studying. <em>First,</em> sequential rank-1 deflation is structurally identical to PCA-style algorithms, OMP-style greedy methods, and several recent PEFT recipes — a unified analysis pays back across multiple methods. <em>Second,</em> each step uses a finite-precision solver. There is always some per-step residual error $\boldsymbol{\Psi}_k$. The question is whether these errors stay small or compound.</p>
+
+<!-- ============================================================ -->
+<h2><span class="idx">§02</span>The cascade</h2>
+
+<p>The paper's central object is the cumulative training error after $r$ rank-1 steps. Theorem 1 bounds it by</p>
+
+<div class="eq">
+$$\Big\| \mathbf{Y} - \sum_{k=1}^{r} \mathbf{b}_k \mathbf{a}_k^\top \mathbf{X} \Big\|_F \;\le\; \underbrace{\Big(\sum_{k \gt r} (\sigma_k^\star)^2 \Big)^{1/2}}_{\text{truncation tail}} \;+\; \underbrace{\sum_{k=1}^{r} \Big(\prod_{j \lt k} \rho_j\Big)\, \big\|\boldsymbol{\Psi}_k\big\|_F}_{\textbf{cascade amplification}}$$
+</div>
+
+<p>Two terms. The <strong>truncation tail</strong> is the unavoidable cost of throwing away components past rank $r$ — it is what you would also pay with a perfect oracle SVD. The interesting term is the second: each per-step error $\boldsymbol{\Psi}_k$ is amplified by a product of factors</p>
+
+<div class="eq">
+$$\rho_j \;=\; 2 + 6\,\frac{\sigma_j^\star}{\mathcal{T}_j^\star},$$
+</div>
+
+<p>where $\sigma_j^\star$ is the $j$-th singular value of the true regressor and $\mathcal{T}_j^\star = \sigma_j^\star - \sigma_{j+1}^\star$ is the $j$-th singular gap.</p>
+
+<div class="callout thm">
+  <span class="label">Theorem 1 (informal).</span>
+  In the perturbation regime where the cumulative error stays below half the smallest gap, the residual training error is the sum of the truncation tail plus a product-amplified sum of per-step errors. Small gaps inflate the product; large gaps damp it.
+</div>
+
+<p>The cascade is geometric in the worst case. If every gap is just barely positive, a small error in step 1 can grow by a factor of, say, 8 by step 8 — and that is on top of fresh errors introduced at every later step.</p>
+
+<!-- ============================================================ -->
+<h2><span class="idx">§03</span>Parameter recovery</h2>
+
+<p>Theorem 1 is about training error — how well does the model fit the data we trained on? A separate, harder question is parameter recovery: how close is the learned $\widehat{\mathbf{W}}$ to the true $\mathbf{W}^\star$?</p>
+
+<div class="grid2">
+  <div class="figpanel">
+    <div class="figlabel">Theorem 2 — noiseless</div>
+    <p style="font-size:14px; margin:0;">Under positive singular gaps and a positive minimum singular value of $\mathbf{X}$, the recovery error inherits the cascade structure. The condition number $\kappa(\mathbf{X})$ replaces the data scale — well-conditioned design helps; ill-conditioned design hurts.</p>
+  </div>
+  <div class="figpanel">
+    <div class="figlabel">Theorem 3 — Gaussian label noise</div>
+    <p style="font-size:14px; margin:0;">With i.i.d. $\mathcal{N}(0,\varepsilon^2)$ label noise and a small-noise ordering condition, the recovery error decomposes into a (cascading) signal term plus an additive noise term that scales as $\varepsilon \sqrt{n \log(1/\gamma)}$. A standard bias-variance trade-off in the truncation rank $r$ appears.</p>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<h2><span class="idx">§04</span>Compute allocation: more-first</h2>
+
+<p>The cascade structure has an immediate practical consequence. Errors at early steps get amplified through every later step; errors at late steps are not. So if you have a fixed total compute budget $T$ for solving the $r$ per-step rank-1 sub-problems, you should spend more on the early steps.</p>
+
+<p>The paper formalizes this with a one-parameter family of schedules indexed by a trend parameter $\alpha$. Setting $x_k = 1 - 2(k-1)/(r-1)$, the per-step compute is</p>
+
+<div class="eq">
+$$t_k(\alpha) \;\propto\; \max\big(1 + \alpha x_k,\,10^{-9}\big), \qquad \sum_{k=1}^{r} t_k = T.$$
+</div>
+
+<p>Positive $\alpha$ shifts the budget toward earlier components; negative $\alpha$ toward later. Three regimes:</p>
+
+<table>
+<thead><tr><th>Schedule</th><th>$\alpha$</th><th>Effect</th></tr></thead>
+<tbody>
+<tr><td>less-first</td><td class="num">−1</td><td>Early steps starved; cascade amplifies errors. Worst empirically.</td></tr>
+<tr><td>equal</td><td class="num">0</td><td>Naïve uniform allocation. Baseline.</td></tr>
+<tr><td><strong>more-first</strong></td><td class="num">+1 to +1.5</td><td><strong>Saturates around $\alpha \approx 1.5$.</strong> Best empirically.</td></tr>
+</tbody>
+</table>
+
+<!-- ============================================================ -->
+<h2><span class="idx">§05</span>Empirics — synthetic linear setting</h2>
+
+<p>The synthetic experiments instantiate the family at $(r, T, m) = (20, 500, 2)$. Three named schedules are compared head-to-head, then $\alpha$ is swept on a fine grid.</p>
+
+<figure style="margin: 18px 0;">
+  <img src="./assets/img/one_rank/rebuttal_fig1_final-1.png" alt="Three-panel synthetic figure: reconstruction error, training objective error, and cumulative numerical-error proxy for less-first / equal / more-first schedules under fixed total budget T=500." style="width:100%; border:1px solid var(--grid);">
+  <figcaption style="font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:0.08em; color:var(--soft); margin-top:8px;">
+    <strong style="color:var(--ink);">FIGURE 1.</strong> Three schedules under fixed total budget $T=500$, rank $r=20$. <em>Left:</em> reconstruction error $\lVert\hat{\mathbf W} - \mathbf W^\star\rVert$. <em>Middle:</em> training objective $\lVert\mathbf Y - \hat{\mathbf W}\mathbf X\rVert_F$. <em>Right:</em> cumulative numerical-error proxy $\sum_{j\le k}\lVert\boldsymbol{\Psi}_j\rVert_F$, where $k$ is the active component at cumulative iteration $t$. Open-circle markers are component-switch points. Vertical dashed lines mark $t_1$, the budget for the first component.
+  </figcaption>
+</figure>
+
+<p>The three panels say the same thing three ways. Whenever the first component gets more budget — left panel: $t_1$ is far to the right; right panel: the green curve rises slowly — the final error is smaller. The right panel makes the cascade <em>visible</em>: less-first accumulates numerical error at a much higher rate, exactly the failure mode Theorem 1 predicts.</p>
+
+<div class="grid2">
+  <figure style="margin: 0;">
+    <img src="./assets/img/one_rank/rebuttal_reconstruction_smooth_final_delta_vs_alpha-1.png" alt="Continuous α-sweep: Δ reconstruction error vs α." style="width:100%; border:1px solid var(--grid);">
+    <figcaption style="font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:0.08em; color:var(--soft); margin-top:6px;">
+      <strong style="color:var(--ink);">FIGURE 2 (LEFT).</strong> $\Delta$ final reconstruction error vs schedule trend $\alpha$. Negative $\Delta$ = better than the equal schedule.
+    </figcaption>
+  </figure>
+  <figure style="margin: 0;">
+    <img src="./assets/img/one_rank/rebuttal_cumulative_psi_final_delta_vs_alpha-1.png" alt="Continuous α-sweep: Δ cumulative numerical error vs α." style="width:100%; border:1px solid var(--grid);">
+    <figcaption style="font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:0.08em; color:var(--soft); margin-top:6px;">
+      <strong style="color:var(--ink);">FIGURE 2 (RIGHT).</strong> $\Delta$ final cumulative numerical-error proxy vs $\alpha$. Same setup, same trend. Color bar: first-component budget $T_1(\alpha)$.
+    </figcaption>
+  </figure>
+</div>
+
+<p>The fine-grained sweep is asymmetric. Moving from $\alpha = 0$ into the more-first half ($\alpha > 0$) buys substantial gains until roughly $\alpha \approx 1.5$, where the curves flatten. Pushing further yields diminishing returns. Moving in the other direction ($\alpha < 0$) sharply degrades both quantities. <em>How much</em> you front-load matters; just <em>that you front-load</em> is the qualitative pattern.</p>
+
+<!-- ============================================================ -->
+<h2><span class="idx">§06</span>Does the pattern survive outside linear regression?</h2>
+
+<p>The paper's theorems are stated for fixed-design linear regression. To probe how far the qualitative scheduling pattern travels, the authors also study sequential rank-1 LoRA on simple vision tasks (MNIST, CIFAR10, CIFAR100) and a language task (DistilBERT on SST-2). The vision experiments are in the paper; here we show the SST-2 results because they are the cleanest cross-domain transfer.</p>
+
+<figure style="margin: 18px 0;">
+  <img src="./assets/img/one_rank/rebuttal_figure2_sst2_from_ablation-1.png" alt="SST-2 bar plot: sequential rank-1, rank-2, rank-3 vs jointly trained rank-3 LoRA accuracy." style="max-width:560px; display:block; margin:0; border:1px solid var(--grid);">
+  <figcaption style="font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:0.08em; color:var(--soft); margin-top:8px; text-align:left;">
+    <strong style="color:var(--ink);">FIGURE 6.</strong> SST-2 final accuracy as sequential rank-1 components are added. The first sequential component (0.872) already matches the jointly trained rank-3 LoRA reference; the second and third add 0.003 and 0.001.
+  </figcaption>
+</figure>
+
+<p>The bar chart says something almost embarrassing: on this task, the first rank-1 update via the sequential procedure already matches the jointly trained rank-3 LoRA. The second and third components push accuracy up by less than half a percentage point each. Whatever capacity sequential rank-1 adaptation is offering, it is concentrated in the first component — exactly as the cascade analysis would predict, in qualitative terms.</p>
+
+<figure style="margin: 18px 0;">
+  <img src="./assets/img/one_rank/rebuttal_accuracy_vs_flops_sst2_more_first_alphas-1.png" alt="SST-2 accuracy vs adaptation FLOPs, swept over more-first α schedules." style="width:100%; border:1px solid var(--grid);">
+  <figcaption style="font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:0.08em; color:var(--soft); margin-top:8px;">
+    <strong style="color:var(--ink);">FIGURE 7.</strong> SST-2 accuracy vs. adaptation-training FLOPs. Orange trajectories: more-first schedules at various $\alpha \in \{0.25, 0.5, \ldots, 2.0\}$. Black: jointly trained rank-3 LoRA reference. Green: equal-schedule sequential baseline.
+  </figcaption>
+</figure>
+
+<p>Two patterns. <em>First,</em> most more-first schedules sit above the equal-schedule baseline (green) at intermediate compute — the schedule choice matters in addition to the total budget. <em>Second,</em> within the more-first branch the dependence on $\alpha$ is not monotone — the orange curves cluster closely at higher compute, so once early components already get a substantial share, further front-loading produces diminishing differences. The same pattern as the synthetic experiment, in a domain the theory does not formally cover.</p>
+
+<div class="callout warn">
+  <span class="label">Caveat ▸</span>
+  These LoRA experiments are <em>exploratory</em> probes, not theorem-validated extensions. The theorems hold for fixed-design linear regression. The qualitative pattern transfers; the proof does not. Treat the deep-learning results as evidence that the linear theory's intuition survives in adjacent settings — not as a guarantee, and not as a state-of-the-art benchmark claim.
+</div>
+
+<!-- ============================================================ -->
+<h2><span class="idx">§07</span>What this paper does NOT claim</h2>
+
+<p>The abstract is unusually explicit about this, and it is worth restating. The paper is an <em>analysis framework</em>, not a sales pitch for a new method.</p>
+
+<ul>
+  <li><strong>Not</strong> a generalization theory — Theorems 2/3 are fixed-design parameter recovery, not test-error bounds.</li>
+  <li><strong>Not</strong> superiority over joint or one-shot training — the experiments show comparable accuracy, not improvement.</li>
+  <li><strong>Not</strong> a tight bound — Theorem 1 is an upper bound, not matched lower.</li>
+  <li><strong>Not</strong> a theorem-grade extension to nonlinear PEFT — the LoRA experiments are outside the proof's regime.</li>
+  <li><strong>Not</strong> an optimal-schedule prescription — only that front-loading helps and back-loading hurts, in the linear setting.</li>
+  <li><strong>Not</strong> applicable when the true matrix has repeated singular values (gap = 0). That requires invariant-subspace tracking, left to future work.</li>
+</ul>
+
+<!-- ============================================================ -->
+<h2><span class="idx">§08</span>Why anyone would care</h2>
+
+<p>Three reasons.</p>
+
+<p><strong>Method-agnostic insight.</strong> The cascade analysis covers any algorithm that builds up a model one low-rank piece at a time. That includes the LoRA family, OMP-style greedy methods, deflation-based PCA, and several incremental compression schemes. One theorem informs the design of all of them.</p>
+
+<p><strong>Resource allocation guidance.</strong> The more-first schedule is a concrete, implementable recommendation: when training in stages on a fixed compute budget, spend disproportionately more on the first few stages. It costs nothing to apply and the experiments show consistent improvement across linear regression and two cross-domain LoRA probes.</p>
+
+<p><strong>Honest scoping.</strong> The paper does not claim a new state-of-the-art method or beat LoRA on benchmarks. It explains <em>why</em> sequential methods behave the way they do. In a field where most papers oversell, an explanatory contribution that cleanly delineates what is and is not proven is increasingly valuable as a foundation other work can build on.</p>
+
+<p><strong>Where this fits.</strong> This work is the linear half of a longer programme. The companion piece — <a href="./adapad.html"><strong>AdaPaD: From PCA to LoRA</strong></a> — asks what happens if you do the deflation in <em>parallel</em> instead of sequentially: the workers don't compound errors; their bounds <em>self-correct</em> across rounds. Reading the two together makes the trade-off explicit: sequential rank-1 is cheap and analytically clean, but it cascades; parallel rank-1 is communication-bound but self-corrects. The follow-up on <em>nonlinear</em> sequential rank-1 (SG-LoRA) is in progress.</p>
+
+<!-- ============================================================ -->
+<h2><span class="idx">§09</span>Open questions</h2>
+
+<div class="grid2">
+  <div class="callout cav" style="margin:0;">
+    <span class="label">Open ▸</span> Tight lower bounds matching the cascade product factor — is the worst case actually exponential in $r$ when gaps are small, or is the bound loose?
+  </div>
+  <div class="callout cav" style="margin:0;">
+    <span class="label">Open ▸</span> Extension to data-dependent (random) design and out-of-sample generalization bounds. The fixed-design assumption is the proof's main scope limit.
+  </div>
+  <div class="callout cav" style="margin:0;">
+    <span class="label">Open ▸</span> Treatment of repeated singular values ($\mathcal{T}_k^\star = 0$) via invariant-subspace tracking (Davis–Kahan style). The current proof requires strict gaps.
+  </div>
+  <div class="callout cav" style="margin:0;">
+    <span class="label">Open ▸</span> Theorem-grade analysis of nonlinear PEFT (e.g., the SG-LoRA / sequential LoRA family). The probes here show the pattern transfers; proving it does not.
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<h2><span class="idx">§10</span>Citation</h2>
+
+<pre style="font-family: 'JetBrains Mono', monospace; font-size: 12px; background: #ececea; padding: 14px 18px; overflow-x: auto;">@article{vandchali2026onerank,
+  title   = {One Rank at a Time: Cascading Error Dynamics in Sequential Learning},
+  author  = {Vandchali, Mahtab Alizadeh and Liao, Fangshuo and Kyrillidis, Anastasios},
+  journal = {Transactions on Machine Learning Research (TMLR)},
+  year    = {2026},
+  note    = {Accepted, in press. arXiv:2505.22602}
+}</pre>
+
+<div class="footer">
+  <span>AI-OWLS · Rice University · Theory desk · Entry No. 014</span>
+  <span>Funding: NSF CAREER 2145629 · Rice K2I</span>
+</div>
+
+</div>
+
+</body>
+</html>

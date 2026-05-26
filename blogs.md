@@ -48,6 +48,19 @@ layout: default
 
   <li>
     <span class="thumb">
+      <a href="./one_rank_at_a_time.html">
+        <img src="./assets/img/one_rank_thumbnail.svg" alt="Cascading error dynamics: each rank-1 step inherits and amplifies the errors of all previous steps; spectral gaps decide the amplification factor.">
+      </a>
+    </span>
+    <span class="title">
+      <a href="./one_rank_at_a_time.html">One Rank at a Time: Cascading Error Dynamics in Sequential Learning</a>
+      <span class="meta">When models are built up one piece at a time (LoRA, deflation PCA, OMP), per-step numerical errors compound geometrically through every later step — and the amplification is governed by the data's spectral gaps. Closed-form bound, schedule prescription (more-first, α≈1.5), validated on synthetic + LoRA on vision/language. <a href="https://arxiv.org/abs/2505.22602">arXiv:2505.22602</a>, TMLR 2026.</span>
+      <span class="credits">With Mahtab Alizadeh Vandchali and <a href="https://jasperliao.github.io/">Fangshuo (Jasper) Liao</a> (Rice CS).</span>
+    </span>
+  </li>
+
+  <li>
+    <span class="thumb">
       <a href="./asymmetric_input.html">
         <img src="./assets/img/air_thumbnail.svg" alt="The AIR architecture: one shared Transformer block, two latent roles — input injected in the L-update, absent in the H-update">
       </a>
