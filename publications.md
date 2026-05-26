@@ -8,6 +8,8 @@ Recent work from the AI-OWLS / OptimaLab group at Rice CS, in reverse chronologi
 
 #### 2026
 
++ **One Rank at a Time: Cascading Error Dynamics in Sequential Learning.** *Mahtab Alizadeh Vandchali, Fangshuo (Jasper) Liao, Anastasios Kyrillidis.* Transactions on Machine Learning Research (TMLR), accepted, in press. [[arXiv]](https://arxiv.org/abs/2505.22602) &middot; [[blog]](https://akyrillidis.github.io/aiowls/one_rank_at_a_time.html)
+
 + **One Model, Two Roles: Emergent Specialization in a Shared Recurrent Transformer.** *Jucheng Shen, Wenyi (Barbara) Su, Anastasios Kyrillidis.* Preprint, arXiv:2605.17811, 2026. [[arXiv]](https://arxiv.org/abs/2605.17811) &middot; [[code]](https://github.com/juchengshen/air) &middot; [[blog]](https://akyrillidis.github.io/aiowls/asymmetric_input.html)
 
 + **AdaPaD: Adaptive Parallel Deflation for PEFT with Self-Correcting Rank Discovery.** *Wenyi (Barbara) Su, Fangshuo Liao, Anastasios Kyrillidis.* Preprint, arXiv:2605.10741, 2026. [[arXiv]](https://arxiv.org/abs/2605.10741) &middot; [[code]](https://github.com/barbara-su/ParallelLinearRegression) &middot; [[blog]](https://akyrillidis.github.io/aiowls/adapad.html)
