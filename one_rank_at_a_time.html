@@ -218,7 +218,7 @@ mark { background: var(--hl); padding: 0 2px; }
   <span><strong>Venue:</strong> TMLR (accepted, in press)</span>
   <span><a href="https://arxiv.org/abs/2505.22602">arXiv:2505.22602</a></span>
   <span><a href="https://arxiv.org/pdf/2505.22602">PDF</a></span>
-  <span><em>Code · coming soon</em></span>
+  <span><a href="https://github.com/MahiAV/ORAT">Code (GitHub)</a></span>
 </div>
 
 <div class="upshot">
@@ -256,11 +256,11 @@ $$\Big\| \mathbf{Y} - \sum_{k=1}^{r} \mathbf{b}_k \mathbf{a}_k^\top \mathbf{X} \
 $$\rho_j \;=\; 2 + 6\,\frac{\sigma_j^\star}{\mathcal{T}_j^\star},$$
 </div>
 
-<p>where $\sigma_j^\star$ is the $j$-th singular value of the true regressor and $\mathcal{T}_j^\star = \sigma_j^\star - \sigma_{j+1}^\star$ is the $j$-th singular gap.</p>
+<p>where $\sigma_j^\star$ is the $j$-th singular value of the output matrix $\mathbf{Y}$ and $\mathcal{T}_j^\star = \sigma_j^\star - \sigma_{j+1}^\star$ is the $j$-th singular gap of $\mathbf{Y}$.</p>
 
 <div class="callout thm">
-  <span class="label">Theorem 1 (informal).</span>
-  In the perturbation regime where the cumulative error stays below half the smallest gap, the residual training error is the sum of the truncation tail plus a product-amplified sum of per-step errors. Small gaps inflate the product; large gaps damp it.
+  <span class="label">Theorem 1 in the paper (informal).</span>
+  In the perturbation regime where the cumulative error stays below half the smallest gap, the residual training error is the sum of the truncation tail plus a product-amplified sum of per-step errors. Small gaps of $\mathbf{Y}$ inflate the product; large gaps damp it.
 </div>
 
 <p>The cascade is geometric in the worst case. If every gap is just barely positive, a small error in step 1 can grow by a factor of, say, 8 by step 8 — and that is on top of fresh errors introduced at every later step.</p>
@@ -272,11 +272,11 @@ $$\rho_j \;=\; 2 + 6\,\frac{\sigma_j^\star}{\mathcal{T}_j^\star},$$
 
 <div class="grid2">
   <div class="figpanel">
-    <div class="figlabel">Theorem 2 — noiseless</div>
-    <p style="font-size:14px; margin:0;">Under positive singular gaps and a positive minimum singular value of $\mathbf{X}$, the recovery error inherits the cascade structure. The condition number $\kappa(\mathbf{X})$ replaces the data scale — well-conditioned design helps; ill-conditioned design hurts.</p>
+    <div class="figlabel">Theorem 2 in the paper — noiseless recovery</div>
+    <p style="font-size:14px; margin:0;">Under positive singular gaps of $\mathbf{Y}$ and a positive minimum singular value of $\mathbf{X}$, the recovery error inherits the cascade structure. The condition number $\kappa(\mathbf{X})$ replaces the data scale — well-conditioned design helps; ill-conditioned design hurts.</p>
   </div>
   <div class="figpanel">
-    <div class="figlabel">Theorem 3 — Gaussian label noise</div>
+    <div class="figlabel">Theorem 3 in the paper — Gaussian label noise</div>
     <p style="font-size:14px; margin:0;">With i.i.d. $\mathcal{N}(0,\varepsilon^2)$ label noise and a small-noise ordering condition, the recovery error decomposes into a (cascading) signal term plus an additive noise term that scales as $\varepsilon \sqrt{n \log(1/\gamma)}$. A standard bias-variance trade-off in the truncation rank $r$ appears.</p>
   </div>
 </div>
