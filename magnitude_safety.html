@@ -195,6 +195,26 @@
   fraction of the model; it costs capability when it's SwiGLU <em>and</em> the model is mostly
   scratch-work.</strong></p>
 
+  <h3>The clincher: you can <em>dial</em> dynamic into static</h3>
+  <p>If persistence is really the thing, we should be able to turn it like a knob &mdash; so we did. Force the
+  model to <em>commit</em> to its chosen neurons for a window of W tokens: re-choosing every token (W=1) at one
+  extreme, choosing once for the whole passage (W = the sequence) at the other. The perplexity slides smoothly
+  from dynamic-lossless to static-catastrophic &mdash; <strong>same neurons, same sparsity, only the commitment
+  window changing.</strong></p>
+
+  <figure>
+    <img src="./assets/img/magsafe_dial.png" alt="Perplexity versus commitment window W for a SwiGLU model (Qwen) and a ReLU model (OPT) at two sparsities; every curve climbs monotonically from per-token (dynamic) to whole-sequence (static).">
+    <figcaption><b>Persistence is a continuous, causal knob.</b> Holding the kept set for longer (larger W)
+    morphs per-token <em>dynamic</em> sparsity into whole-sequence <em>static</em> pruning. For the ReLU model
+    the per-token end is <em>exactly</em> the full model; the whole-sequence end is 67&times; worse. Nothing
+    else changes &mdash; the damage is caused by the commitment window alone. Persistence, dialed.</figcaption>
+  </figure>
+
+  <p>And before you ask whether a <em>cleverer</em> choice of which neurons to keep would rescue the static
+  end: we checked, with an oracle that peeks at the true training gradient. It doesn't &mdash; plain magnitude
+  is already near-optimal, and the oracle is several times <em>worse</em> at high sparsity. The leverage was
+  never a smarter score; it's matching the <em>method</em> to what the part does.</p>
+
   <div class="callout scope">
     <span class="lbl">What we don't claim</span>
     <p>Measured by perplexity plus a capability proxy (LAMBADA) on text &mdash; not a full downstream-task sweep.
