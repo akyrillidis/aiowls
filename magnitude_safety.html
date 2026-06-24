@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="To shrink an AI model without making it dumber, be careful with the parts that remember and cheap with the parts that recompute — and match the trimming method to which is which. A persistence test for model pruning that reconciles two ICML 2026 results.">
+<meta name="keywords" content="model compression, pruning, sparsity, Mamba, state space models, transformers, GHOST, activation sparsity, magnitude pruning">
+<meta property="og:title" content="Two Ways to Slim a Model" />
+<meta property="og:description" content="Which pruning rule is safe depends on whether the model part remembers or recomputes. A persistence test that reconciles GHOST and Sakana's activation-sparsity result." />
+<meta property="og:image" content="https://akyrillidis.github.io/aiowls/assets/img/magsafe_capability.png" />
+<meta property="og:type" content="article" />
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Two Ways to Slim a Model">
+<meta name="twitter:description" content="Which pruning rule is safe depends on whether the model part remembers or recomputes.">
+<meta name="twitter:image" content="https://akyrillidis.github.io/aiowls/assets/img/magsafe_capability.png">
+<title>Two Ways to Slim a Model &middot; AI-OWLS</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;0,8..60,500;0,8..60,600;0,8..60,700;1,8..60,400&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<style>
+  :root{
+    --paper:#fbf9f4; --ink:#1f1d1a; --soft:#5a564e; --line:#e6e1d4;
+    --keep:#2f8f4e;  --keepbg:#eaf5ee;
+    --lose:#c0392b;  --losebg:#fbecea;
+    --accent:#2d8f8a; --amber:#9a6b12;
+  }
+  *{box-sizing:border-box;}
+  body{
+    background:var(--paper); color:var(--ink);
+    font-family:"Source Serif 4", Georgia, serif; font-size:19px; line-height:1.66;
+    margin:0; -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:760px; margin:0 auto; padding:0 22px 90px;}
+  .kick{font-family:"IBM Plex Sans",sans-serif; font-weight:600; font-size:.74rem;
+    letter-spacing:.14em; text-transform:uppercase; color:var(--accent); margin:46px 0 14px;}
+  h1{font-weight:700; font-size:2.55rem; line-height:1.12; letter-spacing:-.01em; margin:0 0 .35em;}
+  .dek{font-size:1.3rem; line-height:1.45; color:var(--soft); font-weight:400; font-style:italic; margin:0 0 1.2em;}
+  .byline{font-family:"IBM Plex Sans",sans-serif; font-size:.92rem; color:var(--soft); margin:0 0 4px;}
+  .links{font-family:"IBM Plex Sans",sans-serif; font-size:.9rem; margin:10px 0 0;}
+  .links a{display:inline-block; margin-right:16px;}
+  a{color:#185f5b; text-decoration:none; border-bottom:1px solid rgba(45,143,138,.35);}
+  a:hover{border-bottom-color:var(--accent); background:rgba(45,143,138,.07);}
+  h2{font-family:"IBM Plex Sans",sans-serif; font-weight:600; font-size:1.5rem; line-height:1.25;
+    margin:2.1em 0 .55em; letter-spacing:-.01em;}
+  h3{font-family:"IBM Plex Sans",sans-serif; font-weight:600; font-size:1.12rem; color:var(--ink);
+    margin:1.6em 0 .35em;}
+  p{margin:0 0 1.1em;} strong{font-weight:600;}
+  hr{border:0; border-top:1px solid var(--line); margin:34px 0;}
+  .upshot{background:#1f1d1a; color:#f4efe4; border-radius:10px; padding:22px 26px; margin:30px 0 8px;
+    font-size:1.08rem; line-height:1.55;}
+  .upshot b{color:#ffd98a;}
+  figure{margin:30px 0; text-align:center;}
+  figure img{max-width:100%; height:auto; border:1px solid var(--line); border-radius:8px; background:#fff;}
+  figcaption{font-family:"IBM Plex Sans",sans-serif; font-size:.86rem; color:var(--soft);
+    line-height:1.5; margin-top:10px; text-align:left;}
+  figcaption b{color:var(--ink);}
+  .callout{border-left:4px solid var(--accent); background:#f1f7f6; padding:16px 20px; border-radius:0 8px 8px 0; margin:26px 0;}
+  .callout.keep{border-left-color:var(--keep); background:var(--keepbg);}
+  .callout.scope{border-left-color:var(--amber); background:#fbf4e6;}
+  .callout p:last-child{margin-bottom:0;}
+  .callout .lbl{font-family:"IBM Plex Sans",sans-serif; font-weight:600; font-size:.74rem; letter-spacing:.1em;
+    text-transform:uppercase; color:var(--soft); display:block; margin-bottom:6px;}
+  .keepword{color:var(--keep); font-weight:600;} .loseword{color:var(--lose); font-weight:600;}
+  code{font-family:"IBM Plex Mono",monospace; font-size:.86em; background:#efeadf; padding:1px 5px; border-radius:3px;}
+  .foot{font-family:"IBM Plex Sans",sans-serif; font-size:.86rem; color:var(--soft); margin-top:40px;}
+  .backlink{font-family:"IBM Plex Sans",sans-serif; font-size:.9rem; margin:46px 0 0; display:block;}
+  @media (max-width:560px){ body{font-size:17.5px;} h1{font-size:2rem;} .dek{font-size:1.12rem;} }
+</style>
+
+<script>window.MathJax={tex:{inlineMath:[['\\(','\\)']]}};</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</head>
+
+<body>
+<div class="wrap">
+
+  <div class="kick">AI-OWLS &middot; Model compression</div>
+  <h1>Two ways to slim a model</h1>
+  <p class="dek">&mdash; and which one works depends on whether the part <em>remembers</em> or <em>recomputes</em>.</p>
+  <p class="byline">Anastasios Kyrillidis, building on <a href="./ghost_mamba2.html">GHOST</a> (with Michael Menezes, Rice CS)</p>
+  <p class="links">
+    <a href="https://arxiv.org/abs/2602.11408">GHOST paper</a>
+    <a href="https://arxiv.org/abs/2603.23198">Sparser&middot;Faster&middot;Lighter</a>
+    <a href="https://github.com/Menezmic21/mamba2_ghost">Code</a>
+  </p>
+
+  <div class="upshot">
+    To make an AI model cheaper to run, you trim the parts it isn't really using. The rule for doing it
+    <i>safely</i> turns out to be simple: <b>be careful with the parts that remember, and cheap with the parts
+    that recompute.</b> It quietly reconciles two recent results that look like they contradict each other &mdash;
+    and a capability test shows exactly where the cheap rule silently breaks.
+  </div>
+
+  <h2>What's going on, in plain words</h2>
+  <p>Inside a modern AI language model there are two very different kinds of working parts. Some hold a
+  <strong>running memory</strong> &mdash; information the model carries forward as it reads, the way you keep
+  track of who &ldquo;she&rdquo; refers to three sentences later. Others are <strong>disposable
+  scratch-work</strong> &mdash; features the model recomputes from scratch for every word and then throws away.</p>
+
+  <p>Both are expensive, so to run these models on cheaper hardware we remove the parts that aren't pulling
+  their weight. There are <strong>two ways to remove a part</strong>: cut it out <em>permanently</em> before you
+  ever run the model (call it <strong>static</strong> pruning &mdash; scissors, done once), or keep every part
+  but, at each step, switch on only the few that matter and skip the rest (call it <strong>dynamic</strong>
+  sparsity &mdash; nothing deleted, most of it just idle at any instant). And there's a cheap way to decide
+  <em>which</em> parts to drop &mdash; <strong>by size</strong> (bigger-looking = assumed more important) &mdash;
+  versus an expensive way that actually measures how much each part changes the answer.</p>
+
+  <p>The question is <em>which combination is safe, and when.</em> Our answer: <strong>it depends on what the
+  part does.</strong> The memory parts must be cut permanently, and you must use the expensive
+  measure-the-real-effect rule &mdash; because the cheap &ldquo;by size&rdquo; rule throws away small-looking
+  pieces that are quietly doing the work. The scratch-work is the opposite: you can't cut any of it permanently
+  without breaking the model, but you <em>can</em> skip almost all of it on the fly &mdash; and there the cheap
+  rule is already nearly perfect.</p>
+
+  <div class="callout">
+    <span class="lbl">The two papers that seemed to disagree</span>
+    <p><strong>GHOST</strong> (ours, ICML 2026) showed that to prune a Mamba-2 model's recurrent <em>memory</em>,
+    size is a bad guide: weight magnitude and true importance are essentially <em>uncorrelated</em>
+    (\(\rho=-0.19\)), so magnitude-pruning discards high-impact &ldquo;phantom&rdquo; channels.
+    <strong>Sparser, Faster, Lighter</strong> (Sakana&nbsp;+&nbsp;NVIDIA, ICML 2026) showed that for a
+    Transformer's feed-forward <em>scratch-work</em>, dropping the small activations per token is near-lossless
+    at 97% sparsity. Same crude idea &mdash; &ldquo;go by size&rdquo; &mdash; <em>fails</em> in one place and is
+    <em>perfect</em> in the other. Persistence is the tiebreaker.</p>
+  </div>
+
+  <hr>
+  <h2>A bit deeper</h2>
+
+  <h3>Magnitude is an unreliable importance score &mdash; identically across datasets</h3>
+  <p>For each feed-forward neuron we compared its <em>size</em> (activation magnitude) against its
+  <em>actual output impact</em> (how much it drives the layer's output). If size were a good importance score,
+  the two would track tightly. They don't &mdash; and crucially, <strong>how badly they decouple is the same
+  across three very different text corpora</strong> (WikiText-2, C4, Pile). For the Mamba-2 <em>state</em>, the
+  decoupling is even stronger and <em>negative</em>: the channels that look biggest are often the least
+  impactful.</p>
+
+  <figure>
+    <img src="./assets/img/magsafe_decouple.png" alt="Bar chart: rank-correlation between activation magnitude and output impact, three bars per model (WikiText-2, C4, Pile). Bars are near-identical within each model; Qwen and OPT positive and weak, Zamba2 strongly negative.">
+    <figcaption><b>The decoupling generalizes.</b> Correlation between a neuron's magnitude and its true
+    output impact, per model, across three datasets. Near-identical bars per model mean this isn't a quirk of
+    one benchmark. Transformers sit weakly positive; the Mamba-2 hybrid (Zamba2) is strongly <em>negative</em>
+    &mdash; magnitude actively mis-ranks importance.</figcaption>
+  </figure>
+
+  <h3>But &ldquo;unreliable score&rdquo; doesn't mean &ldquo;unsafe to prune&rdquo; &mdash; the <em>method</em> decides</h3>
+  <p>Here's the twist. Take the <em>same</em> feed-forward block and the <em>same</em> size-based rule, and
+  apply it two ways. <strong>Cut permanently (static):</strong> catastrophic for a normal Transformer &mdash;
+  perplexity explodes by 100&ndash;1000&times; at high sparsity, because different words need different neurons
+  and no single fixed choice serves them all. <strong>Skip per token (dynamic):</strong> for a ReLU model,
+  <em>lossless even at 95%</em> &mdash; because each word re-chooses which neurons fire, so a wrong skip is
+  erased on the next word instead of compounding.</p>
+
+  <figure>
+    <img src="./assets/img/magsafe_dyn_static.png" alt="Log-scale perplexity bars: dynamic 95% (green) vs static 90% (red) per model, with dense reference lines. Static explodes into the thousands for Qwen and OPT; dynamic stays near dense for OPT; both stay low for Zamba2.">
+    <figcaption><b>Same FFN, same magnitude rule, opposite outcomes.</b> WikiText-2 perplexity (log scale).
+    <em>Static</em> removal (red) detonates for FFN-dominant Transformers; <em>dynamic</em> per-token skipping
+    (green) sits on the dense line for ReLU (OPT). Zamba2 stays mild either way &mdash; its FFN is a small slice
+    of a mostly-memory model.</figcaption>
+  </figure>
+
+  <div class="callout keep">
+    <span class="lbl">The mechanism</span>
+    <p>Magnitude is safe <em>exactly</em> when the structure is re-chosen faster than errors compound.
+    Permanent memory accumulates errors &mdash; be careful. Per-token scratch-work self-corrects &mdash; be cheap.</p>
+  </div>
+
+  <h3>The capability test &mdash; the result perplexity hides</h3>
+  <p>Perplexity can mask damage, so we ran a capability check (LAMBADA last-word prediction) under 90% dynamic
+  sparsity, with 95% confidence intervals. The split is stark and statistically clean:
+  <span class="keepword">ReLU models keep their capability exactly</span> (OPT: 0.683&rarr;0.683,
+  0.703&rarr;0.703, \(p=1.00\)); <span class="loseword">SwiGLU models lose it</span> (Qwen:
+  0.633&rarr;0.230 and 0.707&rarr;0.363, both \(p<0.001\)) &mdash; even where perplexity at 50% looked fine.</p>
+
+  <figure>
+    <img src="./assets/img/magsafe_capability.png" alt="Grouped bars of LAMBADA accuracy, dense (grey) vs 90% dynamic FFN sparsity, with Wilson 95% CIs. Qwen bars drop ~64% and ~49% (red); OPT bars unchanged (green, 0%); Zamba2 nearly unchanged (green, -7%).">
+    <figcaption><b>Where the cheap rule silently breaks.</b> LAMBADA accuracy, dense vs 90% dynamic FFN
+    sparsity (Wilson 95% CIs, n=300). &ldquo;Magnitude activation sparsity is free&rdquo; is <em>true</em> for
+    ReLU (Sakana's setting) and <em>false</em> for SwiGLU &mdash; a distinction a perplexity-only look would
+    have missed entirely.</figcaption>
+  </figure>
+
+  <h3>One model, two parts &mdash; no architecture excuse</h3>
+  <p>A skeptic could object that GHOST's result is on Mamba and Sakana's on a Transformer &mdash; maybe it's the
+  <em>architecture</em>, not persistence. So we put both in <strong>one model: Zamba2</strong>, which has a
+  Mamba-2 memory <em>and</em> a Transformer feed-forward block. Inside that single model the memory needs the
+  careful, permanent treatment (GHOST), while its feed-forward takes cheap per-token skipping. Architecture is
+  held fixed; only persistence varies &mdash; so persistence is the cause.</p>
+
+  <p>Zamba2 also taught an honest nuance: its static penalty is mild and its capability is preserved
+  (0.82&rarr;0.77, not significant) &mdash; because it has a <em>single shared</em> feed-forward block, a small
+  slice of a mostly-memory model. The lesson sharpens rather than breaks the rule:
+  <strong>dynamic magnitude sparsity preserves capability when the scratch-work is ReLU <em>or</em> a small
+  fraction of the model; it costs capability when it's SwiGLU <em>and</em> the model is mostly
+  scratch-work.</strong></p>
+
+  <div class="callout scope">
+    <span class="lbl">What we don't claim</span>
+    <p>Measured by perplexity plus a capability proxy (LAMBADA) on text &mdash; not a full downstream-task sweep.
+    &ldquo;Output-awareness doesn't help dynamic scratch-work&rdquo; is shown for one impact proxy. The method is
+    deterministic (no seeds to average); robustness comes from spanning three datasets, and the capability
+    numbers carry 95% CIs.</p>
+  </div>
+
+  <hr>
+  <h2>Why it matters</h2>
+  <p>Strip away the jargon and the whole thing is one sentence a non-specialist can hold:
+  <strong>to shrink an AI model without making it dumber, be careful with the parts that remember and ruthless
+  with the parts that recompute &mdash; and match the trimming method to which is which.</strong> Get that
+  pairing right and these models run on a laptop instead of a datacenter, by design rather than by guesswork.</p>
+
+  <p>It's also a small lesson in reading the field: two strong papers that seemed to disagree were each
+  <em>right about their own half</em>. The cheap rule isn't universally safe or universally dangerous &mdash; its
+  safety is dictated by what the part <em>does</em>. Memory or scratch-work; permanent or disposable. That one
+  distinction tells you which rule to trust.</p>
+
+  <p class="foot">Probes are forward-only: 5 models &times; 3 datasets + a capability eval, run on a single GPU.
+  Builds on GHOST (Menezes &amp; Kyrillidis, ICML 2026, <a href="https://arxiv.org/abs/2602.11408">arXiv:2602.11408</a>)
+  and Sparser, Faster, Lighter (Sakana&nbsp;+&nbsp;NVIDIA, <a href="https://arxiv.org/abs/2603.23198">arXiv:2603.23198</a>).</p>
+
+  <a class="backlink" href="./blogs.html">&larr; All AI-OWLS posts</a>
+
+</div>
+</body>
+</html>

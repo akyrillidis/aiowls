@@ -48,6 +48,19 @@ layout: default
 
   <li>
     <span class="thumb">
+      <a href="./magnitude_safety.html">
+        <img src="./assets/img/magsafe_thumbnail.png" alt="LAMBADA capability under 90% dynamic FFN sparsity: preserved for ReLU and hybrid models, lost for SwiGLU">
+      </a>
+    </span>
+    <span class="title">
+      <a href="./magnitude_safety.html">Two Ways to Slim a Model: Remember vs Recompute</a>
+      <span class="meta">Which pruning rule is safe depends on whether a model part <em>remembers</em> (be careful, output-aware) or <em>recomputes</em> (be cheap, magnitude). Reconciles GHOST and Sakana's activation-sparsity result; a capability test (with CIs) shows where the cheap rule silently breaks. 5 models &times; 3 datasets, forward-only.</span>
+      <span class="credits">Building on <a href="https://github.com/Menezmic21">Michael Menezes</a>&rsquo;s GHOST (Rice CS).</span>
+    </span>
+  </li>
+
+  <li>
+    <span class="thumb">
       <a href="./one_rank_at_a_time.html">
         <img src="./assets/img/one_rank_thumbnail.svg" alt="Cascading error dynamics: each rank-1 step inherits and amplifies the errors of all previous steps; spectral gaps decide the amplification factor.">
       </a>
