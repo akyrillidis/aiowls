@@ -3,10 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="description" content="To shrink an AI model without making it dumber, be careful with the parts that remember and cheap with the parts that recompute — and match the trimming method to which is which. A persistence test for model pruning that reconciles two ICML 2026 results.">
+<meta name="description" content="To shrink an AI model without making it dumber, be careful with the parts that remember and cheap with the parts that recompute — and match the trimming method to which is which. A persistence test that says when the cheap size-based pruning rule is safe.">
 <meta name="keywords" content="model compression, pruning, sparsity, Mamba, state space models, transformers, GHOST, activation sparsity, magnitude pruning">
 <meta property="og:title" content="Two Ways to Slim a Model" />
-<meta property="og:description" content="Which pruning rule is safe depends on whether the model part remembers or recomputes. A persistence test that reconciles GHOST and Sakana's activation-sparsity result." />
+<meta property="og:description" content="Which pruning rule is safe depends on whether the model part remembers or recomputes. A persistence test that places GHOST's state pruning and Sakana's activation sparsity on one map." />
 <meta property="og:image" content="https://akyrillidis.github.io/aiowls/assets/img/magsafe_capability.png" />
 <meta property="og:type" content="article" />
 <meta name="twitter:card" content="summary_large_image">
@@ -89,7 +89,7 @@
   <div class="upshot">
     To make an AI model cheaper to run, you trim the parts it isn't really using. The rule for doing it
     <i>safely</i> turns out to be simple: <b>be careful with the parts that remember, and cheap with the parts
-    that recompute.</b> It quietly reconciles two recent results that look like they contradict each other &mdash;
+    that recompute.</b> It draws a single rule through two recent results that look, at first glance, like opposite lessons &mdash;
     and a capability test shows exactly where the cheap rule silently breaks.
   </div>
 
@@ -115,14 +115,17 @@
   rule is already nearly perfect.</p>
 
   <div class="callout">
-    <span class="lbl">The two papers that seemed to disagree</span>
+    <span class="lbl">Two results that look like opposite lessons</span>
     <p><strong>GHOST</strong> (ours, ICML 2026) showed that to prune a Mamba-2 model's recurrent <em>memory</em>,
     size is a bad guide: weight magnitude and true importance are essentially <em>uncorrelated</em>
     (\(\rho=-0.19\)), so magnitude-pruning discards high-impact &ldquo;phantom&rdquo; channels.
-    <strong>Sparser, Faster, Lighter</strong> (Sakana&nbsp;+&nbsp;NVIDIA, ICML 2026) showed that for a
-    Transformer's feed-forward <em>scratch-work</em>, dropping the small activations per token is near-lossless
-    at 97% sparsity. Same crude idea &mdash; &ldquo;go by size&rdquo; &mdash; <em>fails</em> in one place and is
-    <em>perfect</em> in the other. Persistence is the tiebreaker.</p>
+    <strong>Sparser, Faster, Lighter</strong> (Sakana&nbsp;+&nbsp;NVIDIA, ICML 2026) reports the opposite for a
+    Transformer's feed-forward <em>scratch-work</em>: train with a light L1 penalty on the activations and the
+    model learns to fire sparsely, so <em>above 99%</em> of those activations can be skipped near-losslessly at
+    inference (with custom GPU kernels to make the unstructured sparsity fast). The two sit in different settings
+    &mdash; post-hoc structured pruning of a recurrent state vs.&nbsp;trained unstructured activation sparsity in
+    an FFN &mdash; so they don't truly contradict; side by side they just look like opposite verdicts on
+    &ldquo;go by size.&rdquo; What separates them is persistence.</p>
   </div>
 
   <hr>
@@ -181,12 +184,14 @@
     have missed entirely.</figcaption>
   </figure>
 
-  <h3>One model, two parts &mdash; no architecture excuse</h3>
+  <h3>One model, two parts &mdash; same weights, opposite rules</h3>
   <p>A skeptic could object that GHOST's result is on Mamba and Sakana's on a Transformer &mdash; maybe it's the
-  <em>architecture</em>, not persistence. So we put both in <strong>one model: Zamba2</strong>, which has a
+  model family or its training, not persistence. So we put both in <strong>one model: Zamba2</strong>, which has a
   Mamba-2 memory <em>and</em> a Transformer feed-forward block. Inside that single model the memory needs the
-  careful, permanent treatment (GHOST), while its feed-forward takes cheap per-token skipping. Architecture is
-  held fixed; only persistence varies &mdash; so persistence is the cause.</p>
+  careful, permanent treatment (GHOST), while its feed-forward takes cheap per-token skipping &mdash; same model,
+  same weights, same data, opposite rules. That rules out the model-family and training explanations; it doesn't
+  by itself <em>prove</em> causation (memory and scratch-work are still different kinds of operator), so next we
+  turn persistence like a knob directly.</p>
 
   <p>Zamba2 also taught an honest nuance: its static penalty is mild and its capability is preserved
   (0.82&rarr;0.77, not significant) &mdash; because it has a <em>single shared</em> feed-forward block, a small
@@ -211,9 +216,10 @@
   </figure>
 
   <p>And before you ask whether a <em>cleverer</em> choice of which neurons to keep would rescue the static
-  end: we checked, with an oracle that peeks at the true training gradient. It doesn't &mdash; plain magnitude
-  is already near-optimal, and the oracle is several times <em>worse</em> at high sparsity. The leverage was
-  never a smarter score; it's matching the <em>method</em> to what the part does.</p>
+  end: we checked, with a gradient-based score (first-order importance, using the true loss gradient). It doesn't
+  help &mdash; plain magnitude is already near-optimal, and the gradient score is several times <em>worse</em> at
+  high sparsity, where a first-order estimate no longer holds once you're deleting most of the signal. The
+  leverage was never a smarter score; it's matching the <em>method</em> to what the part does.</p>
 
   <div class="callout scope">
     <span class="lbl">What we don't claim</span>
@@ -230,7 +236,7 @@
   with the parts that recompute &mdash; and match the trimming method to which is which.</strong> Get that
   pairing right and these models run on a laptop instead of a datacenter, by design rather than by guesswork.</p>
 
-  <p>It's also a small lesson in reading the field: two papers that seemed to disagree were each
+  <p>It's also a small lesson in reading the field: two results that look like opposite lessons were each
   <em>right about their own half</em>. The cheap rule isn't universally safe or universally dangerous &mdash; its
   safety is dictated by what the part <em>does</em>. Memory or scratch-work; permanent or disposable. That one
   distinction tells you which rule to trust.</p>
