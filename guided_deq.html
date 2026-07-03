@@ -135,20 +135,20 @@
       <!-- landscape -->
       <path d="M30,150 C70,120 150,120 190,200 C230,270 250,150 285,110 C330,120 350,250 390,250 C440,250 470,120 495,115 C530,120 545,210 580,205 C620,200 650,150 700,150"
             fill="none" stroke="#c9c1ad" stroke-width="3"/>
-      <!-- wrong minimum marker -->
-      <circle cx="214" cy="232" r="6" fill="#c0553f"/>
+      <!-- wrong minimum marker (on the curve, at the shallow well's floor) -->
+      <circle cx="214" cy="221" r="6" fill="#c0553f"/>
       <text class="svglbl" x="214" y="262" text-anchor="middle" font-size="12.5" fill="#c0553f">a wrong minimum</text>
       <!-- target minimum marker -->
       <circle cx="390" cy="250" r="7.5" fill="none" stroke="#b0771a" stroke-width="3"/>
       <circle cx="390" cy="250" r="2.5" fill="#b0771a"/>
       <text class="svglbl" x="390" y="281" text-anchor="middle" font-size="12.5" fill="#b0771a" font-weight="600">the target minimum</text>
-      <!-- start ball -->
-      <circle cx="258" cy="122" r="9" fill="#211f1b"/>
-      <text class="svglbl" x="258" y="106" text-anchor="middle" font-size="12.5" fill="#211f1b">start</text>
+      <!-- start ball (on the ridge: the basin choice is still undecided) -->
+      <circle cx="285" cy="110" r="8" fill="#211f1b"/>
+      <text class="svglbl" x="285" y="97" text-anchor="middle" font-size="12.5" fill="#211f1b">start</text>
       <!-- job 1: which basin -->
-      <path d="M150,60 L430,60" stroke="#b0771a" stroke-width="1.5" stroke-dasharray="4 4" fill="none"/>
-      <path d="M150,60 L150,74 M430,60 L430,74" stroke="#b0771a" stroke-width="1.5"/>
-      <text class="svglbl" x="290" y="48" text-anchor="middle" font-size="14.5" fill="#b0771a" font-weight="600">Job 1 &mdash; which valley?</text>
+      <path d="M150,52 L430,52" stroke="#b0771a" stroke-width="1.5" stroke-dasharray="4 4" fill="none"/>
+      <path d="M150,52 L150,66 M430,52 L430,66" stroke="#b0771a" stroke-width="1.5"/>
+      <text class="svglbl" x="290" y="40" text-anchor="middle" font-size="14.5" fill="#b0771a" font-weight="600">Job 1 &mdash; which valley?</text>
       <!-- job 2: how deep -->
       <path d="M470,196 L410,238" stroke="#1c7d78" stroke-width="1.6" fill="none" marker-end="url(#ar)"/>
       <defs><marker id="ar" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#1c7d78"/></marker></defs>
@@ -167,8 +167,16 @@
 
   <p><strong>Backprop-through-time (BPTT)</strong> differentiates the entire rollout. It sees how an early nudge
   changes the final structure, so it can genuinely steer the ball toward the right valley. The catch: it must
-  remember every intermediate step, so its memory grows with the length of the relaxation. Long relaxations
-  simply run the GPU out of memory.</p>
+  remember every intermediate step, so its memory grows with the length of the relaxation.</p>
+
+  <p>And here is the part that's easy to miss &mdash; the reason memory is the whole fight. A &ldquo;step&rdquo;
+  is not a cheap nudge of the atoms. Computing the forces means running a <em>whole neural network</em>: for these
+  models, a graph network that passes messages between every pair of nearby atoms, hundreds of atoms at a time.
+  To differentiate through one step you must keep that entire computation in memory &mdash; all of its internal
+  activations. Now multiply by the length of the relaxation: hundreds of steps, each hoarding a full network's
+  worth of activations. A single force call might be a few hundred megabytes; a few hundred of them stacked up is
+  tens of gigabytes, and the GPU is simply out of room. That is why a training method whose memory <em>doesn't</em>
+  grow with the number of steps is worth caring about.</p>
 
   <p><strong>Implicit differentiation (the implicit-function theorem, IFT)</strong> ignores the path and works
   only from the final force-free condition. Its memory is flat &mdash; constant, no matter how long the
@@ -192,6 +200,14 @@
   the valley is still in play); the memory-flat part comes <em>last</em> (that is when only precision is left).
   It is the reverse of how unrolled steps are usually bolted onto implicit models &mdash; and the order follows
   directly from which job each phase is for.</p>
+
+  <p>Readers coming from machine learning will recognize the move. Deep-equilibrium models have a trick called the
+  <em>phantom gradient</em>: run a few unrolled steps as a cheap stand-in for the exact implicit gradient. We
+  borrow the very same primitive &mdash; a few unrolled steps &mdash; but flip its purpose. We are not
+  approximating the equilibrium gradient (we compute that one exactly); we are using the unrolled window to
+  <em>choose the basin</em>. Same tool, opposite job. It is a small but real bridge between how the deep-learning
+  world and the materials-simulation world think about the same loop &mdash; and a hint that primitives invented
+  for one can be repurposed in the other.</p>
 
   <figure>
     <div class="card">
