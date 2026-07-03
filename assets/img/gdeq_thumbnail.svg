@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 288 176" role="img" aria-label="Two jobs in a relaxation: which valley (basin selection) and how deep (equilibrium precision).">
+  <rect width="288" height="176" fill="#faf7f1"/>
+  <!-- mini landscape: two valleys -->
+  <path d="M18,66 C42,44 66,44 92,104 C112,150 122,70 146,60 C172,50 182,120 206,120 C232,120 252,74 270,74"
+        fill="none" stroke="#cabfa8" stroke-width="3"/>
+  <!-- wrong minimum -->
+  <circle cx="104" cy="118" r="5" fill="#c0553f"/>
+  <!-- target minimum ring -->
+  <circle cx="206" cy="120" r="7" fill="none" stroke="#b0771a" stroke-width="3"/>
+  <circle cx="206" cy="120" r="2.4" fill="#b0771a"/>
+  <!-- start ball -->
+  <circle cx="146" cy="60" r="7" fill="#211f1b"/>
+  <!-- job 1 bracket -->
+  <path d="M70,30 L242,30" stroke="#b0771a" stroke-width="1.4" stroke-dasharray="4 3"/>
+  <path d="M70,30 L70,40 M242,30 L242,40" stroke="#b0771a" stroke-width="1.4"/>
+  <text x="156" y="23" text-anchor="middle" font-family="'Space Grotesk',sans-serif" font-size="12.5" font-weight="600" fill="#b0771a">which valley?</text>
+  <!-- job 2 arrow -->
+  <path d="M238,98 L214,114" stroke="#1c7d78" stroke-width="1.6" marker-end="url(#t)"/>
+  <defs><marker id="t" markerWidth="7" markerHeight="7" refX="5" refY="3.5" orient="auto"><path d="M0,0 L7,3.5 L0,7 z" fill="#1c7d78"/></marker></defs>
+  <text x="252" y="150" text-anchor="middle" font-family="'Space Grotesk',sans-serif" font-size="12.5" font-weight="600" fill="#1c7d78">how deep?</text>
+</svg>

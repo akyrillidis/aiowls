@@ -48,6 +48,19 @@ layout: default
 
   <li>
     <span class="thumb">
+      <a href="./guided_deq.html">
+        <img src="./assets/img/gdeq_thumbnail.svg" alt="Two jobs in a relaxation: which valley (basin selection) and how deep (equilibrium precision)">
+      </a>
+    </span>
+    <span class="title">
+      <a href="./guided_deq.html">Which Valley, and How Deep</a>
+      <span class="meta">A structure relaxation does two separable jobs &mdash; pick the right energy minimum, then settle to its bottom. Splitting them matches full backprop on silicon at 3.5&times; less memory and reaches <em>more</em> correct minima &mdash; with a checkable map of exactly when the trick helps.</span>
+      <span class="credits">From the OptimaLab (Rice CS); one wrapper over ADAPT, eSEN-OC25 &amp; GemNet-OC.</span>
+    </span>
+  </li>
+
+  <li>
+    <span class="thumb">
       <a href="./magnitude_safety.html">
         <img src="./assets/img/magsafe_thumbnail.png" alt="LAMBADA capability under 90% dynamic FFN sparsity: preserved for ReLU and hybrid models, lost for SwiGLU">
       </a>

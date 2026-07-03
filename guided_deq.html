@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="A structure relaxation quietly does two jobs: choosing which energy minimum to fall into, and settling precisely to its bottom. Training them as one problem forces a false choice between accuracy and memory. Separating them dissolves it — matching full backprop on silicon at 3.5x less memory — and yields a map of exactly when the trick helps.">
+<meta name="keywords" content="machine-learned interatomic potentials, structure relaxation, deep equilibrium models, implicit differentiation, backpropagation through time, basin selection, materials discovery, fixed point, MLIP">
+<meta property="og:title" content="Which Valley, and How Deep" />
+<meta property="og:description" content="A relaxation does two jobs at once — pick the right minimum, then settle to its bottom. Train them separately and the accuracy-vs-memory dilemma disappears. Plus: a map of when the trick actually helps." />
+<meta property="og:image" content="https://akyrillidis.github.io/aiowls/assets/img/gdeq_og.png" />
+<meta property="og:type" content="article" />
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Which Valley, and How Deep">
+<meta name="twitter:description" content="A structure relaxation does two separable jobs. Splitting them matches full backprop at 3.5x less memory — and maps exactly when it helps.">
+<meta name="twitter:image" content="https://akyrillidis.github.io/aiowls/assets/img/gdeq_og.png">
+<title>Which Valley, and How Deep &middot; AI-OWLS</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400;1,6..72,500&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<script>window.MathJax={tex:{inlineMath:[['\\(','\\)']]}};</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+<style>
+  :root{
+    --paper:#faf7f1; --ink:#211f1b; --soft:#615c52; --line:#e8e2d4;
+    --basin:#b0771a;  --basinbg:#f8f0dc;      /* amber  = basin selection / guidance */
+    --eq:#1c7d78;     --eqbg:#e5f2f0;         /* teal   = equilibrium / implicit / precision */
+    --wrong:#c0553f;  --wrongbg:#f9ece7;      /* coral  = wrong basin / caveat */
+    --grey:#9a9384;
+  }
+  *{box-sizing:border-box;}
+  body{
+    background:var(--paper); color:var(--ink);
+    font-family:"Newsreader", Georgia, serif; font-size:20px; line-height:1.62;
+    margin:0; -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:748px; margin:0 auto; padding:0 22px 96px;}
+  .kick{font-family:"Space Grotesk",sans-serif; font-weight:600; font-size:.72rem;
+    letter-spacing:.2em; text-transform:uppercase; color:var(--eq); margin:52px 0 16px;}
+  h1{font-family:"Newsreader",serif; font-weight:500; font-size:3rem; line-height:1.08;
+    letter-spacing:-.015em; margin:0 0 .3em;}
+  .dek{font-size:1.4rem; line-height:1.42; color:var(--soft); font-weight:400; font-style:italic; margin:0 0 1.1em;}
+  .byline{font-family:"Space Grotesk",sans-serif; font-size:.9rem; color:var(--soft); margin:0 0 4px; letter-spacing:.01em;}
+  .links{font-family:"Space Grotesk",sans-serif; font-size:.88rem; margin:12px 0 0;}
+  .links a{display:inline-block; margin-right:18px;}
+  a{color:#155f5a; text-decoration:none; border-bottom:1px solid rgba(28,125,120,.35);}
+  a:hover{border-bottom-color:var(--eq); background:rgba(28,125,120,.07);}
+  h2{font-family:"Space Grotesk",sans-serif; font-weight:600; font-size:1.42rem; line-height:1.24;
+    margin:2.2em 0 .5em; letter-spacing:-.01em;}
+  h2 .num{color:var(--eq); font-weight:500; margin-right:.5em;}
+  p{margin:0 0 1.15em;} strong{font-weight:600;}
+  em{font-style:italic;}
+  hr{border:0; border-top:1px solid var(--line); margin:38px 0;}
+  .drop::first-letter{font-family:"Newsreader",serif; float:left; font-size:3.9rem; line-height:.82;
+    padding:.06em .1em 0 0; color:var(--basin); font-weight:500;}
+  .brief{background:var(--eqbg); border:1px solid #cfe6e3; border-radius:12px; padding:20px 24px; margin:30px 0;}
+  .brief .lbl{font-family:"Space Grotesk",sans-serif; font-weight:600; font-size:.72rem; letter-spacing:.16em;
+    text-transform:uppercase; color:var(--eq); display:block; margin-bottom:8px;}
+  .brief p{font-size:1.04rem; line-height:1.5; margin:0;}
+  figure{margin:34px 0; text-align:center;}
+  figure svg{max-width:100%; height:auto;}
+  .card{border:1px solid var(--line); border-radius:10px; background:#fffdf8; padding:10px 12px;}
+  figcaption{font-family:"Space Grotesk",sans-serif; font-size:.85rem; color:var(--soft);
+    line-height:1.5; margin-top:12px; text-align:left;}
+  figcaption b{color:var(--ink); font-weight:600;}
+  .callout{border-left:4px solid var(--eq); background:var(--eqbg); padding:16px 20px; border-radius:0 8px 8px 0; margin:28px 0;}
+  .callout.idea{border-left-color:var(--basin); background:var(--basinbg);}
+  .callout.scope{border-left-color:var(--wrong); background:var(--wrongbg);}
+  .callout p:last-child{margin-bottom:0;}
+  .callout .lbl{font-family:"Space Grotesk",sans-serif; font-weight:600; font-size:.72rem; letter-spacing:.12em;
+    text-transform:uppercase; color:var(--soft); display:block; margin-bottom:7px;}
+  table{border-collapse:collapse; width:100%; margin:26px 0; font-size:.92rem;
+    font-family:"Space Grotesk",sans-serif;}
+  caption{caption-side:top; text-align:left; font-family:"Space Grotesk",sans-serif; font-size:.85rem;
+    color:var(--soft); margin-bottom:9px; line-height:1.45;}
+  th,td{text-align:left; padding:8px 10px; border-bottom:1px solid var(--line); vertical-align:top;}
+  thead th{font-weight:600; color:var(--ink); border-bottom:1.5px solid #d8d1c0; font-size:.82rem;
+    letter-spacing:.02em;}
+  tbody tr.hi{background:var(--basinbg);}
+  td .y{color:var(--eq); font-weight:600;} td .n{color:var(--wrong); font-weight:600;} td .q{color:var(--grey); font-weight:600;}
+  .gloss td:nth-child(1), .gloss th:nth-child(1){font-weight:600; color:var(--basin); width:26%;}
+  .gloss td:nth-child(3), .gloss th:nth-child(3){font-weight:600; color:var(--eq); width:26%;}
+  code{font-family:"JetBrains Mono",monospace; font-size:.84em; background:#efeadf; padding:1px 5px; border-radius:3px;}
+  .foot{font-family:"Space Grotesk",sans-serif; font-size:.84rem; color:var(--soft); margin-top:42px; line-height:1.6;}
+  .backlink{font-family:"Space Grotesk",sans-serif; font-size:.9rem; margin:48px 0 0; display:block;}
+  .svglbl{font-family:"Space Grotesk",sans-serif;}
+  @media (max-width:560px){ body{font-size:18px;} h1{font-size:2.2rem;} .dek{font-size:1.18rem;} table{font-size:.82rem;} th,td{padding:6px 6px;} }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="kick">Optimization &middot; Materials &middot; Machine Learning</div>
+  <h1>Which Valley, and How Deep</h1>
+  <p class="dek">A structure relaxation quietly does two jobs at once &mdash; choosing which minimum to
+  fall into, and settling precisely to its bottom. Treated as one problem, they force a false choice between
+  accuracy and memory. Pulled apart, the choice disappears.</p>
+  <p class="byline">The OptimaLab &middot; Rice University &middot; July 2026</p>
+  <p class="links">
+    <a href="https://akyrillidis.github.io/pubs/Preprints/G-DEQ.pdf">Report (PDF)</a>
+    <a href="https://github.com/akyrillidis/G-DEQ">Code</a>
+  </p>
+
+  <div class="brief">
+    <span class="lbl">In brief</span>
+    <p>Relaxing an atomic structure to its nearest energy minimum is the inner loop of materials discovery.
+    Doing it with a neural force field means iterating a map until the atoms stop moving &mdash; and the two
+    ways to train that map trade off against each other: one is accurate but its memory grows with every step,
+    the other is memory-flat but can polish the wrong answer. We show the two jobs inside a relaxation are
+    <em>separable</em>. On silicon defects the split <b>matches full backprop at 3.5&times; less memory</b> and
+    reaches <b>more</b> correct minima. Just as usefully, it comes with a checkable map of <em>when</em> the
+    split helps &mdash; and when a good potential already does the job alone.</p>
+  </div>
+
+  <h2><span class="num">1</span>The expensive inner loop</h2>
+  <p class="drop">Almost every pipeline that searches for new materials keeps asking the same small question:
+  given a guessed arrangement of atoms, what nearby arrangement is actually stable &mdash; the one where the net
+  force on every atom is zero? Physicists call this a <em>relaxation</em>. Done with the gold-standard quantum
+  method it is agonizingly slow, so the field increasingly hands the forces to a neural network &mdash; a
+  <em>machine-learned interatomic potential</em>. Each step gets cheap. But the relaxation is still a loop:
+  nudge the atoms along the predicted forces, recompute, repeat, until nothing moves.</p>
+
+  <p>Written down, that loop is a <em>fixed-point map</em>: a learned operator \(G_\theta\) applied over and
+  over, \( \mathbf{X}_{t+1} = G_\theta(\mathbf{X}_t) = \mathbf{X}_t + \alpha\,F_\theta(\mathbf{X}_t) \), run
+  until it reaches a structure \( \mathbf{X}^\star = G_\theta(\mathbf{X}^\star) \) that the potential declares
+  force-free. Picture an energy landscape of hills and valleys. The relaxation is a ball rolling downhill; where
+  it stops depends entirely on <em>which valley it was over to begin with</em>. That is the whole subtlety.
+  A relaxation is doing two different things at once:</p>
+
+  <figure>
+    <div class="card">
+    <svg viewBox="0 0 720 322" role="img" aria-label="An energy landscape with three valleys; a starting ball must choose which valley (basin selection) and then settle to its bottom (equilibrium precision).">
+      <!-- landscape -->
+      <path d="M30,150 C70,120 150,120 190,200 C230,270 250,150 285,110 C330,120 350,250 390,250 C440,250 470,120 495,115 C530,120 545,210 580,205 C620,200 650,150 700,150"
+            fill="none" stroke="#c9c1ad" stroke-width="3"/>
+      <!-- wrong minimum marker -->
+      <circle cx="214" cy="232" r="6" fill="#c0553f"/>
+      <text class="svglbl" x="214" y="262" text-anchor="middle" font-size="12.5" fill="#c0553f">a wrong minimum</text>
+      <!-- target minimum marker -->
+      <circle cx="390" cy="250" r="7.5" fill="none" stroke="#b0771a" stroke-width="3"/>
+      <circle cx="390" cy="250" r="2.5" fill="#b0771a"/>
+      <text class="svglbl" x="390" y="281" text-anchor="middle" font-size="12.5" fill="#b0771a" font-weight="600">the target minimum</text>
+      <!-- start ball -->
+      <circle cx="258" cy="122" r="9" fill="#211f1b"/>
+      <text class="svglbl" x="258" y="106" text-anchor="middle" font-size="12.5" fill="#211f1b">start</text>
+      <!-- job 1: which basin -->
+      <path d="M150,60 L430,60" stroke="#b0771a" stroke-width="1.5" stroke-dasharray="4 4" fill="none"/>
+      <path d="M150,60 L150,74 M430,60 L430,74" stroke="#b0771a" stroke-width="1.5"/>
+      <text class="svglbl" x="290" y="48" text-anchor="middle" font-size="14.5" fill="#b0771a" font-weight="600">Job 1 &mdash; which valley?</text>
+      <!-- job 2: how deep -->
+      <path d="M470,196 L410,238" stroke="#1c7d78" stroke-width="1.6" fill="none" marker-end="url(#ar)"/>
+      <defs><marker id="ar" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#1c7d78"/></marker></defs>
+      <text class="svglbl" x="516" y="192" text-anchor="middle" font-size="14.5" fill="#1c7d78" font-weight="600">Job 2 &mdash; how deep?</text>
+    </svg>
+    </div>
+    <figcaption><b>Two jobs, one loop.</b> <span style="color:#b0771a">Basin selection</span> decides
+    <em>which</em> valley the relaxation falls into &mdash; a choice made early, while the ball is still near the
+    ridge. <span style="color:#1c7d78">Equilibrium precision</span> is the separate job of settling exactly to
+    the chosen valley's floor. Confuse the two and you inherit the worst of each.</figcaption>
+  </figure>
+
+  <h2><span class="num">2</span>Two ways to train, each half a solution</h2>
+  <p>To make the relaxation land on the right structure, you train the potential through the loop. There are two
+  standard ways, and they sit at opposite corners of a trade-off.</p>
+
+  <p><strong>Backprop-through-time (BPTT)</strong> differentiates the entire rollout. It sees how an early nudge
+  changes the final structure, so it can genuinely steer the ball toward the right valley. The catch: it must
+  remember every intermediate step, so its memory grows with the length of the relaxation. Long relaxations
+  simply run the GPU out of memory.</p>
+
+  <p><strong>Implicit differentiation (the implicit-function theorem, IFT)</strong> ignores the path and works
+  only from the final force-free condition. Its memory is flat &mdash; constant, no matter how long the
+  relaxation &mdash; which is exactly the appeal of <em>deep equilibrium</em> models. But it optimizes
+  <em>whichever</em> valley the ball already landed in. From a bad start it will faithfully, efficiently polish
+  the <span style="color:#c0553f">wrong minimum</span>, and it can never tell you how to reach a better one.</p>
+
+  <div class="callout idea">
+    <span class="lbl">The bigger idea</span>
+    <p>The trade-off looks fundamental only because both methods are asked to do <em>both</em> jobs. But the two
+    jobs have opposite needs. Choosing the valley depends on the path and is decided <em>early</em> &mdash; it
+    wants a short, differentiated window. Settling to the floor is a fixed-point problem &mdash; it wants
+    constant memory and doesn't care about the path at all. So give each job the tool built for it.</p>
+  </div>
+
+  <h2><span class="num">3</span>The split: guidance, then equilibrium</h2>
+  <p>The method is almost embarrassingly literal. Run a <em>short</em> differentiated window at the start
+  &mdash; just the first \(K\) steps &mdash; and use it for one job only: <span style="color:#b0771a">picking
+  the valley</span>. Then hand off to the implicit phase, which drives the relaxation to its exact fixed point at
+  <span style="color:#1c7d78">constant memory</span>. The differentiated part comes <em>first</em> (that is when
+  the valley is still in play); the memory-flat part comes <em>last</em> (that is when only precision is left).
+  It is the reverse of how unrolled steps are usually bolted onto implicit models &mdash; and the order follows
+  directly from which job each phase is for.</p>
+
+  <figure>
+    <div class="card">
+    <svg viewBox="0 0 720 210" role="img" aria-label="A relaxation trajectory split into a short amber guidance window of K differentiated steps followed by a long teal implicit equilibrium phase.">
+      <!-- guidance segment -->
+      <line x1="62" y1="118" x2="250" y2="118" stroke="#b0771a" stroke-width="5"/>
+      <!-- equilibrium segment -->
+      <line x1="250" y1="118" x2="662" y2="118" stroke="#1c7d78" stroke-width="3" stroke-dasharray="1 0"/>
+      <!-- iterate dots -->
+      <g fill="#b0771a"><circle cx="62" cy="118" r="5.5"/><circle cx="109" cy="118" r="4.5"/><circle cx="156" cy="118" r="4.5"/><circle cx="203" cy="118" r="4.5"/><circle cx="250" cy="118" r="4.5"/></g>
+      <g fill="#1c7d78"><circle cx="340" cy="118" r="4"/><circle cx="430" cy="118" r="4"/><circle cx="520" cy="118" r="4"/><circle cx="610" cy="118" r="4"/></g>
+      <!-- endpoints -->
+      <text class="svglbl" x="62" y="150" text-anchor="middle" font-size="12.5" fill="#211f1b">X&#8320;</text>
+      <circle cx="662" cy="118" r="7.5" fill="none" stroke="#1c7d78" stroke-width="3"/>
+      <text class="svglbl" x="662" y="150" text-anchor="middle" font-size="12.5" fill="#1c7d78" font-weight="600">X&#8902; force-free</text>
+      <!-- K brace -->
+      <path d="M62,92 L62,84 L250,84 L250,92" stroke="#b0771a" stroke-width="1.4" fill="none"/>
+      <text class="svglbl" x="156" y="74" text-anchor="middle" font-size="13" fill="#b0771a" font-weight="600">K differentiated steps</text>
+      <!-- phase labels -->
+      <text class="svglbl" x="156" y="176" text-anchor="middle" font-size="14.5" fill="#b0771a" font-weight="700">GUIDANCE</text>
+      <text class="svglbl" x="156" y="194" text-anchor="middle" font-size="12" fill="#8a6a2a">pick the valley &middot; O(K) memory</text>
+      <text class="svglbl" x="456" y="176" text-anchor="middle" font-size="14.5" fill="#1c7d78" font-weight="700">EQUILIBRIUM</text>
+      <text class="svglbl" x="456" y="194" text-anchor="middle" font-size="12" fill="#2a7a76">settle precisely &middot; O(1) memory</text>
+    </svg>
+    </div>
+    <figcaption><b>Differentiate first, then go implicit.</b> Only the short <span style="color:#b0771a">guidance</span>
+    window is unrolled and stored, so it &mdash; and it alone &mdash; sets the memory bill. The horizon \(K\) is a
+    dial: turn it down for less memory, up for more steering. The long <span style="color:#1c7d78">equilibrium</span>
+    tail costs the same memory whether it runs for ten steps or ten thousand.</figcaption>
+  </figure>
+
+  <p>Because only the guidance window is stored, <strong>memory becomes a knob you set, not a cost you pay.</strong>
+  The horizon \(K\) trades memory for steering along a smooth frontier &mdash; and, crucially, it is decoupled
+  from how long the relaxation actually runs.</p>
+
+  <table>
+    <caption><b>Memory is a dial.</b> Silicon point-defect relaxation, peak training memory vs. the guidance
+    horizon \(K\), against full BPTT (7,470&nbsp;MB). Accuracy (&Delta;Q, lower is better) is a statistical tie
+    with BPTT across the useful range; 5 seeds.</caption>
+    <thead>
+      <tr><th>Guidance horizon</th><th>Peak memory</th><th>vs. full BPTT</th><th>Accuracy (&Delta;Q)</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>K = 10</td><td>1,261 MB</td><td>5.9&times; less</td><td>277.0 &plusmn; 6.4</td></tr>
+      <tr><td>K = 15</td><td>1,755 MB</td><td>4.3&times; less</td><td>254.5 &plusmn; 9.8</td></tr>
+      <tr class="hi"><td>K = 20 &nbsp;<em>(sweet spot)</em></td><td>2,145 MB</td><td>3.5&times; less</td><td>248.3 &plusmn; 9.0</td></tr>
+      <tr><td>K = 30</td><td>3,230 MB</td><td>2.3&times; less</td><td>251.6 &plusmn; 5.9</td></tr>
+      <tr><td><em>full BPTT</em></td><td>7,470 MB</td><td>1.0&times; (baseline)</td><td>246.0 &plusmn; 5.8</td></tr>
+    </tbody>
+  </table>
+
+  <h2><span class="num">4</span>The result that matters: it selects better, not just cheaper</h2>
+  <p>Saving memory would be a nice engineering win on its own. But the sharper claim is that the split reaches
+  the <em>right</em> valleys &mdash; and to earn that claim you have to count basins, not bytes. On a set of 100
+  silicon point defects we asked, of each method: how many relaxations landed in the correct minimum?</p>
+
+  <figure>
+    <div class="card">
+    <svg viewBox="0 0 720 250" role="img" aria-label="Correct basins reached out of 100 silicon defects: implicit-only 25, pretrained base 43, full BPTT 79, the decomposition 85.">
+      <!-- gridline at 100 -->
+      <line x1="278" y1="34" x2="278" y2="214" stroke="#e8e2d4" stroke-width="1"/>
+      <line x1="278" y1="34" x2="691" y2="34" stroke="#e8e2d4" stroke-width="1"/>
+      <text class="svglbl" x="691" y="28" text-anchor="end" font-size="11" fill="#9a9384">100</text>
+      <!-- rows: scale 0..100 over x 278..691 (4.13 px/unit) -->
+      <!-- implicit-only 25 -->
+      <text class="svglbl" x="266" y="62" text-anchor="end" font-size="13" fill="#615c52">implicit-only (IFT)</text>
+      <rect x="278" y="49" width="103" height="24" rx="2" fill="#c0553f"/>
+      <text class="svglbl" x="391" y="66" font-size="13" fill="#c0553f" font-weight="600">25</text>
+      <!-- pretrained 43 -->
+      <text class="svglbl" x="266" y="106" text-anchor="end" font-size="13" fill="#615c52">pretrained base</text>
+      <rect x="278" y="93" width="178" height="24" rx="2" fill="#c9c1ad"/>
+      <text class="svglbl" x="466" y="110" font-size="13" fill="#8a8474" font-weight="600">43</text>
+      <!-- BPTT 79 -->
+      <text class="svglbl" x="266" y="150" text-anchor="end" font-size="13" fill="#615c52">full BPTT</text>
+      <rect x="278" y="137" width="326" height="24" rx="2" fill="#7fb3af"/>
+      <text class="svglbl" x="614" y="154" font-size="13" fill="#1c7d78" font-weight="600">79</text>
+      <!-- decomposition 85 -->
+      <text class="svglbl" x="266" y="194" text-anchor="end" font-size="13" fill="#211f1b" font-weight="600">the decomposition</text>
+      <rect x="278" y="181" width="351" height="24" rx="2" fill="#b0771a"/>
+      <text class="svglbl" x="639" y="198" font-size="13" fill="#b0771a" font-weight="700">85</text>
+      <!-- annotation -->
+      <text class="svglbl" x="278" y="236" font-size="12.5" fill="#8a6a2a" font-style="italic">&#8593; reaches more correct valleys than full BPTT itself &mdash; and implicit-only, blind to the path, reaches fewest</text>
+    </svg>
+    </div>
+    <figcaption><b>Correct basins, out of 100.</b> The pretrained potential alone lands right 43 times; polishing
+    it with the path-blind implicit gradient makes things <em>worse</em> (25) &mdash; it just sharpens whichever
+    minimum it started in. Full BPTT, which sees the path, reaches 79. The decomposition reaches <b>85</b>,
+    matching or beating BPTT while spending a fraction of its memory. The advantage is <em>selection</em>, and
+    that is the point.</figcaption>
+  </figure>
+
+  <p>The reading is clean. The implicit gradient, blind to the path, is actively counter-productive for choosing
+  a valley &mdash; exactly as the picture predicts. The short guidance window recovers all of BPTT's
+  valley-picking power, and then some, for a fraction of the memory. Accuracy and efficiency turned out not to be
+  opposed; they were two questions wearing one coat.</p>
+
+  <h2><span class="num">5</span>When does the trick help? A map, not a promise</h2>
+  <p>Here is where it would be easy to oversell. A method that wins on silicon is not a method that wins
+  everywhere, and the honest contribution is knowing the difference <em>in advance</em>. The guidance window
+  earns its keep only when it has a real job to do &mdash; a wrong valley to fix, decided early enough that a
+  short window can reach the decision. That is four checkable conditions:</p>
+
+  <table>
+    <caption><b>The regime map.</b> The split has headroom only when all four conditions hold. Each &ldquo;no&rdquo;
+    is a <em>coordinate</em> &mdash; a specific condition that is off &mdash; not a mysterious failure. We tested
+    the first three rows; the fourth is the open frontier.</caption>
+    <thead>
+      <tr><th>Setting (base potential)</th><th>Forces right?</th><th>Many valleys?</th><th>Base lands wrong?</th><th>Short relaxation?</th><th>Headroom?</th></tr>
+    </thead>
+    <tbody>
+      <tr class="hi"><td><b>Silicon defects</b><br><span style="color:#615c52;font-weight:400">weak, narrow potential</span></td><td><span class="y">yes</span></td><td><span class="y">yes</span></td><td><span class="y">yes</span></td><td><span class="y">yes</span></td><td><b style="color:#b0771a">yes</b></td></tr>
+      <tr><td>Titanium adsorbate<br><span style="color:#615c52">strong, in-domain potential</span></td><td><span class="y">yes</span></td><td><span class="y">yes</span></td><td><span class="n">no</span></td><td><span class="y">yes</span></td><td>no</td></tr>
+      <tr><td>Oxide surface (OC22)<br><span style="color:#615c52">far-from-equilibrium</span></td><td><span class="y">yes</span></td><td><span class="y">yes</span></td><td><span class="y">yes</span></td><td><span class="n">no</span></td><td>no</td></tr>
+      <tr><td>Bulk crystals<br><span style="color:#615c52">no in-domain potential yet</span></td><td><span class="q">?</span></td><td><span class="y">yes</span></td><td><span class="q">likely</span></td><td><span class="q">?</span></td><td><span class="q">open</span></td></tr>
+    </tbody>
+  </table>
+
+  <p>Read as a map, each row teaches something. On <strong>titanium</strong>, a strong, well-trained potential
+  already lands in the right valley &mdash; so there is nothing to re-select, and the split has no job. That is
+  not a defeat; it is the map correctly predicting &ldquo;a good potential already solves this.&rdquo; On
+  <strong>oxide surfaces</strong>, the base really does land in wrong valleys &mdash; but the relaxations are
+  roughly seven times longer, so the valley-deciding moment falls outside any <em>short</em> window, and a short
+  window is the whole point. And <strong>bulk crystals</strong> &mdash; the most diverse setting of all &mdash;
+  remain genuinely open, waiting on a potential trained in-domain. One thing holds across every row: the memory
+  property is unconditional. It is only the <em>selection value</em> that depends on where you are on the map.</p>
+
+  <h2><span class="num">6</span>A word for both sides of the aisle</h2>
+  <p>This problem lives on a fault line between two communities that name the same things differently, and a
+  surprising amount of the difficulty is translation. To a machine-learning reader a &ldquo;basin&rdquo; is
+  obvious and a &ldquo;slab&rdquo; is jargon; to a materials scientist it is the reverse. So here is the small
+  bilingual dictionary the whole idea rests on:</p>
+
+  <table class="gloss">
+    <caption><b>The same objects, two vocabularies.</b> Left, materials-science terms for a machine-learning
+    reader; right, machine-learning terms for a materials scientist.</caption>
+    <thead>
+      <tr><th>Materials term</th><th>&mdash; is &mdash;</th><th>ML / optimization term</th><th>&mdash; is &mdash;</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>relaxation</td><td>rolling downhill to a force-free structure</td><td>basin selection</td><td>choosing <em>which</em> minimum you land in</td></tr>
+      <tr><td>basin / metastable state</td><td>one valley the ball can settle in</td><td>equilibrium precision</td><td>how exactly you reach that valley's floor</td></tr>
+      <tr><td>slab &amp; adsorbate</td><td>a surface, and a molecule stuck to it</td><td>BPTT</td><td>differentiate the whole rollout (memory grows)</td></tr>
+      <tr><td>cell</td><td>the periodic box; fixed or free to change shape</td><td>fixed point / IFT</td><td>the force-free condition; its gradient at flat memory</td></tr>
+      <tr><td>relaxation trajectory</td><td>the path \( \mathbf{X}_0,\mathbf{X}_1,\dots\to\mathbf{X}^\star \)</td><td>guidance horizon \(K\)</td><td>how many steps you differentiate &mdash; the dial</td></tr>
+    </tbody>
+  </table>
+
+  <p>Spelling it out is not throat-clearing; it is a small contribution in its own right. Half the reason
+  &ldquo;why not just use dataset X?&rdquo; is hard to answer across the aisle is that the datasets look identical
+  through one lens and completely different through the other. The map above is really a claim that
+  <em>&ldquo;relaxation&rdquo; is several different problems</em> wearing one word &mdash; and that trajectory-level
+  training is worth its cost on only some of them.</p>
+
+  <hr>
+  <div class="callout">
+    <span class="lbl">How we checked</span>
+    <p>The silicon numbers are five seeds each, held-out, with matched learning rate and training budget against a
+    single shared base potential. The implicit and unrolled gradients were verified against finite differences in
+    double precision, per backbone; the checkpointed guidance gradient is bit-identical to the naive one. The
+    same wrapper was exercised across <em>three</em> different neural potentials (a cell-blind Transformer, an
+    equivariant cell-aware model, a message-passing network) to show the method isn't wedded to one architecture.
+    The beyond-silicon rows were run as <em>pre-registered</em> tests with kill conditions fixed in advance &mdash;
+    which is why we can report the titanium and oxide outcomes as map coordinates rather than quietly reframing
+    them after the fact.</p>
+  </div>
+
+  <div class="callout scope">
+    <span class="lbl">What we don't claim</span>
+    <p>One demonstrated win, on silicon point defects, plus a map that says where else to expect one. We do
+    <em>not</em> claim a second dataset win: on the settings we probed, a strong potential already solved the task
+    (titanium) or the relaxation was too long for a short window (oxide). The guarantees that come with warm-start
+    theory do not transfer to a learned, non-contractive operator, so we keep that framing informal. The
+    bulk-crystal frontier is open, not conquered.</p>
+  </div>
+
+  <hr>
+  <h2>Why it matters</h2>
+  <p>Strip away the vocabulary and one sentence survives: <strong>a relaxation is really asking two questions
+  &mdash; which valley, and how deep &mdash; and you should answer them with two different tools.</strong> Answer
+  them together and you overpay in memory for accuracy you could have had for free. Answer them apart and the
+  dilemma dissolves. The rest &mdash; the 3.5&times;, the 85 out of 100, the four-column map &mdash; is what that
+  one idea looks like when you hold it to the light and insist on checking.</p>
+
+  <p class="foot">Silicon results are five seeds, held-out, matched-budget; gradients verified against
+  double-precision finite differences per backbone. Full write-up, the regime-of-validity analysis, and the
+  machine-learning &harr; materials-science dataset landscape are in the
+  <a href="https://akyrillidis.github.io/pubs/Preprints/G-DEQ.pdf">report</a>; code and reproduction at
+  <a href="https://github.com/akyrillidis/G-DEQ">github.com/akyrillidis/G-DEQ</a>.</p>
+
+  <a class="backlink" href="./blogs.html">&larr; All AI-OWLS posts</a>
+
+</div>
+</body>
+</html>
