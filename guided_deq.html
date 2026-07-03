@@ -5,15 +5,15 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="description" content="A structure relaxation quietly does two jobs: choosing which energy minimum to fall into, and settling precisely to its bottom. Training them as one problem forces a false choice between accuracy and memory. Separating them dissolves it — matching full backprop on silicon at 3.5x less memory — and yields a map of exactly when the trick helps.">
 <meta name="keywords" content="machine-learned interatomic potentials, structure relaxation, deep equilibrium models, implicit differentiation, backpropagation through time, basin selection, materials discovery, fixed point, MLIP">
-<meta property="og:title" content="Which Valley, and How Deep" />
+<meta property="og:title" content="Which Valley, and How Deep: Training Neural Atomic Relaxation at a Fraction of the Memory" />
 <meta property="og:description" content="A relaxation does two jobs at once — pick the right minimum, then settle to its bottom. Train them separately and the accuracy-vs-memory dilemma disappears. Plus: a map of when the trick actually helps." />
 <meta property="og:image" content="https://akyrillidis.github.io/aiowls/assets/img/gdeq_og.png" />
 <meta property="og:type" content="article" />
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Which Valley, and How Deep">
+<meta name="twitter:title" content="Which Valley, and How Deep: Training Neural Atomic Relaxation at a Fraction of the Memory">
 <meta name="twitter:description" content="A structure relaxation does two separable jobs. Splitting them matches full backprop at 3.5x less memory — and maps exactly when it helps.">
 <meta name="twitter:image" content="https://akyrillidis.github.io/aiowls/assets/img/gdeq_og.png">
-<title>Which Valley, and How Deep &middot; AI-OWLS</title>
+<title>Which Valley, and How Deep: Training Neural Atomic Relaxation at a Fraction of the Memory &middot; AI-OWLS</title>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -39,8 +39,8 @@
   .wrap{max-width:748px; margin:0 auto; padding:0 22px 96px;}
   .kick{font-family:"Space Grotesk",sans-serif; font-weight:600; font-size:.72rem;
     letter-spacing:.2em; text-transform:uppercase; color:var(--eq); margin:52px 0 16px;}
-  h1{font-family:"Newsreader",serif; font-weight:500; font-size:3rem; line-height:1.08;
-    letter-spacing:-.015em; margin:0 0 .3em;}
+  h1{font-family:"Newsreader",serif; font-weight:500; font-size:2.4rem; line-height:1.13;
+    letter-spacing:-.015em; margin:0 0 .34em;}
   .dek{font-size:1.4rem; line-height:1.42; color:var(--soft); font-weight:400; font-style:italic; margin:0 0 1.1em;}
   .byline{font-family:"Space Grotesk",sans-serif; font-size:.9rem; color:var(--soft); margin:0 0 4px; letter-spacing:.01em;}
   .links{font-family:"Space Grotesk",sans-serif; font-size:.88rem; margin:12px 0 0;}
@@ -86,14 +86,14 @@
   .foot{font-family:"Space Grotesk",sans-serif; font-size:.84rem; color:var(--soft); margin-top:42px; line-height:1.6;}
   .backlink{font-family:"Space Grotesk",sans-serif; font-size:.9rem; margin:48px 0 0; display:block;}
   .svglbl{font-family:"Space Grotesk",sans-serif;}
-  @media (max-width:560px){ body{font-size:18px;} h1{font-size:2.2rem;} .dek{font-size:1.18rem;} table{font-size:.82rem;} th,td{padding:6px 6px;} }
+  @media (max-width:560px){ body{font-size:18px;} h1{font-size:1.72rem;} .dek{font-size:1.18rem;} table{font-size:.82rem;} th,td{padding:6px 6px;} }
 </style>
 </head>
 <body>
 <div class="wrap">
 
   <div class="kick">Optimization &middot; Materials &middot; Machine Learning</div>
-  <h1>Which Valley, and How Deep</h1>
+  <h1>Which Valley, and How Deep: Training Neural Atomic Relaxation at a Fraction of the Memory</h1>
   <p class="dek">A structure relaxation quietly does two jobs at once &mdash; choosing which minimum to
   fall into, and settling precisely to its bottom. Treated as one problem, they force a false choice between
   accuracy and memory. Pulled apart, the choice disappears.</p>

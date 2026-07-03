@@ -53,7 +53,7 @@ layout: default
       </a>
     </span>
     <span class="title">
-      <a href="./guided_deq.html">Which Valley, and How Deep</a>
+      <a href="./guided_deq.html">Which Valley, and How Deep: Training Neural Atomic Relaxation at a Fraction of the Memory</a>
       <span class="meta">A structure relaxation does two separable jobs &mdash; pick the right energy minimum, then settle to its bottom. Splitting them matches full backprop on silicon at 3.5&times; less memory and reaches <em>more</em> correct minima &mdash; with a checkable map of exactly when the trick helps.</span>
       <span class="credits">From the OptimaLab (Rice CS); one wrapper over ADAPT, eSEN-OC25 &amp; GemNet-OC.</span>
     </span>
