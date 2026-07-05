@@ -8,6 +8,8 @@ Recent work from the AI-OWLS / OptimaLab group at Rice CS, in reverse chronologi
 
 #### 2026
 
++ **G-DEQ: Decoupling Basin Selection from Equilibrium Precision for Learned Atomic Relaxation.** *Yifei Zhang, Evan Dramko, Anastasios Kyrillidis.* Preprint, 2026. [[report]](https://akyrillidis.github.io/pubs/Preprints/G-DEQ.pdf) &middot; [[code]](https://github.com/akyrillidis/G-DEQ) &middot; [[blog]](https://akyrillidis.github.io/aiowls/guided_deq.html)
+
 + **One Rank at a Time: Cascading Error Dynamics in Sequential Learning.** *Mahtab Alizadeh Vandchali, Fangshuo (Jasper) Liao, Anastasios Kyrillidis.* Transactions on Machine Learning Research (TMLR), accepted, in press. [[arXiv]](https://arxiv.org/abs/2505.22602) &middot; [[blog]](https://akyrillidis.github.io/aiowls/one_rank_at_a_time.html)
 
 + **One Model, Two Roles: Emergent Specialization in a Shared Recurrent Transformer.** *Jucheng Shen, Wenyi (Barbara) Su, Anastasios Kyrillidis.* Preprint, arXiv:2605.17811, 2026. [[arXiv]](https://arxiv.org/abs/2605.17811) &middot; [[code]](https://github.com/juchengshen/air) &middot; [[blog]](https://akyrillidis.github.io/aiowls/asymmetric_input.html)
