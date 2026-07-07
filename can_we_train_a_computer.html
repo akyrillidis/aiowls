@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="We hand-wired a transformer to be a computer, trained another from scratch to do the identical job, and found the trained one points to memory through a different, more perpendicular internal code. Same function, different mechanism — a ground-truthed case where the standard weight-space test for 'did they learn the same algorithm?' misleads, and mechanistic probing settles it.">
+<meta name="keywords" content="mechanistic interpretability, transformers, content addressing, attention, SUBLEQ, Turing complete, mode connectivity, one-instruction set computer, Gaussian keys, orthogonal keys, K_off">
+<meta property="og:title" content="Can We Train a Computer? Two Ways to Point at a Memory" />
+<meta property="og:description" content="Two transformers compute the exact same Turing-complete function — one hand-wired, one trained from scratch. To every weight-space test they look like different algorithms. They aren't: the trained one just found a more perpendicular way to point at memory." />
+<meta property="og:image" content="https://akyrillidis.github.io/aiowls/assets/img/ctac_kmatrix.png" />
+<meta property="og:type" content="article" />
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Can We Train a Computer? Two Ways to Point at a Memory">
+<meta name="twitter:description" content="Two transformers run the same one-instruction computer perfectly. One was wired by hand, one was trained. They point at memory through different internal codes — and that gap is what fools the standard 'same algorithm?' test.">
+<meta name="twitter:image" content="https://akyrillidis.github.io/aiowls/assets/img/ctac_kmatrix.png">
+<title>Can We Train a Computer? Two Ways to Point at a Memory &middot; AI-OWLS</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Display&family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+
+<script>window.MathJax={tex:{inlineMath:[['\\(','\\)']],displayMath:[['\\[','\\]']]}};</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+<style>
+  :root{
+    --paper:#f6f1e6; --ink:#2c2218; --soft:#5c4d3f; --line:#ddd4c0; --rule:#2c2218;
+    --oxblood:#7c1f2b;                                   /* the one editorial spot color: drop cap */
+    --built:#a9761c;  --builtbg:#f2e9d6; --built-d:#8a5f16;   /* amber = hand-built / Gaussian (data-ink) */
+    --train:#1f6b67;  --trainbg:#e5efec; --train-d:#17544f;   /* teal  = trained / orthogonal (data-ink) */
+    --grey:#8a7d6b;
+  }
+  *{box-sizing:border-box;}
+  body{
+    background:var(--paper); color:var(--ink);
+    font-family:"Libre Caslon Text", Georgia, "Times New Roman", serif;
+    font-size:19.5px; line-height:1.72; margin:0;
+    -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
+  }
+  .wrap{ max-width:624px; margin:0 auto; padding:0 24px 112px; }
+
+  .kick{ font-style:italic; font-size:.9rem; letter-spacing:.02em; color:var(--soft);
+    margin:56px 0 14px; text-align:center; }
+  h1{ font-family:"Libre Caslon Display", Georgia, serif; font-weight:400; font-size:2.6rem;
+    line-height:1.09; letter-spacing:.004em; margin:0 0 .32em; text-align:center; }
+  .dek{ font-size:1.12rem; line-height:1.5; color:var(--soft); font-style:italic; font-weight:400;
+    margin:0 auto 1.3em; text-align:center; max-width:530px; }
+  .byline{ font-style:italic; font-size:1rem; margin:0 0 3px; text-align:center; }
+  .venue{ font-style:italic; font-size:.84rem; color:var(--soft); margin:2px auto 0;
+    text-align:center; max-width:500px; }
+  .links{ font-size:.9rem; margin:12px 0 0; text-align:center; }
+  a{ color:var(--ink); text-decoration:none; border-bottom:1px solid rgba(44,34,24,.32); }
+  a:hover{ border-bottom-color:var(--ink); }
+  .rule-top{ border:0; border-top:1px solid var(--rule); width:64px; margin:26px auto 42px; opacity:.5; }
+
+  h2{ font-family:"Libre Caslon Display", Georgia, serif; font-weight:400; font-size:1.5rem;
+    line-height:1.2; margin:2.05em 0 .45em; letter-spacing:.005em; }
+  h2 .num{ color:var(--oxblood); margin-right:.45em; }
+  p{ margin:0 0 1.12em; } strong{ font-weight:700; } em{ font-style:italic; }
+  hr{ border:0; border-top:1px solid var(--rule); opacity:.5; width:64px; margin:40px auto; }
+
+  .drop::first-letter{ font-family:"Libre Caslon Display", Georgia, serif; float:left;
+    font-size:4.4rem; line-height:.66; padding:.02em .09em 0 0; color:var(--oxblood); font-weight:400; }
+
+  /* "In brief" — reskinned as a cream, hairline, rule-marked aside (no shadow, no fill block) */
+  .brief{ background:transparent; border:1px solid var(--line); border-left:2px solid var(--train);
+    padding:15px 20px; margin:28px 0; }
+  .brief.built{ border-left-color:var(--built); }
+  .brief .lbl{ font-style:italic; font-size:.82rem; letter-spacing:.02em; color:var(--train-d);
+    display:block; margin-bottom:6px; }
+  .brief.built .lbl{ color:var(--built-d); }
+  .brief p{ font-size:.98rem; line-height:1.55; margin:0; }
+  .brief p + p{ margin-top:.65em; }
+
+  figure{ margin:32px auto; text-align:center; max-width:484px; }
+  figure img{ max-width:100%; height:auto; border:1px solid var(--line); background:#fbf8f0; padding:6px; }
+  figure svg{ max-width:100%; height:auto; }
+  .card{ border:1px solid var(--line); background:#fbf8f0; padding:10px 12px; }
+  figcaption{ font-style:italic; font-size:.85rem; color:var(--soft); line-height:1.55;
+    margin-top:11px; text-align:left; }
+  figcaption b{ color:var(--ink); font-weight:700; font-style:normal; }
+  .svglbl{ font-family:Georgia, serif; font-style:italic; }
+
+  .eq{ margin:1.5em 0; text-align:center; overflow-x:auto; }
+
+  /* verdict ledger — hairline cards, italic heads, muted data-ink top rules */
+  .ledger{ display:grid; grid-template-columns:1fr 1fr; gap:18px; margin:28px 0; }
+  .ledger .col{ border:1px solid var(--line); background:#fbf8f0; padding:14px 18px; }
+  .ledger .col.proven{ border-top:2px solid var(--train); }
+  .ledger .col.open{ border-top:2px solid var(--built); }
+  .ledger h3{ font-style:italic; font-size:.92rem; letter-spacing:.02em; margin:0 0 9px; font-weight:400; }
+  .ledger .proven h3{ color:var(--train-d); } .ledger .open h3{ color:var(--built-d); }
+  .ledger ul{ margin:0; padding-left:18px; font-size:.92rem; line-height:1.46; }
+  .ledger li{ margin:0 0 8px; } .ledger li:last-child{ margin-bottom:0; }
+
+  code{ font-family:"Libre Caslon Text", Georgia, serif; font-style:italic; background:transparent; padding:0; }
+  .foot{ font-style:italic; font-size:.85rem; color:var(--soft); margin-top:42px; line-height:1.62;
+    border-top:1px solid var(--line); padding-top:20px; }
+  .foot a{ font-style:normal; }
+  .backlink{ font-style:italic; font-size:.92rem; margin:42px 0 0; display:block; }
+  @media (max-width:640px){ body{font-size:18px;} h1{font-size:2rem;} .dek{font-size:1.05rem;} .ledger{grid-template-columns:1fr;} }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="kick">Interpretability &middot; Transformers &middot; Machine Learning</div>
+  <h1>Can We Train a Computer? Two Ways to Point at a Memory</h1>
+  <p class="dek">We wired a transformer, by hand, to <em>be</em> a computer. Then we trained a second one, from
+  random noise, to do the exact same job. They compute the identical function &mdash; and yet, to every
+  standard test, they look like they live in different universes. Here is why, and why it matters.</p>
+  <p class="byline">Anastasios Kyrillidis &middot; Rice University</p>
+  <p class="venue">In collaboration with Microsoft Research &middot; &ldquo;Can we train a computer? Two
+  mechanisms for content addressing in transformers.&rdquo;</p>
+  <p class="links">The paper &mdash; and the code &mdash; are available on request at
+  <a href="mailto:anastasios@rice.edu">anastasios@rice.edu</a>.</p>
+  <hr class="rule-top">
+
+  <div class="brief">
+    <span class="lbl">In brief</span>
+    <p>A transformer&rsquo;s attention &ldquo;points&rdquo; at a memory cell by matching a query against a key.
+    We built a small transformer whose attention and ReLUs execute a real, Turing-complete computer &mdash; about
+    a hundred hand-set weights turn a neural network into a simple processing unit. We also just <em>trained</em> a
+    transformer, from scratch, to do the same job; it succeeds, and even chains single steps into multi-step
+    programs it never saw. So we have two networks that compute the same function. Do they work the same way?
+    A weight-space test says &ldquo;different algorithm.&rdquo; A mechanistic probe says &ldquo;same
+    family.&rdquo; The answer is that gradient descent found a more <em>perpendicular</em> internal code for
+    pointing at memory &mdash; and that magnitude gap, not any real disagreement, is what fools the first test.</p>
+  </div>
+
+  <h2><span class="num">1</span>A computer with one instruction</h2>
+  <p class="drop">There is a programming language with exactly one instruction. It is called <strong>SUBLEQ</strong>
+  &mdash; short for &ldquo;subtract, and branch if less-than-or-equal to zero.&rdquo; That is the whole
+  instruction set. You give it three addresses; it subtracts the contents of one memory cell from another, writes
+  the result back, and then, if that result came out at or below zero, it jumps somewhere else in the program.
+  Then, repeat. It sounds far too meagre to do anything. It is, in fact, <em>Turing-complete</em>: with enough of
+  these little subtract-and-branch steps you can compute anything any computer can compute. Addition,
+  multiplication, division, square roots, loops, conditionals &mdash; all of it, out of one instruction.</p>
+
+  <p>That makes SUBLEQ a beautiful object for one specific experiment. The computer is simple enough to hold in
+  your head, and you can build it out of unusual parts. Our unusual part is a <em>transformer</em>, the
+  architecture behind modern language models. SUBLEQ lets us pin down an old, slippery question: when a neural
+  network is trained to do a job we already know how to build by hand, does it end up working the <em>same
+  way</em> we would have built it?</p>
+
+  <div class="brief built">
+    <span class="lbl">In brief &middot; what SUBLEQ is</span>
+    <p><strong>SUBLEQ</strong> = <em>SUB</em>tract and branch if <em>L</em>ess-than-or-<em>EQ</em>ual to zero. One
+    instruction, three operands \(a, b, c\): compute \(\mathrm{mem}[b] \leftarrow \mathrm{mem}[b] -
+    \mathrm{mem}[a]\); if the result \(\le 0\), jump to instruction \(c\), otherwise continue.</p>
+    <p>It is a <em>one-instruction set computer</em> (OISC), and it is Turing-complete &mdash; a full
+    processor&rsquo;s worth of computation expressed with a single verb. That extreme simplicity is exactly what
+    lets us hand-build a transformer that runs it, and check a trained one against the ground truth.</p>
+  </div>
+
+  <h2><span class="num">2</span>Two ways to make a transformer be one</h2>
+  <p>There are two very different ways to get a transformer to run SUBLEQ, and the paper is about what happens
+  when you compare them.</p>
+
+  <p>The first way is to <strong>wire it by hand</strong>. Following a line of work showing that transformers can
+  be constructed to loop like little programmable machines, you choose the weights so each layer performs a piece
+  of the subtract-and-branch: attention heads that fetch the right operands from memory, ReLU units that do the
+  arithmetic and the comparison. Call this hand-built network \(\theta_C\) &mdash; <em>C</em> for
+  <em>constructed</em>. It is startlingly sparse: of roughly 2.1 million weights, only about <strong>a
+  hundred</strong> are nonzero and actually doing the logic; the rest are exactly zero. It runs SUBLEQ at
+  <strong>100%</strong> accuracy, because we told it precisely how.</p>
+
+  <p>The second way is to <strong>train one from scratch</strong>. Start from random noise, show it examples of
+  single SUBLEQ steps, and let gradient descent find weights that reproduce them. Call this network
+  \(\theta_T\) &mdash; <em>T</em> for <em>trained</em>. It, too, reaches <strong>100%</strong> single-step
+  accuracy. More striking: although it was only ever trained on single steps, it <em>generalizes</em> to whole
+  multi-step programs it never saw executed &mdash; Fibonacci, multiplication, division, square roots &mdash;
+  running them correctly <strong>99.8%</strong> of the time (802 of 804 test programs), with only a couple of
+  honest stumbles on the hardest cases.</p>
+
+  <p>So now we have two networks. They both run the same Turing-complete computer, perfectly. One we built; one we
+  grew. The obvious next question &mdash; the whole reason to set this up &mdash; is whether they are secretly the
+  same machine underneath.</p>
+
+  <figure>
+    <div class="card">
+    <svg viewBox="0 0 720 268" role="img" aria-label="Two attention pointers: on the left, a soft Gaussian bump over positions (hand-built, Gaussian keys); on the right, a set of near-orthogonal spikes (trained, orthogonal keys).">
+      <line x1="40"  y1="196" x2="330" y2="196" stroke="#cfc6b2" stroke-width="1.4"/>
+      <line x1="390" y1="196" x2="680" y2="196" stroke="#cfc6b2" stroke-width="1.4"/>
+      <path d="M40,192 C110,192 140,54 185,54 C230,54 260,192 330,192" fill="none" stroke="#a9761c" stroke-width="3"/>
+      <path d="M40,192 C110,192 140,54 185,54 C230,54 260,192 330,192 L330,196 L40,196 Z" fill="#a9761c" opacity="0.12"/>
+      <line x1="185" y1="54" x2="185" y2="196" stroke="#8a5f16" stroke-width="1" stroke-dasharray="3 3"/>
+      <text class="svglbl" x="185" y="216" text-anchor="middle" font-size="12" fill="#8a5f16">target cell</text>
+      <text class="svglbl" x="185" y="40" text-anchor="middle" font-size="12.5" fill="#8a5f16">one broad, overlapping peak</text>
+      <g stroke="#1f6b67" stroke-width="2.6">
+        <line x1="420" y1="196" x2="420" y2="138"/><line x1="470" y1="196" x2="470" y2="118"/>
+        <line x1="520" y1="196" x2="520" y2="66"/><line x1="570" y1="196" x2="570" y2="128"/>
+        <line x1="620" y1="196" x2="620" y2="110"/><line x1="660" y1="196" x2="660" y2="146"/>
+      </g>
+      <g fill="#1f6b67">
+        <circle cx="420" cy="138" r="3"/><circle cx="470" cy="118" r="3"/><circle cx="520" cy="66" r="4"/>
+        <circle cx="570" cy="128" r="3"/><circle cx="620" cy="110" r="3"/><circle cx="660" cy="146" r="3"/>
+      </g>
+      <line x1="520" y1="66" x2="520" y2="196" stroke="#17544f" stroke-width="1" stroke-dasharray="3 3"/>
+      <text class="svglbl" x="520" y="216" text-anchor="middle" font-size="12" fill="#17544f">target cell</text>
+      <text class="svglbl" x="540" y="50" text-anchor="middle" font-size="12.5" fill="#17544f">sharp, near-independent spikes</text>
+      <text class="svglbl" x="185" y="250" text-anchor="middle" font-size="13.5" fill="#2c2218">hand-built: Gaussian keys</text>
+      <text class="svglbl" x="535" y="250" text-anchor="middle" font-size="13.5" fill="#2c2218">trained: orthogonal keys</text>
+      <line x1="360" y1="36" x2="360" y2="230" stroke="#ddd4c0" stroke-width="1"/>
+    </svg>
+    </div>
+    <figcaption><b>Two ways to point at the same cell.</b> Both networks must make attention single out one memory
+    position. The <span style="color:#8a5f16">hand-built</span> circuit does it with a single <em>broad</em> bump
+    whose neighbouring keys strongly overlap &mdash; a &ldquo;Gaussian&rdquo; pointer. The
+    <span style="color:#17544f">trained</span> network does it with a set of sharp, nearly
+    <em>perpendicular</em> spikes &mdash; each position gets its own almost-independent key. Same destination,
+    two different internal codes for getting there.</figcaption>
+  </figure>
+
+  <h2><span class="num">3</span>The tension: two tests disagree</h2>
+  <p>How do you check whether two networks &ldquo;learned the same algorithm&rdquo;? The field&rsquo;s default
+  instrument is a <strong>weight-space</strong> test called <em>mode connectivity</em>. Line up the two
+  networks&rsquo; weights and walk in a straight line from one to the other, watching the accuracy. If they are
+  the same solution in slightly different clothes, every network along that path should keep working &mdash; you
+  slide from one to the other without falling off a cliff. If accuracy collapses in the middle, they sit in
+  different &ldquo;basins,&rdquo; and the usual conclusion is: different algorithms.</p>
+
+  <p>We ran it. Every straight-line interpolation between \(\theta_C\) and \(\theta_T\) <em>collapses</em> &mdash;
+  accuracy craters partway across. By the letter of the standard test, the verdict is unambiguous: these are two
+  different algorithms, in two different basins.</p>
+
+  <p>But there is a second instrument, and it says the opposite. Instead of comparing raw weights, a
+  <strong>mechanistic probe</strong> asks what each network is actually <em>doing</em> &mdash; which attention
+  heads fetch which operands, what each part computes. Probe both networks and a shared skeleton appears: the
+  trained network has independently rediscovered the two pointer-dereference operations at the heart of SUBLEQ
+  &mdash; reading \(\mathrm{mem}[a]\) and \(\mathrm{mem}[b]\) &mdash; the same content-addressing family the
+  hand-built circuit uses. Same job, same primitives.</p>
+
+  <figure>
+    <img src="assets/img/ctac_corner.png" alt="Scatter plot: quadratic-fit and K-matrix off-diagonal, both increasing toward 'Gaussian'. Trained networks cluster in the lower-left 'orthogonal-key' region; the hand-built theta_C sits alone in the upper-right 'Gaussian' corner.">
+    <figcaption><b>A gap you can see.</b> Two different measurements of &ldquo;how Gaussian is the pointer?&rdquo;
+    plotted against each other, each rising toward the top-right. Every <span style="color:#17544f">trained</span>
+    network &mdash; across many seeds and variants &mdash; lands in the <span style="color:#17544f">orthogonal-key</span>
+    region at lower-left. The <span style="color:#8a5f16">hand-built</span> circuit \(\theta_C\) sits by itself in
+    the far <span style="color:#8a5f16">Gaussian</span> corner. Nothing lives in between. That empty middle is the
+    same emptiness the weight-space test reads as &ldquo;different basins&rdquo; &mdash; but here it is telling us
+    something more precise.</figcaption>
+  </figure>
+
+  <p>So which is it &mdash; same algorithm or not? Two respected tests flatly disagree, and reconciling them is
+  the whole paper. The resolution is not to declare one test right and the other wrong. It is to notice that they
+  are measuring <em>different things</em>, and to name the thing that actually differs.</p>
+
+  <h2><span class="num">4</span>The resolution: Gaussian keys vs orthogonal keys</h2>
+  <p>Attention points at a memory cell by an <em>overlap</em> &mdash; a dot product between a query vector for
+  &ldquo;the cell I want&rdquo; and a key vector for each position. The position whose key best matches the query
+  wins the pointer. The two networks build those position-keys in fundamentally different ways.</p>
+
+  <p>The hand-built \(\theta_C\) sharpens its pointer using a smooth, quadratic-in-distance rule. The upshot is
+  that neighbouring positions have <em>strongly correlated</em> keys: key 10 and key 11 look very much alike, key
+  10 and key 12 a bit less, and so on, tapering off with distance. It is a <em>Gaussian</em> pointer &mdash; one
+  broad, overlapping bump (the left panel of the drawing above). Useful, and exactly how a careful engineer might
+  build it.</p>
+
+  <p>The trained \(\theta_T\) does something else entirely. Gradient descent hands it a set of position-keys that
+  are nearly <em>orthogonal</em> &mdash; nearly perpendicular to one another. Each position gets its own
+  almost-independent code, with little overlap between neighbours (the right panel). Both schemes point at the
+  right cell perfectly well. They just encode &ldquo;which cell&rdquo; in geometrically opposite ways.</p>
+
+  <p>To make this measurable, we summarize each network with a single number, <em>K</em><sub>off</sub>: the
+  average overlap between the keys of <em>different</em> positions. High <em>K</em><sub>off</sub> means keys are
+  correlated (Gaussian); low means they are close to perpendicular (orthogonal). The two regimes are stark:</p>
+
+  <div class="eq">
+  \[
+  K_{\text{off}}(\theta_C) \approx 0.89
+  \qquad\text{vs.}\qquad
+  K_{\text{off}}(\theta_T) \in [\,0.20,\ 0.53\,]
+  \]
+  </div>
+
+  <p>For scale: if the keys were <em>completely</em> random and unrelated, this number would sit near a floor of
+  about <strong>0.031</strong>. The trained networks are not at that floor &mdash; they are meaningfully above it,
+  which is why the probe still finds real, shared structure &mdash; but they are nowhere near the hand-built
+  circuit&rsquo;s <strong>0.89</strong>. That is the gap. It is a gap in <em>magnitude</em>, not in kind, and it
+  is precisely what the weight-space interpolation was (mis)reading as &ldquo;a different algorithm.&rdquo; When
+  two solutions encode the same information at very different magnitudes, the straight line between their weights
+  runs through nonsense &mdash; even though both endpoints are doing the same thing.</p>
+
+  <div class="brief">
+    <span class="lbl">In brief &middot; what <em>K</em><sub>off</sub> measures</span>
+    <p><em>K</em><sub>off</sub> is the <em>off-diagonal</em> of the key-overlap matrix: the typical similarity
+    between the attention keys of two <em>different</em> memory positions, averaged over all pairs. (The diagonal
+    &mdash; a position with itself &mdash; is trivially perfect, so we ignore it.)</p>
+    <p><strong>High</strong> \(K_{\text{off}}\) (\(\approx 0.89\)) &rArr; neighbouring keys strongly overlap: a
+    broad, correlated, <em>Gaussian</em> pointer. <strong>Low</strong> \(K_{\text{off}}\) (\(0.20\)&ndash;\(0.53\))
+    &rArr; keys are near-perpendicular: sharp, near-independent, <em>orthogonal</em> pointing. The random-keys
+    floor is \(\approx 0.031\). One dial, and it cleanly separates the two mechanisms.</p>
+  </div>
+
+  <figure>
+    <img src="assets/img/ctac_kmatrix.png" alt="Four key-overlap matrices. Top row (hand-built, Gaussian): dense, deep-red, strongly correlated. Bottom row (trained, orthogonal): a bright diagonal against noisy near-zero off-diagonal.">
+    <figcaption><b>The money shot.</b> Each square is a <em>key-overlap matrix</em>: how much position \(k\)&rsquo;s
+    key resembles position \(k'\)&rsquo;s, for every pair. <span style="color:#8a5f16">Top row, hand-built:</span>
+    a dense wash &mdash; every position&rsquo;s key overlaps heavily with its neighbours&rsquo; (Gaussian,
+    \(K_{\text{off}}\approx 0.89\)). <span style="color:#17544f">Bottom row, trained:</span> a single bright
+    diagonal against a noisy, near-zero background &mdash; each position keeps its own near-perpendicular code
+    (orthogonal, \(K_{\text{off}}\) as low as \(0.20\)). Same function; visibly different mechanism. This one
+    picture is the paper.</figcaption>
+  </figure>
+
+  <p>There is a second, tidier signature of the same split. If you plot, for each attention head, the
+  pre-softmax score as a function of how far a position is from the target, the hand-built network draws smooth
+  parabolas &mdash; the fingerprint of its quadratic Gaussian rule. The trained network instead draws a single
+  sharp <em>spike</em> at the target and near-flat noise everywhere else &mdash; the fingerprint of orthogonal
+  keys.</p>
+
+  <figure>
+    <img src="assets/img/ctac_scores.png" alt="Left: hand-built network, smooth parabolic score curves peaking at the target, K_off 0.89. Right: trained network, a sharp spike at zero offset with flat noise elsewhere, K_off 0.24.">
+    <figcaption><b>Two fingerprints.</b> Attention score versus distance-to-target, one curve per head.
+    <span style="color:#8a5f16">Left (hand-built):</span> smooth parabolas &mdash; the broad Gaussian pointer,
+    \(K_{\text{off}}=0.89\). <span style="color:#17544f">Right (trained):</span> a single spike at the target
+    and flat noise around it &mdash; the near-orthogonal pointer, \(K_{\text{off}}=0.24\). The two mechanisms
+    even look different on paper.</figcaption>
+  </figure>
+
+  <h2><span class="num">5</span>How solid is it?</h2>
+  <p>A single trained network landing on orthogonal keys could be a fluke of one random seed. It is not. The
+  orthogonal-key regime shows up again and again: across many random seeds; across <strong>four</strong>
+  additional one-instruction-set variants (other flavours of the same subtract-and-branch idea); across
+  <strong>five</strong> architectural perturbations of the transformer itself (LayerNorm, GELU, depth six, and so
+  on); and in a control trained with no weight decay at all, ruling out that the effect is merely an artifact of
+  regularization pressure. That is roughly <strong>18</strong> networks in total, and the finding holds
+  throughout: hand-built lands Gaussian, trained lands orthogonal.</p>
+
+  <figure>
+    <img src="assets/img/ctac_universality.png" alt="Bar chart of per-network K_off across 18 models. All SUBLEQ-family trained nets cluster near 0.29, well below the hand-built Gaussian line at 0.89 and above the Welch floor at 0.031. The reverse-task bar sits higher, near 0.66.">
+    <figcaption><b>One regime, many networks.</b> Each bar is one trained network&rsquo;s
+    \(K_{\text{off}}\). Every SUBLEQ-family variant clusters together (mean \(\approx 0.29\)), far below the
+    <span style="color:#8a5f16">hand-built Gaussian line</span> at \(0.89\) and comfortably above the
+    random-keys floor at \(0.031\). The lone tall bar on the right is the honest scope check &mdash; a
+    <span style="color:#17544f">different</span> task (sequence reversal), where the same <em>signature</em>
+    appears but the precise number drifts to \(\approx 0.66\). Robust within the family; not a universal
+    constant.</figcaption>
+  </figure>
+
+  <p>That last bar matters, and we want to be careful about it. When we point the same machinery at a
+  <em>different</em> task &mdash; simply reversing a sequence &mdash; the qualitative <em>signature</em> transfers
+  (the spike-like score curves reappear), but the exact <em>K</em><sub>off</sub> value moves to about
+  <strong>0.66</strong>. So the phenomenon &mdash; &ldquo;training prefers a more orthogonal code than a careful
+  hand-construction&rdquo; &mdash; travels; the specific number \(0.20\)&ndash;\(0.53\) is
+  <em>SUBLEQ-family-specific</em>, not a law of nature. Saying so is part of the result, not a hedge on it.</p>
+
+  <p>We are equally careful on two other fronts. The mechanistic overlap between the networks is
+  <strong>partial</strong>, not total: \(\theta_T\) exactly reproduces the two pointer-dereference primitives,
+  but two of its other heads attend at the third operand &mdash; the same content-addressing <em>family</em>, a
+  different division of labour. And the trained network is guaranteed only on <em>single</em> SUBLEQ steps; its
+  success on full multi-step programs (that 99.8%) is emergent generalization, with the occasional honest
+  failure. We are not claiming a general-purpose computer fell out of gradient descent &mdash; the claim is
+  narrower, and we think more interesting.</p>
+
+  <h2><span class="num">6</span>What it means</h2>
+  <p>Step back and the shape of the lesson is clean. Here is a case &mdash; rare, because we hold the ground truth
+  &mdash; where the field&rsquo;s standard weight-space test for &ldquo;did these two networks learn the same
+  algorithm?&rdquo; gives the <em>wrong</em> answer. It reports &ldquo;different algorithms,&rdquo; and it is
+  fooled. Not by a real disagreement between the networks, but by a gap in the <em>magnitude</em> of how they
+  encode the same information. When two solutions differ mostly in scale, a straight line drawn between their
+  weights passes through territory that works for neither &mdash; and the test, reading that dead zone,
+  cries &ldquo;different basins.&rdquo;</p>
+
+  <p>The crucial move is to resist the obvious reading. The interpolation collapsing is <em>not</em> a fact about
+  the networks; it is a <strong>limitation of the test</strong>. What settled the question was looking inside
+  &mdash; probing the mechanism, naming Gaussian keys versus orthogonal keys, putting a number on the gap. The
+  practical takeaway for interpretability: when two networks might differ in magnitude, trust the probe over the
+  interpolation. And a quieter one for anyone who trains models: given a free choice between a smooth, correlated
+  code and a sharp, perpendicular one, gradient descent reliably reaches for the perpendicular. That preference,
+  made visible against a hand-built control, is worth knowing.</p>
+
+  <div class="ledger">
+    <div class="col proven">
+      <h3>Proven</h3>
+      <ul>
+        <li>Two functionally identical networks occupy <strong>two distinct key regimes</strong>: hand-built
+        Gaussian (\(K_{\text{off}}\approx 0.89\)) vs trained orthogonal (\(0.20\)&ndash;\(0.53\)), above the
+        \(0.031\) floor.</li>
+        <li><strong>Robust</strong> across seeds, 4 instruction-set variants, 5 architectural perturbations and a
+        no-weight-decay control (\(\approx 18\) nets).</li>
+        <li>The weight-space &ldquo;different basin&rdquo; verdict is an <strong>artifact of the magnitude
+        gap</strong>; mechanistic probes resolve it.</li>
+      </ul>
+    </div>
+    <div class="col open">
+      <h3>Open / scope</h3>
+      <ul>
+        <li>The exact \(K_{\text{off}}\) band is <strong>SUBLEQ-family-specific</strong>; the signature transfers
+        to sequence reversal but the value shifts (\(\approx 0.66\)).</li>
+        <li>Mechanistic overlap is <strong>partial</strong>: the two dereference primitives match; operand-\(c\)
+        heads take a different role.</li>
+        <li>The trained net is <strong>single-step exact</strong>; multi-step is emergent (99.8%), with honest
+        failures.</li>
+      </ul>
+    </div>
+  </div>
+
+  <hr>
+  <h2>A soft close</h2>
+  <p>We rarely get to check our interpretability tools against the truth, because we rarely know the truth. SUBLEQ
+  gave us that rare thing: a network we understand completely, standing next to one we merely trained, both
+  computing the very same function. Held up to the light, they turned out to point at memory through different
+  internal codes &mdash; and the standard instrument for telling them apart was reading the difference wrong. What
+  gradient descent actually picks, when it is free to pick, is a hard thing to see. Once in a while, with the
+  right toy computer, you can catch a clear glimpse of it.</p>
+
+  <p class="foot">Results are across roughly 18 trained networks &mdash; multiple seeds, four one-instruction-set
+  variants, five architectural perturbations, and a no-weight-decay control. Every number here matches the paper;
+  the mode-connectivity collapse is reported as a limitation of the weight-space test, not a verdict on the
+  networks. The full write-up, the mechanistic analysis, and the code are available on request at
+  <a href="mailto:anastasios@rice.edu">anastasios@rice.edu</a>. By Anastasios Kyrillidis (Rice University), in
+  collaboration with Microsoft Research.</p>
+
+  <a class="backlink" href="./blogs.html">&larr; All AI-OWLS posts</a>
+
+</div>
+</body>
+</html>
