@@ -11,6 +11,9 @@ layout: default
     padding: 16px 0; border-bottom: 1px solid #e6e1d4;
   }
   .blog-list li:last-child { border-bottom: none; }
+  /* a parent that has a branched sub-list: don't flex the <li> itself */
+  .blog-list li.has-sub { display: block; }
+  .blog-row { display: flex; align-items: center; gap: 20px; }
   .blog-list .thumb { flex: 0 0 180px; }
   .blog-list .thumb a {
     display: flex; align-items: center; justify-content: center;
@@ -38,9 +41,32 @@ layout: default
     display: block; margin-top: 4px;
     font-size: 0.82em; color: #8a8780; font-style: italic;
   }
+
+  /* branched sub-blog group, nested under a related parent (cf. QuanTAS) */
+  .sublist {
+    list-style: none; padding: 0;
+    margin: 12px 0 0 200px;
+    border-left: 2px solid #e6e1d4;
+  }
+  .sublist li {
+    display: flex; align-items: center; gap: 12px;
+    padding: 8px 0 8px 14px; border-bottom: none;
+  }
+  .sublist .icon {
+    flex: 0 0 28px; width: 28px; height: 28px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; line-height: 1;
+    background: #fbf7f0; border: 1px solid #d8d3c4; border-radius: 4px;
+  }
+  .sublist .title a { text-decoration: none; font-weight: 500; font-size: 0.97em; }
+  .sublist .title a:hover { text-decoration: underline; }
+  .sublist .meta { display: block; margin-top: 2px; font-size: 0.82em; color: #6c6960; }
+
   @media (max-width: 540px) {
     .blog-list li { flex-direction: column; align-items: flex-start; }
+    .blog-row { flex-direction: column; align-items: flex-start; }
     .blog-list .thumb, .blog-list .thumb a { width: 100%; max-width: 360px; height: auto; aspect-ratio: 16 / 10; }
+    .sublist { margin-left: 12px; }
   }
 </style>
 
@@ -59,30 +85,29 @@ layout: default
     </span>
   </li>
 
-  <li>
-    <span class="thumb">
-      <a href="./guided_deq.html">
-        <img src="./assets/img/gdeq_thumbnail.svg" alt="Two jobs in a relaxation: which valley (basin selection) and how deep (equilibrium precision)">
-      </a>
-    </span>
-    <span class="title">
-      <a href="./guided_deq.html">Which Valley, and How Deep: Training Neural Atomic Relaxation at a Fraction of the Memory</a>
-      <span class="meta">A structure relaxation does two separable jobs &mdash; pick the right energy minimum, then settle to its bottom. Splitting them matches full backprop on silicon at 3.5&times; less memory and reaches <em>more</em> correct minima &mdash; with a checkable map of exactly when the trick helps.</span>
-      <span class="credits">From the OptimaLab (Rice CS); one wrapper over ADAPT, eSEN-OC25 &amp; GemNet-OC.</span>
-    </span>
-  </li>
+  <li class="has-sub">
+    <div class="blog-row">
+      <span class="thumb">
+        <a href="./guided_deq.html">
+          <img src="./assets/img/gdeq_thumbnail.svg" alt="Two jobs in a relaxation: which valley (basin selection) and how deep (equilibrium precision)">
+        </a>
+      </span>
+      <span class="title">
+        <a href="./guided_deq.html">Which Valley, and How Deep: Training Neural Atomic Relaxation at a Fraction of the Memory</a>
+        <span class="meta">A structure relaxation does two separable jobs &mdash; pick the right energy minimum, then settle to its bottom. Splitting them matches full backprop on silicon at 3.5&times; less memory and reaches <em>more</em> correct minima &mdash; with a checkable map of exactly when the trick helps.</span>
+        <span class="credits">From the OptimaLab (Rice CS); one wrapper over ADAPT, eSEN-OC25 &amp; GemNet-OC.</span>
+      </span>
+    </div>
 
-  <li>
-    <span class="thumb">
-      <a href="./measuring_relaxation.html">
-        <img src="./assets/img/measuring_relaxation_thumbnail.svg" alt="A right-skewed error distribution: the median sits well left of the mean, pulled right by a heavy tail">
-      </a>
-    </span>
-    <span class="title">
-      <a href="./measuring_relaxation.html">What Counts as a Relaxed Structure?</a>
-      <span class="meta">Machine-learned potentials relax structures all day, yet the field has no agreed metric for whether they got it right. A sober map of the three metric families, why the global mean misleads (mean/median &asymp; 1.3&times; on our own data), and a literature review crediting the six benchmarks that already built this conversation.</span>
-      <span class="credits">A survey / position piece &mdash; companion to <a href="./guided_deq.html">Which Valley, and How Deep</a>.</span>
-    </span>
+    <ul class="sublist">
+      <li>
+        <span class="icon">📏</span>
+        <span class="title">
+          <a href="./measuring_relaxation.html">What Counts as a Relaxed Structure?</a>
+          <span class="meta">The companion question: ML potentials have no agreed metric for relaxation &ldquo;success&rdquo;. A sober map of the three metric families, why the global mean misleads (mean/median &asymp; 1.3&times; on our own data), and a literature review crediting the six benchmarks that already built this conversation.</span>
+        </span>
+      </li>
+    </ul>
   </li>
 
   <li>
