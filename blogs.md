@@ -48,6 +48,19 @@ layout: default
 
   <li>
     <span class="thumb">
+      <a href="./can_we_train_a_computer.html">
+        <img src="./assets/img/ctac_kmatrix.png" alt="Two key-overlap matrices: hand-built Gaussian addressing (dense, correlated) vs trained orthogonal-key addressing (sharp diagonal)">
+      </a>
+    </span>
+    <span class="title">
+      <a href="./can_we_train_a_computer.html">Can We Train a Computer? Two Ways to Point at a Memory</a>
+      <span class="meta">We wired a transformer, by hand, to <em>be</em> a Turing-complete computer, then trained another from scratch to do the identical job. Both run it perfectly &mdash; yet to every weight-space test they look like different algorithms. They aren&rsquo;t: gradient descent found a more <em>perpendicular</em> way to point at memory (K<sub>off</sub> 0.89 vs 0.20&ndash;0.53), and that magnitude gap is what fools the standard test.</span>
+      <span class="credits">A ground-truthed case for mechanistic probes over weight-space interpolation. NeurIPS 2026 submission (under review).</span>
+    </span>
+  </li>
+
+  <li>
+    <span class="thumb">
       <a href="./guided_deq.html">
         <img src="./assets/img/gdeq_thumbnail.svg" alt="Two jobs in a relaxation: which valley (basin selection) and how deep (equilibrium precision)">
       </a>
@@ -56,6 +69,19 @@ layout: default
       <a href="./guided_deq.html">Which Valley, and How Deep: Training Neural Atomic Relaxation at a Fraction of the Memory</a>
       <span class="meta">A structure relaxation does two separable jobs &mdash; pick the right energy minimum, then settle to its bottom. Splitting them matches full backprop on silicon at 3.5&times; less memory and reaches <em>more</em> correct minima &mdash; with a checkable map of exactly when the trick helps.</span>
       <span class="credits">From the OptimaLab (Rice CS); one wrapper over ADAPT, eSEN-OC25 &amp; GemNet-OC.</span>
+    </span>
+  </li>
+
+  <li>
+    <span class="thumb">
+      <a href="./measuring_relaxation.html">
+        <img src="./assets/img/measuring_relaxation_thumbnail.svg" alt="A right-skewed error distribution: the median sits well left of the mean, pulled right by a heavy tail">
+      </a>
+    </span>
+    <span class="title">
+      <a href="./measuring_relaxation.html">What Counts as a Relaxed Structure?</a>
+      <span class="meta">Machine-learned potentials relax structures all day, yet the field has no agreed metric for whether they got it right. A sober map of the three metric families, why the global mean misleads (mean/median &asymp; 1.3&times; on our own data), and a literature review crediting the six benchmarks that already built this conversation.</span>
+      <span class="credits">A survey / position piece &mdash; companion to <a href="./guided_deq.html">Which Valley, and How Deep</a>.</span>
     </span>
   </li>
 

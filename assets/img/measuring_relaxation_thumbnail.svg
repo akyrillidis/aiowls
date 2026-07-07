@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 288 176" role="img" aria-label="A right-skewed error distribution: the median (typical structure) sits well left of the mean, which is pulled right by a heavy tail.">
+  <rect width="288" height="176" fill="#fbfaf7"/>
+  <rect x="0" y="0" width="288" height="7" fill="#e3120b"/>
+  <!-- baseline -->
+  <line x1="30" y1="140" x2="270" y2="140" stroke="#121212" stroke-width="1.4"/>
+  <!-- right-skewed bars (a few hard structures form the tail) -->
+  <g fill="#a4a4a4">
+    <rect x="34"  y="86"  width="16" height="54"/>
+    <rect x="52"  y="60"  width="16" height="80"/>
+    <rect x="70"  y="74"  width="16" height="66"/>
+    <rect x="88"  y="98"  width="16" height="42"/>
+    <rect x="106" y="112" width="16" height="28"/>
+    <rect x="124" y="122" width="16" height="18"/>
+    <rect x="142" y="128" width="16" height="12"/>
+    <rect x="160" y="131" width="16" height="9"/>
+    <rect x="178" y="133" width="16" height="7"/>
+    <rect x="200" y="134" width="16" height="6"/>
+    <rect x="226" y="135" width="16" height="5"/>
+  </g>
+  <!-- median marker (blue) -->
+  <line x1="70" y1="30" x2="70" y2="146" stroke="#006ba6" stroke-width="2.4"/>
+  <text x="70" y="24" text-anchor="middle" font-family="'Source Sans 3',sans-serif" font-size="12.5" font-weight="700" fill="#006ba6">median</text>
+  <!-- mean marker (red), pulled right by the tail -->
+  <line x1="118" y1="30" x2="118" y2="146" stroke="#e3120b" stroke-width="2.4" stroke-dasharray="5 3"/>
+  <text x="118" y="24" text-anchor="start" font-family="'Source Sans 3',sans-serif" font-size="12.5" font-weight="700" fill="#e3120b">mean</text>
+  <!-- caption -->
+  <text x="30" y="163" font-family="'Source Sans 3',sans-serif" font-size="11.5" fill="#55524c">the average overstates the typical structure</text>
+</svg>

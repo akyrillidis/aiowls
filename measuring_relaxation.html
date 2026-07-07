@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Machine-learned potentials relax millions of structures a day, yet the field has no agreed metric for whether they got it right. A short, sober map of the metric landscape for ML-driven atomic relaxation — the three families, the trap of the global mean, and where the genuinely open problems are.">
+<meta name="keywords" content="machine-learned interatomic potentials, structure relaxation, evaluation metrics, Matbench Discovery, forces are not enough, MLIP benchmarks, materials informatics">
+<meta property="og:title" content="What Counts as a Relaxed Structure?" />
+<meta property="og:description" content="ML potentials have no agreed metric for relaxation success. A map of the mess — the three metric families, why the global mean lies, and where the real problems hide." />
+<meta property="og:image" content="https://akyrillidis.github.io/aiowls/assets/img/measuring_relaxation_og.png" />
+<meta property="og:type" content="article" />
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="What Counts as a Relaxed Structure?">
+<meta name="twitter:description" content="ML potentials have no agreed metric for relaxation success. A sober map of the metric landscape — and where the open problems are.">
+<meta name="twitter:image" content="https://akyrillidis.github.io/aiowls/assets/img/measuring_relaxation_og.png">
+<title>What Counts as a Relaxed Structure? &middot; AI-OWLS</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:ital,wght@0,400;0,600;0,700;0,900;1,400&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;1,8..60,400&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<style>
+  :root{
+    --paper:#fbfaf7; --ink:#121212; --soft:#55524c; --line:#ded9cf;
+    --ecoRed:#e3120b; --ecoBlue:#006ba6; --ecoGrey:#a4a4a4; --ecoDark:#0e0e0e;
+    --posbg:#eaf3f7;
+  }
+  *{box-sizing:border-box;}
+  body{
+    background:var(--paper); color:var(--ink);
+    font-family:"Source Sans 3", Helvetica, Arial, sans-serif; font-size:18.5px; line-height:1.55;
+    margin:0; -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:740px; margin:0 auto; padding:0 22px 90px;}
+  /* Economist red masthead strip */
+  .masthead{background:var(--ecoRed); margin:0 -9999px; padding:0;}
+  .masthead .inner{max-width:740px; margin:0 auto; padding:9px 22px; color:#fff;
+    font-weight:900; font-size:.82rem; letter-spacing:.02em; text-transform:uppercase;
+    display:flex; justify-content:space-between; align-items:center;}
+  .masthead .inner span:last-child{font-weight:600; opacity:.9;}
+  .kick{font-weight:700; font-size:.76rem; letter-spacing:.06em; text-transform:uppercase;
+    color:var(--ecoRed); margin:34px 0 10px;}
+  h1{font-weight:900; font-size:2.5rem; line-height:1.08; letter-spacing:-.015em; margin:0 0 .3em;}
+  .dek{font-family:"Source Serif 4", Georgia, serif; font-size:1.28rem; line-height:1.42;
+    color:var(--soft); font-weight:400; margin:0 0 1.1em;}
+  .standfirst{font-size:.9rem; color:var(--soft); border-bottom:2px solid var(--ink);
+    padding-bottom:12px; margin-bottom:6px; font-weight:600; text-transform:uppercase; letter-spacing:.04em;}
+  p{margin:0 0 1.05em;} strong{font-weight:700;}
+  a{color:var(--ecoBlue); text-decoration:none; border-bottom:1px solid rgba(0,107,166,.35);}
+  a:hover{border-bottom-color:var(--ecoBlue); background:rgba(0,107,166,.07);}
+  h2{font-weight:700; font-size:1.34rem; line-height:1.2; margin:2em 0 .5em; letter-spacing:-.01em;}
+  h2 .n{color:var(--ecoRed); font-family:"IBM Plex Mono",monospace; font-size:.8em; margin-right:.5em;}
+  hr{border:0; border-top:1px solid var(--line); margin:32px 0;}
+  table{border-collapse:collapse; width:100%; margin:24px 0; font-size:.87rem;}
+  caption{caption-side:top; text-align:left; font-weight:700; font-size:.78rem; letter-spacing:.05em;
+    text-transform:uppercase; color:var(--ink); border-top:3px solid var(--ecoRed); padding:8px 0 4px;}
+  th,td{text-align:left; padding:8px 10px; border-bottom:1px solid var(--line); vertical-align:top;}
+  thead th{font-weight:700; color:#fff; background:var(--ecoDark); font-size:.72rem;
+    letter-spacing:.03em; text-transform:uppercase;}
+  td:first-child{font-weight:700; white-space:nowrap;}
+  td .blind{color:var(--ecoRed); font-weight:600;}
+  .pull{background:var(--posbg); border-left:4px solid var(--ecoBlue); padding:16px 20px;
+    margin:26px 0; font-family:"Source Serif 4",serif;}
+  .pull b{color:var(--ecoBlue);}
+  .stat{display:flex; gap:20px; align-items:baseline; margin:24px 0; padding:16px 0;
+    border-top:2px solid var(--ink); border-bottom:1px solid var(--line);}
+  .stat .big{font-weight:900; font-size:3.1rem; line-height:.9; color:var(--ecoRed); letter-spacing:-.02em;}
+  .stat .cap{font-size:.9rem; color:var(--soft);}
+  .credit{background:#f4f1ea; border:1px solid var(--line); border-radius:4px; padding:16px 20px; margin:24px 0; font-size:.92rem;}
+  .credit .lbl{font-weight:700; font-size:.74rem; letter-spacing:.06em; text-transform:uppercase; color:var(--soft); display:block; margin-bottom:8px;}
+  .credit ul{margin:0; padding-left:1.1em;} .credit li{margin:5px 0;}
+  code{font-family:"IBM Plex Mono",monospace; font-size:.85em; background:#efeadf; padding:1px 5px; border-radius:3px;}
+  .foot{font-size:.82rem; color:var(--soft); margin-top:36px; line-height:1.55;}
+  .foot b{color:var(--ink);}
+  .backlink{font-size:.9rem; margin:44px 0 0; display:block; font-weight:600;}
+  @media (max-width:560px){ body{font-size:17px;} h1{font-size:2rem;} .dek{font-size:1.12rem;} table{font-size:.8rem;} th,td{padding:6px 6px;} .stat{flex-direction:column; gap:6px;} .stat .big{font-size:2.5rem;} }
+</style>
+</head>
+<body>
+
+<div class="masthead"><div class="inner"><span>AI&middot;OWLS &nbsp;/&nbsp; The Data Desk</span><span>Evaluation &middot; 2026</span></div></div>
+
+<div class="wrap">
+
+  <div class="kick">Machine-learned potentials &middot; how we score them</div>
+  <h1>What counts as a relaxed structure?</h1>
+  <p class="dek">Neural force fields: the field still has no single, agreed metric for whether they got it right. A short map of the mess &mdash; and where the real problems hide.</p>
+  <div class="standfirst">A survey from the AI-OWLS desk</div>
+
+  <p>Structure relaxation &mdash; nudging a guessed arrangement of atoms downhill until the forces vanish &mdash; is the workhorse inner loop of computational materials science. A machine-learned interatomic potential (MLIP) makes each step cheap, and modern potentials run this loop across enormous candidate libraries. Which raises a deceptively simple question: <strong>when the model hands back a &ldquo;relaxed&rdquo; structure, how do you score whether it succeeded?</strong></p>
+
+  <p>Ask three groups and you may get three answers. One reports energy error against a reference calculation; one reports the mean distance from the true relaxed geometry; one runs a single expensive quantum calculation on the output and checks whether the forces really vanished. They are not measuring the same thing, and &mdash; as we will see &mdash; they do not always agree on who won.</p>
+
+  <h2><span class="n">01</span>Three families, three blind spots</h2>
+  <p>The metrics in circulation sort cleanly into three families. Each answers a real question; each has a characteristic way of lying.</p>
+
+  <table>
+    <caption>How the field scores a relaxation</caption>
+    <thead>
+      <tr><th>Family</th><th>Typical metrics</th><th>What it measures &mdash; and its blind spot</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Geometry</td><td>coordinate RMSD / MAE, max per-atom displacement, fraction of structures within a distance threshold (the OC20 IS2RS style)</td><td>How close the shape is to the reference. <span class="blind">Blind spot:</span> a small coordinate error need not sit at a true minimum, and a global mean is dominated by a handful of hard structures.</td></tr>
+      <tr><td>Relaxedness</td><td>residual force magnitude, max/mean force norm, fraction of structures with forces below a threshold (AFbT)</td><td>Whether the output is physically at equilibrium. <span class="blind">Blind spot:</span> forces can be small at the <em>wrong</em> minimum; and force error is often uncorrelated with the thing you care about.</td></tr>
+      <tr><td>Cost</td><td>DFT/optimizer steps saved, fraction reaching a convergence criterion</td><td>Whether the prediction actually cheapens the downstream calculation &mdash; the honest goal. <span class="blind">Blind spot:</span> expensive to measure, so it is reported least often, on the smallest samples.</td></tr>
+    </tbody>
+  </table>
+
+  <p>Two facts follow immediately. First, the metric you emphasise encodes what you think the task <em>is</em> &mdash; a shape, a stationary point, or a saved computation. Second, the cheapest metrics to compute (geometry, force error) are the furthest from the goal that actually matters (cost saved).</p>
+
+  <h2><span class="n">02</span>The global mean lies more than you think</h2>
+  <p>The most common reporting choice &mdash; a single dataset-averaged error &mdash; is also the most treacherous, because relaxation datasets are heterogeneous. A few structures start far from equilibrium, or have many atoms, or are simply hard; they dominate the average and drown out the typical case.</p>
+
+  <p>We can put a number on it from our own work. On an oxide-surface relaxation set of 150 structures, the base potential's average structural error (a mass-weighted RMSD) has a <strong>mean-to-median ratio of about 1.3</strong> &mdash; the mean sits a third above the typical structure, pulled up by the tail. Eighty-two percent of structures improve over doing nothing, but the median structure closes only <strong>~9%</strong> of its distance to the target. Report only the mean and you would misread both the typical quality and the spread.</p>
+
+  <div class="stat">
+    <span class="big">1.3&times;</span>
+    <span class="cap">mean-to-median ratio of per-structure error on a 150-structure oxide relaxation set &mdash; the average overstates the typical case. Fractions and per-structure relative improvement read cleaner.</span>
+  </div>
+
+  <p>The fixes are known and cheap: report the <strong>median</strong> and the <strong>distribution</strong>, not just the mean; report the <strong>fraction of structures within a threshold</strong> (a first-class metric, not an afterthought); and, best of all, report <strong>per-structure relative improvement</strong> &mdash; how much of each structure's initial error the method removed &mdash; which normalises away the &ldquo;a few hard structures&rdquo; effect and answers the question collaborators actually ask: <em>are we consistently less wrong after the model than before?</em></p>
+
+  <h2><span class="n">03</span>Literature review</h2>
+  <p>None of this is a scoop, and it would be dishonest to pretend otherwise. &ldquo;Aggregate error metrics can mislead; use physics-, distribution- and task-aware evaluation instead&rdquo; is by now a mature, actively-curated conversation. The honest thing is to name the people who built it.</p>
+
+  <div class="credit">
+    <span class="lbl">The conversation this post is summarising, not starting</span>
+    <ul>
+      <li><strong>Fu, Wu, Wang <em>et al.</em>, &ldquo;Forces are Not Enough&rdquo; (TMLR, 2023)</strong> &mdash; the founding result that force accuracy is <em>not</em> aligned with simulation-level success. <a href="https://arxiv.org/abs/2210.07237">arXiv:2210.07237</a>.</li>
+      <li><strong>Liu, He, Mo (2023)</strong> &mdash; shows low averaged errors are insufficient because rare, high-error atoms are washed out by the near-equilibrium majority, and proposes new metrics <em>validated</em> to predict downstream MD/diffusion properties (activation energies) better than force MAE. <a href="https://www.nature.com/articles/s41524-023-01123-3">npj Comput. Mater. 9:174</a> (arXiv:2306.11639).</li>
+      <li><strong>Matbench Discovery</strong> (Riebesell <em>et al.</em>, 2025) &mdash; standardises stability discovery around classification (F1, discovery-acceleration factor) and structure/symmetry metrics, and explicitly documents a regression-vs-classification misalignment. <a href="https://arxiv.org/abs/2308.14920">arXiv:2308.14920</a> (Nat. Mach. Intell.).</li>
+      <li><strong>Open Catalyst (OC20/OC22)</strong> (2020&ndash;) &mdash; baked &ldquo;distance alone is insufficient&rdquo; into benchmark design, adding a fresh-DFT force-below-threshold check. <a href="https://arxiv.org/abs/2010.09990">arXiv:2010.09990</a>.</li>
+      <li><strong>MLIP Arena</strong> (Chiang <em>et al.</em>, NeurIPS 2025 Spotlight) &mdash; names &ldquo;over-reliance on error-based metrics&rdquo; as a headline problem and evaluates physics awareness, stability and thermodynamics. <a href="https://arxiv.org/abs/2509.20630">arXiv:2509.20630</a>.</li>
+      <li><strong>CatBench</strong> (Moon <em>et al.</em>, <em>Cell Rep. Phys. Sci.</em> 6:102968, 2025) &mdash; reports total <em>and</em> anomaly-filtered (&ldquo;normal&rdquo;) error and classifies each relaxation (normal, adsorbate-migration, or anomaly), so a model's standing can depend on which error you report.</li>
+    </ul>
+  </div>
+
+  <p>Read together, these say the same thing from six directions: a scalar averaged error is a starting point, not a verdict.</p>
+
+  <h2><span class="n">04</span>What is actually still open</h2>
+  <p>So is there anything left to do, or is the topic closed? Being strict about it: most of the obvious moves are taken. A taxonomy of metrics is a blog post (you are reading one). A generic new scalar is unlikely to survive review next to the work above. The genuinely thin spots are narrow and specific:</p>
+
+  <p>&mdash; A metric <strong>validated against relaxation <em>cost</em></strong> &mdash; the number of DFT or optimiser steps a prediction actually saves &mdash; rather than against molecular-dynamics observables, which is where the validated metrics currently live. And a demonstration that the metric choice <strong>reverses the ranking of named, state-of-the-art relaxation models</strong> on a real relaxation task, rather than on illustrative placeholders.</p>
+
+  <p>A word of caution against overselling, since it is tempting: the &ldquo;mean hides the tail&rdquo; effect is dilution, not a sign-reversing paradox; and &ldquo;relaxation metrics are an unstudied gap&rdquo; is simply false. The interesting residue is small, and it is shrinking as the benchmarks multiply.</p>
+
+  <hr>
+  <div class="pull">
+    <p>The absence of a single yardstick is not a scandal to be fixed with one more scalar. It is the ordinary condition of a young field sitting on the seam between two older ones &mdash; and <b>the durable contributions have been standardised benchmarks and validated metrics, not clever averages.</b></p>
+  </div>
+
+  <p>For those of us arriving from computer science, that is oddly good news. The &ldquo;mess&rdquo; &mdash; different data, different tasks, different notions of success &mdash; is exactly the surface where the interesting, well-posed problems live: what should we measure, how do we validate that a metric predicts the goal, and how do we compare methods without fooling ourselves. Materials science supplies the gold, which is the data. The measurement question is one place the two fields genuinely need each other.</p>
+
+  <p>The modest, honest version of all this, and the one we are adopting in our own relaxation work: stop reporting a lone mean. Show the median, the distribution, the fraction within threshold, and the per-structure improvement over the baseline &mdash; and cite the people who told us to.</p>
+
+  <p class="foot"><b>Provenance.</b> The mean-to-median figure is measured on a 150-structure oxide-surface relaxation set from our own experiments; the metric-family map and the open-problem assessment are synthesised from the six sources above, all linked inline. This is a survey and a position, not a new result. <b>Companion:</b> our G-DEQ work on <a href="https://akyrillidis.github.io/aiowls/guided_deq.html">relaxation training</a>, whose evaluation motivated the question.</p>
+
+  <a class="backlink" href="./blogs.html">&larr; All AI-OWLS posts</a>
+
+</div>
+</body>
+</html>
