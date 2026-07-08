@@ -74,6 +74,19 @@ layout: default
 
   <li>
     <span class="thumb">
+      <a href="./which_layer_runs_the_program.html">
+        <img src="./assets/img/p2_scaling.png" alt="Last-block update share versus network depth: unnormalized networks stay concentrated near the top, normalized ones track the even 1/L line">
+      </a>
+    </span>
+    <span class="title">
+      <a href="./which_layer_runs_the_program.html">Which Layer Runs the Program?</a>
+      <span class="meta">Anthropic just showed a transformer&rsquo;s computation is organized <em>by depth</em> &mdash; a middle-layer &ldquo;workspace.&rdquo; On a tiny transformer whose correct layer layout we know exactly, we find what <em>puts</em> computation at a given depth: <strong>normalization</strong> &mdash; a knob you can turn to relocate a learned step (last-block share 0.88 without it, 0.38 with, and it survives a last-block-removal test).</span>
+      <span class="credits">A ground-truthed, causal complement to the &ldquo;where computation lives&rdquo; question. In collaboration with Microsoft Research.</span>
+    </span>
+  </li>
+
+  <li>
+    <span class="thumb">
       <a href="./can_we_train_a_computer.html">
         <img src="./assets/img/ctac_kmatrix.png" alt="Two key-overlap matrices: hand-built Gaussian addressing (dense, correlated) vs trained orthogonal-key addressing (sharp diagonal)">
       </a>

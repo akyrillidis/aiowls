@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Anthropic just showed a transformer's computation is organized by depth — a middle-layer 'global workspace'. On a tiny transformer whose correct layer layout we know exactly, we ask what PUTS computation at a given depth — and find one ordinary component, normalization, causally decides it.">
+<meta name="keywords" content="mechanistic interpretability, transformers, normalization, LayerNorm, RMSNorm, depth, residual stream, global workspace, SUBLEQ, update concentration, where computation lives">
+<meta property="og:title" content="Which Layer Runs the Program? Normalization Decides Where a Transformer Computes" />
+<meta property="og:description" content="Anthropic found a depth-organized 'workspace' inside a language model. Here's a ground-truthed toy that shows what puts computation at a given depth: normalization — an architectural knob you can turn to relocate a learned step." />
+<meta property="og:image" content="https://akyrillidis.github.io/aiowls/assets/img/p2_scaling.png" />
+<meta property="og:type" content="article" />
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Which Layer Runs the Program?">
+<meta name="twitter:description" content="Anthropic showed a transformer's computation is depth-organized (a middle-layer 'workspace'). We show, with ground truth, what sets that depth: normalization — and it's a knob you can turn.">
+<meta name="twitter:image" content="https://akyrillidis.github.io/aiowls/assets/img/p2_scaling.png">
+<title>Which Layer Runs the Program? &middot; AI-OWLS</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Display&family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+
+<script>window.MathJax={tex:{inlineMath:[['\\(','\\)']],displayMath:[['\\[','\\]']]}};</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+<style>
+  :root{
+    --paper:#f6f1e6; --ink:#2c2218; --soft:#5c4d3f; --line:#ddd4c0; --rule:#2c2218;
+    --oxblood:#7c1f2b;
+    --built:#a9761c;  --builtbg:#f2e9d6; --built-d:#8a5f16;   /* amber = no normalization (data-ink) */
+    --train:#1f6b67;  --trainbg:#e5efec; --train-d:#17544f;   /* teal  = normalization      (data-ink) */
+    --grey:#8a7d6b;
+  }
+  *{box-sizing:border-box;}
+  body{
+    background:var(--paper); color:var(--ink);
+    font-family:"Libre Caslon Text", Georgia, "Times New Roman", serif;
+    font-size:19.5px; line-height:1.72; margin:0;
+    -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
+  }
+  .wrap{ max-width:624px; margin:0 auto; padding:0 24px 112px; }
+  .kick{ font-style:italic; font-size:.9rem; letter-spacing:.02em; color:var(--soft); margin:56px 0 14px; text-align:center; }
+  h1{ font-family:"Libre Caslon Display", Georgia, serif; font-weight:400; font-size:2.6rem;
+    line-height:1.09; letter-spacing:.004em; margin:0 0 .32em; text-align:center; }
+  .dek{ font-size:1.12rem; line-height:1.5; color:var(--soft); font-style:italic; font-weight:400;
+    margin:0 auto 1.3em; text-align:center; max-width:540px; }
+  .byline{ font-style:italic; font-size:1rem; margin:0 0 3px; text-align:center; }
+  .venue{ font-style:italic; font-size:.84rem; color:var(--soft); margin:2px auto 0; text-align:center; max-width:500px; }
+  .links{ font-size:.9rem; margin:12px 0 0; text-align:center; }
+  a{ color:var(--ink); text-decoration:none; border-bottom:1px solid rgba(44,34,24,.32); }
+  a:hover{ border-bottom-color:var(--ink); }
+  .rule-top{ border:0; border-top:1px solid var(--rule); width:64px; margin:26px auto 42px; opacity:.5; }
+  h2{ font-family:"Libre Caslon Display", Georgia, serif; font-weight:400; font-size:1.5rem;
+    line-height:1.2; margin:2.05em 0 .45em; letter-spacing:.005em; }
+  h2 .num{ color:var(--oxblood); margin-right:.45em; }
+  p{ margin:0 0 1.12em; } strong{ font-weight:700; } em{ font-style:italic; }
+  hr{ border:0; border-top:1px solid var(--rule); opacity:.5; width:64px; margin:40px auto; }
+  .drop::first-letter{ font-family:"Libre Caslon Display", Georgia, serif; float:left;
+    font-size:4.4rem; line-height:.66; padding:.02em .09em 0 0; color:var(--oxblood); font-weight:400; }
+  .brief{ background:transparent; border:1px solid var(--line); border-left:2px solid var(--oxblood);
+    padding:15px 20px; margin:28px 0; }
+  .brief .lbl{ font-style:italic; font-size:.82rem; letter-spacing:.02em; color:var(--oxblood);
+    display:block; margin-bottom:6px; }
+  .brief p{ font-size:.99rem; line-height:1.56; margin:0; }
+  .brief p + p{ margin-top:.65em; }
+  figure{ margin:32px auto; text-align:center; max-width:500px; }
+  figure img{ max-width:100%; height:auto; border:1px solid var(--line); background:#fbf8f0; padding:6px; }
+  figure svg{ max-width:100%; height:auto; }
+  .card{ border:1px solid var(--line); background:#fbf8f0; padding:12px 12px 6px; }
+  figcaption{ font-style:italic; font-size:.85rem; color:var(--soft); line-height:1.55;
+    margin-top:11px; text-align:left; }
+  figcaption b{ color:var(--ink); font-weight:700; font-style:normal; }
+  .svglbl{ font-family:Georgia, serif; font-style:italic; }
+  .eq{ margin:1.5em 0; text-align:center; overflow-x:auto; }
+  .ledger{ display:grid; grid-template-columns:1fr 1fr; gap:18px; margin:28px 0; }
+  .ledger .col{ border:1px solid var(--line); background:#fbf8f0; padding:14px 18px; }
+  .ledger .col.proven{ border-top:2px solid var(--train); }
+  .ledger .col.open{ border-top:2px solid var(--built); }
+  .ledger h3{ font-style:italic; font-size:.92rem; letter-spacing:.02em; margin:0 0 9px; font-weight:400; }
+  .ledger .proven h3{ color:var(--train-d); } .ledger .open h3{ color:var(--built-d); }
+  .ledger ul{ margin:0; padding-left:18px; font-size:.92rem; line-height:1.46; }
+  .ledger li{ margin:0 0 8px; } .ledger li:last-child{ margin-bottom:0; }
+  .foot{ font-style:italic; font-size:.85rem; color:var(--soft); margin-top:42px; line-height:1.62;
+    border-top:1px solid var(--line); padding-top:20px; }
+  .foot a{ font-style:normal; }
+  .backlink{ font-style:italic; font-size:.92rem; margin:42px 0 0; display:block; }
+  @media (max-width:640px){ body{font-size:18px;} h1{font-size:2rem;} .dek{font-size:1.05rem;} .ledger{grid-template-columns:1fr;} }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="kick">Interpretability &middot; Transformers &middot; Machine Learning</div>
+  <h1>Which Layer Runs the Program?</h1>
+  <p class="dek">Anthropic just showed that a transformer's computation is organized <em>by depth</em> &mdash; a
+  middle-layer &ldquo;workspace&rdquo; between what it reads and what it says. Here is a ground-truthed toy where we
+  can watch that organization form, and find one ordinary component &mdash; normalization &mdash; that decides
+  where each step lands.</p>
+  <p class="byline">Anastasios Kyrillidis &middot; Rice University</p>
+  <p class="venue">In collaboration with Microsoft Research &middot; &ldquo;Which Layer Runs the Program?
+  Normalization, Not Depth, Decides Where a Transformer Executes Each Step.&rdquo;</p>
+  <p class="links">The paper &mdash; and the code &mdash; are available on request at
+  <a href="mailto:anastasios@rice.edu">anastasios@rice.edu</a>.</p>
+  <p class="venue" style="margin-top:10px;">This line of work was inspired by Dimitris Papailiopoulos&rsquo;s essay <a href="https://x.com/DimitrisPapail/status/2028669695344148946">&ldquo;Can You Train a Computer?&rdquo;</a></p>
+  <hr class="rule-top">
+
+  <div class="brief">
+    <span class="lbl">In brief</span>
+    <p>In July 2026, Anthropic reported that a large language model's computation is organized by depth: an
+    intermediate band of layers acts as a &ldquo;global workspace&rdquo; that holds and broadcasts concepts,
+    sitting between an early &ldquo;sensory&rdquo; region and a late &ldquo;motor&rdquo; region aligned with the
+    output. It is a striking map of <em>where</em> computation lives inside a transformer &mdash; read off a fixed,
+    pretrained model. It also raises the obvious next question: what <em>puts</em> the workspace there?</p>
+    <p>We study the controlled version of that question on a tiny transformer whose &ldquo;correct&rdquo; layer
+    layout we know exactly, and find that a component practitioners add almost as an afterthought, for training
+    stability &mdash; <strong>normalization</strong> &mdash; decides the depth at which each step of a learned
+    algorithm is computed. And because it is a cause, it is a <em>knob</em>: move the normalizer, and the
+    computation moves with it.</p>
+  </div>
+
+  <h2><span class="num">1</span>A computer with an answer key</h2>
+  <p class="drop">The trouble with asking <em>where</em> a computation happens inside a network is that we almost
+  never know where it <em>ought</em> to happen. Anthropic's workspace, like every mechanistic-interpretability
+  result, has to recover its own ground truth after the fact. So we picked a task that comes with an answer key.
+  <strong>SUBLEQ</strong> is a programming language with a single instruction &mdash; subtract, and branch if the
+  result is at or below zero &mdash; and that one instruction is enough to compute anything (it is
+  Turing-complete). Because it is so simple, you can build a small transformer <em>by hand</em> that executes it,
+  and you can write down, in advance, which layer ought to compute each step: fetch the operands at layer&nbsp;1,
+  dereference and subtract at layer&nbsp;2, and so on. Call that hand-built circuit the oracle.</p>
+
+  <p>Then we train a second transformer, from random noise, to do the same job &mdash; and read it, layer by
+  layer, against the oracle's known layout, trusting a probe only once it has recovered the oracle's answer key
+  first. This gives us the rare thing interpretability usually lacks: a network whose correct internal schedule we
+  know, so that &ldquo;where does this step get computed?&rdquo; has a checkable answer rather than a story.</p>
+
+  <h2><span class="num">2</span>Normalization decides where each step runs</h2>
+  <p>We change exactly one thing. Two families of four-layer networks are identical in task, depth, width,
+  activation, optimizer, and seed &mdash; they differ <em>only</em> in whether a normalization layer is present.
+  The effect is not subtle. <strong>Without</strong> normalization, the dereference and the arithmetic do not
+  become readable until the <em>final</em> layer; the network defers its real work to the end. <strong>With</strong>
+  it &mdash; LayerNorm or RMSNorm, it makes no difference &mdash; both surface early, at layer&nbsp;2, exactly the
+  layer the hand-built oracle uses, and later layers merely carry the answer forward.</p>
+
+  <p>One number summarizes it, read straight off the forward pass: the fraction of the network's total
+  layer-to-layer change contributed by its <em>last</em> block. Spread evenly across four layers that share would
+  be about \(0.25\); pile everything into the last layer and it approaches one. Unnormalized networks sit at
+  <strong>\(0.88\)</strong>; normalized ones at <strong>\(0.38\)</strong>. Same task, same accuracy, one layer of
+  difference in the recipe &mdash; and the computation moves halfway across the network.</p>
+
+  <figure>
+    <div class="card">
+    <svg viewBox="0 0 660 250" role="img" aria-label="Two bar charts of per-layer update share across four blocks. Left (no normalization): tiny bars for layers 1-3, one tall bar at layer 4. Right (normalization): four roughly equal bars.">
+      <!-- LEFT: no normalization -->
+      <text class="svglbl" x="150" y="24" text-anchor="middle" font-size="13.5" fill="#8a5f16">without normalization</text>
+      <line x1="40" y1="200" x2="270" y2="200" stroke="#cfc6b2" stroke-width="1.3"/>
+      <g fill="#a9761c">
+        <rect x="52"  y="192" width="38" height="8"/>
+        <rect x="108" y="190" width="38" height="10"/>
+        <rect x="164" y="186" width="38" height="14"/>
+        <rect x="220" y="58"  width="38" height="142"/>
+      </g>
+      <text class="svglbl" x="239" y="50" text-anchor="middle" font-size="12" fill="#8a5f16">0.88</text>
+      <g class="svglbl" font-size="10.5" fill="#b6ab95" text-anchor="middle">
+        <text x="71" y="214">L1</text><text x="127" y="214">L2</text><text x="183" y="214">L3</text><text x="239" y="214">L4</text>
+      </g>
+      <text class="svglbl" x="150" y="236" text-anchor="middle" font-size="11.5" fill="#8a5f16">the work is banked in the last block</text>
+      <!-- divider -->
+      <line x1="330" y1="30" x2="330" y2="216" stroke="#ddd4c0" stroke-width="1"/>
+      <!-- RIGHT: normalization -->
+      <text class="svglbl" x="490" y="24" text-anchor="middle" font-size="13.5" fill="#17544f">with normalization</text>
+      <line x1="380" y1="200" x2="620" y2="200" stroke="#cfc6b2" stroke-width="1.3"/>
+      <g fill="#1f6b67">
+        <rect x="392" y="132" width="38" height="68"/>
+        <rect x="448" y="126" width="38" height="74"/>
+        <rect x="504" y="138" width="38" height="62"/>
+        <rect x="560" y="130" width="38" height="70"/>
+      </g>
+      <g class="svglbl" font-size="10.5" fill="#9db8b3" text-anchor="middle">
+        <text x="411" y="214">L1</text><text x="467" y="214">L2</text><text x="523" y="214">L3</text><text x="579" y="214">L4</text>
+      </g>
+      <text class="svglbl" x="500" y="236" text-anchor="middle" font-size="11.5" fill="#17544f">every block contributes; the step lands early</text>
+    </svg>
+    </div>
+    <figcaption><b>Where the update lands.</b> The share of a network's total residual change contributed by each
+    block. <span style="color:#8a5f16">Without normalization</span> the last block does almost all of it
+    (\(0.88\)); <span style="color:#17544f">with normalization</span> the change is spread across depth
+    (last-block share \(0.38\)), and the arithmetic first appears at the layer the hand-built oracle uses. Same
+    task, same accuracy.</figcaption>
+  </figure>
+
+  <h2><span class="num">3</span>A knob, not just a correlation</h2>
+  <p>Because normalization is the <em>cause</em>, we can act on it. Put a single normalization layer at a chosen
+  block and the computation follows: with it at block&nbsp;0 the arithmetic decodes at layer&nbsp;2, at block&nbsp;1
+  at layer&nbsp;3, at block&nbsp;2 at layer&nbsp;4 &mdash; the last-block share climbing in step from \(0.57\) to
+  \(0.90\). You are placing the computation at a depth of your choosing. The depth of a learned step is not fixed
+  by the task; it is set by where you put the normalizer.</p>
+
+  <p>The effect is a scaling law, not a four-layer accident. Sweeping depth from two to twelve layers, unnormalized
+  networks stay concentrated while normalized ones track the even \(1/L\) share almost exactly &mdash; the gap
+  between them <em>widening</em> with depth. And it really is the rescaling that matters: a norm-free stand-in
+  (Dynamic Tanh, which saturates but does not rescale to a fixed norm) leaves the network concentrated at
+  \(0.78\), close to having no normalization at all.</p>
+
+  <figure>
+    <img src="assets/img/p2_scaling.png" alt="Last-block update share versus depth, 2 to 12 layers. Unnormalized networks stay high (0.79-0.91); normalized networks track the 1/L line closely.">
+    <figcaption><b>A depth-scaling law.</b> Last-block update share against network depth. Unnormalized networks
+    (amber) stay high at every depth; normalized ones (teal) track the even \(1/L\) line &mdash; the prediction if
+    every block contributed equally. The dissociation is not a quirk of one architecture; it grows with depth.</figcaption>
+  </figure>
+
+  <h2><span class="num">4</span>How honest is it?</h2>
+  <p>Two guardrails, because the metric can flatter itself. First, that last-block number partly reflects a ruler
+  effect: the residual stream grows across depth either way, so the last block acts on a larger input and its
+  change looks bigger for free. Divide the stream size out and the unnormalized concentration falls from \(0.88\)
+  to \(0.61\) &mdash; smaller, but still \(2.4\times\) the even share. The concentration is genuine; the raw metric
+  overstates it. Second, and more important, the claim that matters does not lean on the metric at all: we simply
+  <em>remove</em> the last block and read the output. The unnormalized network, having banked everything there,
+  collapses; the normalized one, which spread the work, keeps most of its accuracy. Depth becomes load-bearing
+  &mdash; or not &mdash; depending on the normalizer.</p>
+
+  <p>It is not a quirk of one computer, either. The same signature appears across other one-instruction languages,
+  and on <em>modular addition</em> &mdash; a circuit we did not hand-build &mdash; where removing normalization
+  again banks the computation late (\(0.89\)) while LayerNorm and RMSNorm distribute it (\(0.31\), \(0.32\)). We
+  keep the theory deliberately small: it says precisely what the metric measures and why normalization touches it,
+  and leaves the load-bearing claims to the interventions. Where the arithmetic itself lives, when we ablate to
+  find it, is attention rather than the feed-forward block.</p>
+
+  <div class="ledger">
+    <div class="col proven">
+      <h3>What we show</h3>
+      <ul>
+        <li>At fixed task, depth, width and accuracy, <strong>normalization</strong> moves the dereference and
+        arithmetic from the last layer to the layer the oracle uses (last-block share \(0.88\!\to\!0.38\); LayerNorm
+        \(=\) RMSNorm).</li>
+        <li>It is a <strong>control knob</strong>: placing the normalizer relocates the computation; the contrast
+        follows a \(1/L\) law from 2&ndash;12 layers; a norm-free stand-in does not reproduce it.</li>
+        <li>The one measurable consequence is <strong>load-bearing depth</strong>: remove the last block and the
+        unnormalized executor breaks, the normalized one survives.</li>
+      </ul>
+    </div>
+    <div class="col open">
+      <h3>Honest scope</h3>
+      <ul>
+        <li>The raw metric is <strong>stream-weighted</strong> (\(0.88\!\to\!0.61\) once corrected); the causal
+        claim rests on the truncation test, not the metric.</li>
+        <li>This is a <strong>small, ground-truthed</strong> transformer &mdash; the controlled complement to
+        pretrained-model studies, not a substitute for them.</li>
+        <li>We do <strong>not</strong> claim to explain Anthropic's workspace; we show, with ground truth, what one
+        architectural factor does to <em>where</em> computation lands.</li>
+      </ul>
+    </div>
+  </div>
+
+  <hr>
+  <h2>What it means</h2>
+  <p>Anthropic's result and this one are asking the same question from opposite ends. They read, off a real model
+  we cannot hand-build, that computation is organized by depth. We ask, on a model we understand completely, what
+  <em>sets</em> that organization &mdash; and find that a component nobody added for this purpose, one meant only to
+  make training stable, quietly acts as an implicit bias on the depth-layout of a learned algorithm, and can be
+  turned like a dial. As more of what our models do is <em>found</em> by training rather than designed by us, where
+  a computation ends up is decided less by the circuit and more by the optimizer and the architecture around it.
+  Measured here against ground truth, normalization looks like one honest handle on that &mdash; a candidate for
+  reading, and maybe steering, where computation lives in the models we can only train.</p>
+
+  <p class="foot">Results are paired and multi-seed on a four-layer, width-256 SUBLEQ transformer, with the
+  hand-built oracle as ground truth; the last-block-share metric is reported with its stream-normalized correction,
+  and the load-bearing claim is the last-block-removal test, which uses no metric. The full write-up and the code
+  are available on request at <a href="mailto:anastasios@rice.edu">anastasios@rice.edu</a>. By Anastasios
+  Kyrillidis (Rice University), in collaboration with Microsoft Research. On Anthropic's global workspace, see
+  <a href="https://transformer-circuits.pub/2026/workspace/">transformer-circuits.pub/2026/workspace</a>.</p>
+
+  <a class="backlink" href="./blogs.html">&larr; All AI-OWLS posts</a>
+
+</div>
+</body>
+</html>
