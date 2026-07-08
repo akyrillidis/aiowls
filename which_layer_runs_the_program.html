@@ -132,6 +132,14 @@
   first. This gives us the rare thing interpretability usually lacks: a network whose correct internal schedule we
   know, so that &ldquo;where does this step get computed?&rdquo; has a checkable answer rather than a story.</p>
 
+  <figure style="max-width:520px;">
+    <img src="assets/img/p2_emergence.png" alt="Emergence depth of the datapath signals for the hand-built oracle (black), a normalized trained net (blue), and an unnormalized one (red); the arithmetic decodes at layer 2 for the oracle and the normalized net, at the last layer for the unnormalized one.">
+    <figcaption><b>Read against the answer key.</b> The shallowest depth at which each datapath signal becomes
+    decodable. The hand-built oracle (black) fixes the known layout; a normalized trained net (blue) forms the
+    arithmetic early, at layer&nbsp;2 like the oracle, while the unnormalized one (red) carries its operands
+    diffusely and defers the arithmetic to the final layer. Same datapath, different depths.</figcaption>
+  </figure>
+
   <h2><span class="num">2</span>Normalization decides where each step runs</h2>
   <p>We change exactly one thing. Two families of four-layer networks are identical in task, depth, width,
   activation, optimizer, and seed &mdash; they differ <em>only</em> in whether a normalization layer is present.
@@ -187,12 +195,29 @@
     task, same accuracy.</figcaption>
   </figure>
 
+  <figure style="max-width:380px;">
+    <img src="assets/img/p2_concentration.png" alt="Dot plot of last-block update share by condition: no normalization 0.88, magnitude-budget controls 0.82 to 0.89, LayerNorm and RMSNorm 0.38, DyT 0.78.">
+    <figcaption><b>Only normalization de-concentrates.</b> The last block&rsquo;s share of the total residual
+    update (lower means spread across depth), by condition. Unnormalized sits at \(0.88\); changing the magnitude
+    <em>budget</em> (initialization scale, residual down-scaling) leaves it at \(0.82\)&ndash;\(0.89\) &mdash;
+    falsifying a &ldquo;budget&rdquo; account &mdash; while RMSNorm and LayerNorm (\(0.38\) each) halve it. A
+    norm-free saturating map (DyT, \(0.78\)) does not de-concentrate.</figcaption>
+  </figure>
+
   <h2><span class="num">3</span>A knob, not just a correlation</h2>
   <p>Because normalization is the <em>cause</em>, we can act on it. Put a single normalization layer at a chosen
   block and the computation follows: with it at block&nbsp;0 the arithmetic decodes at layer&nbsp;2, at block&nbsp;1
   at layer&nbsp;3, at block&nbsp;2 at layer&nbsp;4 &mdash; the last-block share climbing in step from \(0.57\) to
   \(0.90\). You are placing the computation at a depth of your choosing. The depth of a learned step is not fixed
   by the task; it is set by where you put the normalizer.</p>
+
+  <figure style="max-width:400px;">
+    <img src="assets/img/p2_relocation.png" alt="Update-concentration (dots, five seeds; line, mean) and the emergence layer as the single normalization layer is moved from block 0 to block 3; concentration climbs from 0.57 to 0.90.">
+    <figcaption><b>Turning the knob.</b> Update-concentration (dots, five seeds; line, the mean) and the layer at
+    which the arithmetic first decodes (labels), as the single normalization layer is moved from block&nbsp;0 to
+    block&nbsp;3. Move the normalizer later and the computation lands later &mdash; concentration climbing from
+    \(0.57\) to \(0.90\) in step.</figcaption>
+  </figure>
 
   <p>The effect is a scaling law, not a four-layer accident. Sweeping depth from two to twelve layers, unnormalized
   networks stay concentrated while normalized ones track the even \(1/L\) share almost exactly &mdash; the gap
@@ -216,6 +241,15 @@
   <em>remove</em> the last block and read the output. The unnormalized network, having banked everything there,
   collapses; the normalized one, which spread the work, keeps most of its accuracy. Depth becomes load-bearing
   &mdash; or not &mdash; depending on the normalizer.</p>
+
+  <figure style="max-width:400px;">
+    <img src="assets/img/p2_e1b.png" alt="Written-cell output accuracy when the network is truncated to its first k blocks; unnormalized is flat near 0.30 until the last block then jumps to 1.00, normalized climbs steadily and reaches about 0.82 with the last block removed.">
+    <figcaption><b>Depth becomes load-bearing.</b> Written-cell output accuracy when the network is truncated to
+    its first \(k\) blocks (\(k=4\) is full depth; \(k=3\) drops the last block). Without normalization, accuracy
+    is flat near \(0.30\) until the last block, then jumps to \(1.00\) &mdash; everything is banked there, so
+    removing it breaks the executor; with normalization it climbs steadily and still reaches \(\sim\!0.82\) once
+    the last block is gone.</figcaption>
+  </figure>
 
   <p>It is not a quirk of one computer, either. The same signature appears across other one-instruction languages,
   and on <em>modular addition</em> &mdash; a circuit we did not hand-build &mdash; where removing normalization
