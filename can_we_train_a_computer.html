@@ -157,7 +157,7 @@
   </div>
 
   <h2><span class="num">2</span>Two ways to make a transformer be one</h2>
-  <p>There are two very different ways to get a transformer to run SUBLEQ, and the paper is about what happens
+  <p>There are two different ways to get a transformer to run SUBLEQ, and the paper is about what happens
   when you compare them.</p>
 
   <p>The first way is to <strong>wire it by hand</strong>. Following a line of work showing that transformers can
@@ -255,7 +255,7 @@
   wins the pointer. The two networks build those position-keys in fundamentally different ways.</p>
 
   <p>The hand-built \(\theta_C\) sharpens its pointer using a smooth, quadratic-in-distance rule. The upshot is
-  that neighbouring positions have <em>strongly correlated</em> keys: key 10 and key 11 look very much alike, key
+  that neighbouring positions have <em>strongly correlated</em> keys: key 10 and key 11 look nearly identical, key
   10 and key 12 a bit less, and so on, tapering off with distance. It is a <em>Gaussian</em> pointer &mdash; one
   broad, overlapping bump (the left panel of the drawing above). Useful, and exactly how a careful engineer might
   build it.</p>
@@ -280,10 +280,12 @@
   <p>For scale: if the keys were <em>completely</em> random and unrelated, this number would sit near a floor of
   about <strong>0.031</strong>. The trained networks are not at that floor &mdash; they are meaningfully above it,
   which is why the probe still finds real, shared structure &mdash; but they are nowhere near the hand-built
-  circuit&rsquo;s <strong>0.89</strong>. That is the gap. It is a gap in <em>magnitude</em>, not in kind, and it
-  is precisely what the weight-space interpolation was (mis)reading as &ldquo;a different algorithm.&rdquo; When
-  two solutions encode the same information at very different magnitudes, the straight line between their weights
-  runs through nonsense &mdash; even though both endpoints are doing the same thing.</p>
+  circuit&rsquo;s <strong>0.89</strong>. That is the gap &mdash; a gap in the <em>geometry</em> of the code, not in
+  what it computes; both point at the right cell perfectly. It is tempting to say this gap is what the weight-space
+  interpolation misread as &ldquo;a different algorithm.&rdquo; It isn&rsquo;t: the straight line between two
+  <em>separately-trained</em> networks runs through nonsense too, even when they share the same mechanism.
+  Interpolation collapses between almost any two distinct solutions, so its verdict was never evidence of a real
+  difference.</p>
 
   <div class="brief">
     <span class="lbl">In brief &middot; what <em>K</em><sub>off</sub> measures</span>
@@ -360,17 +362,19 @@
   <h2><span class="num">6</span>What it means</h2>
   <p>Step back and the shape of the lesson is clean. Here is a case &mdash; rare, because we hold the ground truth
   &mdash; where the field&rsquo;s standard weight-space test for &ldquo;did these two networks learn the same
-  algorithm?&rdquo; gives the <em>wrong</em> answer. It reports &ldquo;different algorithms,&rdquo; and it is
-  fooled. Not by a real disagreement between the networks, but by a gap in the <em>magnitude</em> of how they
-  encode the same information. When two solutions differ mostly in scale, a straight line drawn between their
-  weights passes through territory that works for neither &mdash; and the test, reading that dead zone,
-  cries &ldquo;different basins.&rdquo;</p>
+  algorithm?&rdquo; gives the <em>wrong</em> answer. It reports &ldquo;different algorithms&rdquo; &mdash; but it
+  reports that about almost any two distinct networks, even two trained from different random seeds. A straight
+  line drawn between two sets of trained weights passes through territory that works for neither, and the test,
+  reading that dead zone, cries &ldquo;different basins.&rdquo; The collapse is real; what it means is not &mdash;
+  it is a fact about the test, not about the networks.</p>
 
-  <p>The crucial move is to resist the obvious reading. The interpolation collapsing is <em>not</em> a fact about
-  the networks; it is a <strong>limitation of the test</strong>. What settled the question was looking inside
-  &mdash; probing the mechanism, naming Gaussian keys versus orthogonal keys, putting a number on the gap. The
-  practical takeaway for interpretability: when two networks might differ in magnitude, trust the probe over the
-  interpolation. And a quieter one for anyone who trains models: given a free choice between a smooth, correlated
+  <p>The move is to resist the obvious reading. We checked it directly: shrink the hand-built circuit&rsquo;s
+  weights until the size difference is gone, and the straight line still collapses; interpolate two
+  separately-trained networks, and it collapses just the same. The dead zone is a <strong>limitation of the
+  test</strong>, not a fact about the networks. What settled the question was looking inside &mdash; probing the
+  mechanism, naming Gaussian keys versus orthogonal keys, putting a number on the gap. The practical takeaway for
+  interpretability: do not read a weight-space interpolation as a &ldquo;same algorithm?&rdquo; test; look inside
+  instead. And a quieter one for anyone who trains models: given a free choice between a smooth, correlated
   code and a sharp, perpendicular one, gradient descent reliably reaches for the perpendicular. That preference,
   made visible against a hand-built control, is worth knowing.</p>
 
@@ -383,8 +387,9 @@
         \(0.031\) floor.</li>
         <li><strong>Robust</strong> across seeds, 4 instruction-set variants, 5 architectural perturbations and a
         no-weight-decay control (\(\approx 18\) nets).</li>
-        <li>The weight-space &ldquo;different basin&rdquo; verdict is an <strong>artifact of the magnitude
-        gap</strong>; mechanistic probes resolve it.</li>
+        <li>The weight-space &ldquo;different basin&rdquo; verdict is <strong>uninformative here</strong> &mdash;
+        it collapses even between two separately-trained networks, and closing the size gap does not change it;
+        mechanistic probes resolve the question.</li>
       </ul>
     </div>
     <div class="col open">
