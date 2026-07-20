@@ -223,7 +223,9 @@
   networks stay concentrated while normalized ones track the even \(1/L\) share almost exactly &mdash; the gap
   between them <em>widening</em> with depth. And it really is the rescaling that matters: a norm-free stand-in
   (Dynamic Tanh, which saturates but does not rescale to a fixed norm) leaves the network concentrated at
-  \(0.78\), close to having no normalization at all.</p>
+  \(0.78\), close to having no normalization at all. And the effect is robust in the ways that matter: it holds
+  whether the normalizer sits <em>before</em> or <em>after</em> each block, and even with the weight decay turned
+  off &mdash; it is the normalization itself, not a placement trick or a training-regularizer side effect.</p>
 
   <figure>
     <img src="assets/img/p2_scaling.png" alt="Last-block update share versus depth, 2 to 12 layers. Unnormalized networks stay high (0.79-0.91); normalized networks track the 1/L line closely.">

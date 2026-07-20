@@ -11,7 +11,7 @@
 <meta property="og:type" content="article" />
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Can We Train a Computer? Two Ways to Point at a Memory">
-<meta name="twitter:description" content="Two transformers run the same one-instruction computer perfectly. One was wired by hand, one was trained. They point at memory through different internal codes — and that gap is what fools the standard 'same algorithm?' test.">
+<meta name="twitter:description" content="Two transformers run the same one-instruction computer perfectly. One was wired by hand, one was trained. They point at memory through different internal codes — but the standard 'same algorithm?' test is the wrong tool: it flags even two separately-trained networks as different. Looking inside settles it.">
 <meta name="twitter:image" content="https://akyrillidis.github.io/aiowls/assets/img/ctac_kmatrix.png">
 <title>Can We Train a Computer? Two Ways to Point at a Memory &middot; AI-OWLS</title>
 
@@ -126,7 +126,9 @@
     programs it never saw. So we have two networks that compute the same function. Do they work the same way?
     A weight-space test says &ldquo;different algorithm.&rdquo; A mechanistic probe says &ldquo;same
     family.&rdquo; The answer is that gradient descent found a more <em>perpendicular</em> internal code for
-    pointing at memory &mdash; and that magnitude gap, not any real disagreement, is what fools the first test.</p>
+    pointing at memory &mdash; the same function through different-looking weights. The weight-space test mistakes
+    that for a real disagreement, but it is the wrong tool: it calls even two <em>separately-trained</em> networks
+    &ldquo;different.&rdquo; Looking inside is what settles it.</p>
   </div>
 
   <h2><span class="num">1</span>A computer with one instruction</h2>
