@@ -406,7 +406,7 @@ shift the input, it scales it. Every batch sees a slightly different version of 
 </p>
 
 <p>
-The general question — <em>what does training with noise actually do to the loss
+The general question — <em>what does training with noise do to the loss
 landscape?</em> — has a long history. In 1995, Chris Bishop showed that, for a
 smooth network, training on inputs corrupted by additive Gaussian noise is
 approximately equivalent to training without noise but with a Tikhonov-style
@@ -581,7 +581,7 @@ falls out behind it.
 </p>
 
 <p>
-For the convergence analysis we actually work with a slightly simpler proxy,
+For the convergence analysis we work with a slightly simpler proxy,
 $\hat\sigma(\mathbf{w},\mathbf{x}) = z\Phi(z/\sigma)$, which drops the $\sigma\varphi(z/\sigma)$
 term. The two agree everywhere except in a small neighbourhood of $z = 0$, and the gap
 shrinks at rate $O(\sigma\varphi(z/\sigma))$ — small enough that the downstream theorems are not affected.

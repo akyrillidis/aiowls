@@ -263,7 +263,7 @@ $$\rho_j \;=\; 2 + 6\,\frac{\sigma_j^\star}{\mathcal{T}_j^\star},$$
   In the perturbation regime where the cumulative error stays below half the smallest gap, the residual training error is the sum of the truncation tail plus a product-amplified sum of per-step errors. Small gaps of $\mathbf{Y}$ inflate the product; large gaps damp it.
 </div>
 
-<p>The cascade is geometric in the worst case. If every gap is just barely positive, a small error in step 1 can grow by a factor of, say, 8 by step 8 — and that is on top of fresh errors introduced at every later step.</p>
+<p>The cascade is geometric in the worst case. If every gap is barely positive, a small error in step 1 can grow by a factor of, say, 8 by step 8 — and that is on top of fresh errors introduced at every later step.</p>
 
 <!-- ============================================================ -->
 <h2><span class="idx">§03</span>Parameter recovery</h2>
@@ -394,7 +394,7 @@ $$t_k(\alpha) \;\propto\; \max\big(1 + \alpha x_k,\,10^{-9}\big), \qquad \sum_{k
 
 <div class="grid2">
   <div class="callout cav" style="margin:0;">
-    <span class="label">Open ▸</span> Tight lower bounds matching the cascade product factor — is the worst case actually exponential in $r$ when gaps are small, or is the bound loose?
+    <span class="label">Open ▸</span> Tight lower bounds matching the cascade product factor — is the worst case exponential in $r$ when gaps are small, or is the bound loose?
   </div>
   <div class="callout cav" style="margin:0;">
     <span class="label">Open ▸</span> Extension to data-dependent (random) design and out-of-sample generalization bounds. The fixed-design assumption is the proof's main scope limit.

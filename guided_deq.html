@@ -166,7 +166,7 @@
   standard ways, and they sit at opposite corners of a trade-off.</p>
 
   <p><strong>Backprop-through-time (BPTT)</strong> differentiates the entire rollout. It sees how an early nudge
-  changes the final structure, so it can genuinely steer the ball toward the right valley. The catch: it must
+  changes the final structure, so it can steer the ball toward the right valley. The catch: it must
   remember every intermediate step, so its memory grows with the length of the relaxation.</p>
 
   <p>And here is the part that's easy to miss &mdash; the reason memory is the whole fight. A &ldquo;step&rdquo;
@@ -175,7 +175,7 @@
   To differentiate through one step you must keep that entire computation in memory &mdash; all of its internal
   activations. Now multiply by the length of the relaxation: hundreds of steps, each hoarding a full network's
   worth of activations. A single force call might be a few hundred megabytes; a few hundred of them stacked up is
-  tens of gigabytes, and the GPU is simply out of room. That is why a training method whose memory <em>doesn't</em>
+  tens of gigabytes, and the GPU is out of room. That is why a training method whose memory <em>doesn't</em>
   grow with the number of steps is worth caring about.</p>
 
   <p><strong>Implicit differentiation (the implicit-function theorem, IFT)</strong> ignores the path and works
@@ -241,7 +241,7 @@
 
   <p>Because only the guidance window is stored, <strong>memory becomes a knob you set, not a cost you pay.</strong>
   The horizon \(K\) trades memory for steering along a smooth frontier &mdash; and, crucially, it is decoupled
-  from how long the relaxation actually runs.</p>
+  from how long the relaxation runs.</p>
 
   <table>
     <caption><b>Memory is a dial.</b> Silicon point-defect relaxation, peak training memory vs. the guidance
@@ -331,7 +331,7 @@
   <strong>oxide surfaces</strong>, the base really does land in wrong valleys &mdash; but the relaxations are
   roughly seven times longer, so the valley-deciding moment falls outside any <em>short</em> window, and a short
   window is the whole point. And <strong>bulk crystals</strong> &mdash; the most diverse setting of all &mdash;
-  remain genuinely open, waiting on a potential trained in-domain. One thing holds across every row: the memory
+  remain open, waiting on a potential trained in-domain. One thing holds across every row: the memory
   property is unconditional. It is only the <em>selection value</em> that depends on where you are on the map.</p>
 
   <h2><span class="num">6</span>A word for both sides of the aisle</h2>

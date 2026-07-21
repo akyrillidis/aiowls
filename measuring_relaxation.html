@@ -87,7 +87,7 @@
   <p class="dek">Neural force fields: the field still has no single, agreed metric for whether they got it right. A short map of the mess &mdash; and where the real problems hide.</p>
   <div class="standfirst">A survey from the AI-OWLS desk</div>
 
-  <p>Structure relaxation &mdash; nudging a guessed arrangement of atoms downhill until the forces vanish &mdash; is the workhorse inner loop of computational materials science. A machine-learned interatomic potential (MLIP) makes each step cheap, and modern potentials run this loop across enormous candidate libraries. Which raises a deceptively simple question: <strong>when the model hands back a &ldquo;relaxed&rdquo; structure, how do you score whether it succeeded?</strong></p>
+  <p>Structure relaxation &mdash; nudging a guessed arrangement of atoms downhill until the forces vanish &mdash; is the core inner loop of computational materials science. A machine-learned interatomic potential (MLIP) makes each step cheap, and modern potentials run this loop across enormous candidate libraries. Which raises a deceptively simple question: <strong>when the model hands back a &ldquo;relaxed&rdquo; structure, how do you score whether it succeeded?</strong></p>
 
   <p>Ask three groups and you may get three answers. One reports energy error against a reference calculation; one reports the mean distance from the true relaxed geometry; one runs a single expensive quantum calculation on the output and checks whether the forces really vanished. They are not measuring the same thing, and &mdash; as we will see &mdash; they do not always agree on who won.</p>
 
@@ -108,7 +108,7 @@
 
   <p>Two facts follow immediately. First, the metric you emphasise encodes what you think the task <em>is</em> &mdash; a shape, a stationary point, or a saved computation. Second, the cheapest metrics to compute (geometry, force error) are the furthest from the goal that actually matters (cost saved).</p>
 
-  <p>There is also a practical asymmetry the last two families hide. To score residual force or steps-saved <em>honestly</em> you need a fresh DFT calculation on the predicted structure &mdash; the model's own forces only certify that it reached <em>its own</em> fixed point, not a true minimum. And DFT is both non-differentiable (so it can't be the training loss) and slow, minutes per structure on several GPUs. So in day-to-day work the geometry family &mdash; comparing against the DFT-relaxed target the dataset already provides &mdash; is the workhorse, with force and cost metrics reserved for a small validation subset. That is a hard constraint, not a stylistic choice.</p>
+  <p>There is also a practical asymmetry the last two families hide. To score residual force or steps-saved <em>honestly</em> you need a fresh DFT calculation on the predicted structure &mdash; the model's own forces only certify that it reached <em>its own</em> fixed point, not a true minimum. And DFT is both non-differentiable (so it can't be the training loss) and slow, minutes per structure on several GPUs. So in day-to-day work the geometry family &mdash; comparing against the DFT-relaxed target the dataset already provides &mdash; is the default, with force and cost metrics reserved for a small validation subset. That is a hard constraint, not a stylistic choice.</p>
 
   <h2><span class="n">02</span>The global mean lies more than you think</h2>
   <p>The most common reporting choice &mdash; a single dataset-averaged error &mdash; is also the most treacherous, because relaxation datasets are heterogeneous. A few structures start far from equilibrium, or have many atoms, or are simply hard; they dominate the average and drown out the typical case.</p>
@@ -145,7 +145,7 @@
 
   <p>&mdash; A metric <strong>validated against relaxation <em>cost</em></strong> &mdash; the number of DFT or optimiser steps a prediction actually saves &mdash; rather than against molecular-dynamics observables, which is where the validated metrics currently live. And a demonstration that the metric choice <strong>reverses the ranking of named, state-of-the-art relaxation models</strong> on a real relaxation task, rather than on illustrative placeholders.</p>
 
-  <p>A word of caution against overselling, since it is tempting: the &ldquo;mean hides the tail&rdquo; effect is dilution, not a sign-reversing paradox; and &ldquo;relaxation metrics are an unstudied gap&rdquo; is simply false. The interesting residue is small, and it is shrinking as the benchmarks multiply.</p>
+  <p>A word of caution against overselling, since it is tempting: the &ldquo;mean hides the tail&rdquo; effect is dilution, not a sign-reversing paradox; and &ldquo;relaxation metrics are an unstudied gap&rdquo; is false. The interesting residue is small, and it is shrinking as the benchmarks multiply.</p>
 
   <hr>
   <div class="pull">

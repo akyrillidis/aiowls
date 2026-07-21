@@ -165,7 +165,7 @@
   of the subtract-and-branch: attention heads that fetch the right operands from memory, ReLU units that do the
   arithmetic and the comparison. Call this hand-built network \(\theta_C\) &mdash; <em>C</em> for
   <em>constructed</em>. It is startlingly sparse: of roughly 2.1 million weights, only about <strong>a
-  hundred</strong> are nonzero and actually doing the logic; the rest are exactly zero. It runs SUBLEQ at
+  hundred</strong> are nonzero and doing the logic; the rest are exactly zero. It runs SUBLEQ at
   <strong>100%</strong> accuracy, because we told it precisely how.</p>
 
   <p>The second way is to <strong>train one from scratch</strong>. Start from random noise, show it examples of
@@ -228,7 +228,7 @@
   different algorithms, in two different basins.</p>
 
   <p>But there is a second instrument, and it says the opposite. Instead of comparing raw weights, a
-  <strong>mechanistic probe</strong> asks what each network is actually <em>doing</em> &mdash; which attention
+  <strong>mechanistic probe</strong> asks what each network is <em>doing</em> &mdash; which attention
   heads fetch which operands, what each part computes. Probe both networks and a shared skeleton appears: the
   trained network has independently rediscovered the two pointer-dereference operations at the heart of SUBLEQ
   &mdash; reading \(\mathrm{mem}[a]\) and \(\mathrm{mem}[b]\) &mdash; the same content-addressing family the
@@ -345,7 +345,7 @@
   </figure>
 
   <p>That last bar matters, and we want to be careful about it. When we point the same machinery at a
-  <em>different</em> task &mdash; simply reversing a sequence &mdash; the qualitative <em>signature</em> transfers
+  <em>different</em> task &mdash; reversing a sequence &mdash; the qualitative <em>signature</em> transfers
   (the spike-like score curves reappear), but the exact <em>K</em><sub>off</sub> value moves to about
   <strong>0.66</strong>. So the phenomenon &mdash; &ldquo;training prefers a more orthogonal code than a careful
   hand-construction&rdquo; &mdash; travels; the specific number \(0.20\)&ndash;\(0.53\) is

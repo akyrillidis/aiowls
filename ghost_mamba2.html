@@ -517,7 +517,7 @@ figure figcaption .lead {
 <article class="body">
 
 <p>
-    Most of today's headline AI &mdash; ChatGPT, Claude, Gemini, the open-weights LLaMA and Qwen models &mdash; is built on the <em>transformer</em>. A transformer reads a sequence of tokens by, at every step of generation, looking back at every previous token. That's mathematically elegant and trains beautifully at scale; it's also expensive at inference time. Generating the $n$-th token costs work proportional to $n$, and the per-token "KV cache" the model has to keep around grows linearly with context length too. For long contexts &mdash; legal documents, codebases, hundreds of thousands of tokens &mdash; that quadratic cost is what stops a transformer from being practical.
+    Most of today's headline AI &mdash; ChatGPT, Claude, Gemini, the open-weights LLaMA and Qwen models &mdash; is built on the <em>transformer</em>. A transformer reads a sequence of tokens by, at every step of generation, looking back at every previous token. That's mathematically elegant and trains well at scale; it's also expensive at inference time. Generating the $n$-th token costs work proportional to $n$, and the per-token "KV cache" the model has to keep around grows linearly with context length too. For long contexts &mdash; legal documents, codebases, hundreds of thousands of tokens &mdash; that quadratic cost is what stops a transformer from being practical.
 </p>
 <p>
     A separate line of work bets differently. <strong>State-space models</strong> carry a fixed-size internal "state" that updates as the model reads, recurrent-network style. Done right, they give <em>constant-memory</em> and <em>linear-time</em> sequence processing. The leading recent design &mdash; <strong>Mamba</strong>, and its successor <strong>Mamba2</strong> &mdash; is competitive with transformers on language modelling quality while keeping that recurrence advantage. It's the kind of architecture that matters most when context windows stretch into the hundreds of thousands of tokens, where the transformer's cost starts to bite.
@@ -760,13 +760,13 @@ $$
 <div class="box">
     <p class="box-kicker">Limitation 1 &middot; Extreme sparsity</p>
     <p class="box-title">At 90%, GHOST degrades.</p>
-    <p>Perplexity climbs to 25 from a dense 13.17. The elbow plot in the appendix shows that 90% sparsity forces removal of <em>highly utilised</em> states &mdash; states that pass GHOST's controllability test. There is no scoring rule that survives a budget that small. We report the number anyway.</p>
+    <p>Perplexity climbs to 25 from a dense 13.17. The elbow plot in the appendix shows that 90% sparsity forces removal of <em>highly utilised</em> states &mdash; states that pass GHOST's controllability test. No scoring rule survives a budget that small. We report the number anyway.</p>
 </div>
 
 <div class="box">
     <p class="box-kicker">Limitation 2 &middot; Small models</p>
     <p class="box-title">130M models suffer harder.</p>
-    <p>Mamba2-130M goes from 25.85 dense to 29.06 pruned at 50% &mdash; a 12% relative perplexity hit, versus 8% for the 1.3B model. Less representational redundancy, less room to give up. Pruning gets easier as you scale up; on toy models it is genuinely costly.</p>
+    <p>Mamba2-130M goes from 25.85 dense to 29.06 pruned at 50% &mdash; a 12% relative perplexity hit, versus 8% for the 1.3B model. Less representational redundancy, less room to give up. Pruning gets easier as you scale up; on toy models it is costly.</p>
 </div>
 
 <div class="box">
@@ -778,7 +778,7 @@ $$
 <div class="box">
     <p class="box-kicker">Limitation 4 &middot; Architecture-specific</p>
     <p class="box-title">This is a Mamba2 result.</p>
-    <p>GHOST exploits Mamba2's scalar-identity $A$ and grouped-query (GQA) structure. The same control-theoretic principle should apply to S4, H3, Mamba1, hybrid Jamba-style models &mdash; but the specific Gramian approximations have to be re-derived. Drop-in transfer is not promised. We do show one transfer experiment in the paper: Zamba2, a Mamba2&nbsp;+&nbsp;Transformer hybrid, where GHOST continues to work.</p>
+    <p>GHOST exploits Mamba2's scalar-identity $A$ and grouped-query (GQA) structure. The same control-theoretic principle should apply to S4, H3, Mamba1, hybrid Jamba-style models &mdash; but the specific Gramian approximations have to be re-derived. We don't promise drop-in transfer. We do show one transfer experiment in the paper: Zamba2, a Mamba2&nbsp;+&nbsp;Transformer hybrid, where GHOST continues to work.</p>
 </div>
 
 <h2>What this is really about</h2>

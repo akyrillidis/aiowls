@@ -184,7 +184,7 @@
 
   <h2><span class="num">§2</span>An empirical pattern, unexplained</h2>
 
-  <p>If you replace full-batch gradient descent with stochastic gradient descent and a small batch size, the sharpness still rises and then plateaus — but it plateaus <em>below</em> <em>2/η</em>. The smaller the batch, the lower the plateau. Reduce the batch from 1000 to 50 and the equilibrium sharpness drops by a measurable, reproducible amount. This isn't subtle, and it isn't new. Cohen's 2021 paper noted it in passing. <a href="https://arxiv.org/abs/2412.20553">Andreyev and Beneventano (2025)</a> identified a related quantity — the so-called <em>batch sharpness</em>, measured along the direction the mini-batch gradient actually moves — that <em>does</em> sit at <em>2/η</em>. They called this the <em>Edge of Stochastic Stability</em>, and explicitly posed as an open problem the question of <em>why</em> the full-batch sharpness is suppressed and by how much.</p>
+  <p>If you replace full-batch gradient descent with stochastic gradient descent and a small batch size, the sharpness still rises and then plateaus — but it plateaus <em>below</em> <em>2/η</em>. The smaller the batch, the lower the plateau. Reduce the batch from 1000 to 50 and the equilibrium sharpness drops by a measurable, reproducible amount. This isn't subtle, and it isn't new. Cohen's 2021 paper noted it in passing. <a href="https://arxiv.org/abs/2412.20553">Andreyev and Beneventano (2025)</a> identified a related quantity — the so-called <em>batch sharpness</em>, measured along the direction the mini-batch gradient moves — that <em>does</em> sit at <em>2/η</em>. They called this the <em>Edge of Stochastic Stability</em>, and explicitly posed as an open problem the question of <em>why</em> the full-batch sharpness is suppressed and by how much.</p>
 
   <p>That open problem is what our paper closes.</p>
 
@@ -211,7 +211,7 @@
     \[ \mathbb{E}[S_{\mathrm{eq}}] \approx \frac{2}{\eta} \;-\; \underbrace{\frac{\eta\,\beta\,\sigma_u^{2}}{4\alpha}}_{\Delta S} \]
   </div>
 
-  <p>The three landscape quantities have intuitive roles. <em>α</em> measures the rate of <em>progressive sharpening</em>: the tendency of an unconstrained gradient step to push the sharpness upward. <em>β</em> measures the strength of the restoring force in the directions perpendicular to the unstable one. And <em>σ²<sub>u</sub></em> is the variance of the gradient noise <em>projected onto</em> the most unstable Hessian direction — the only piece of the noise that actually matters for the dynamics in question.</p>
+  <p>The three landscape quantities have intuitive roles. <em>α</em> measures the rate of <em>progressive sharpening</em>: the tendency of an unconstrained gradient step to push the sharpness upward. <em>β</em> measures the strength of the restoring force in the directions perpendicular to the unstable one. And <em>σ²<sub>u</sub></em> is the variance of the gradient noise <em>projected onto</em> the most unstable Hessian direction — the only piece of the noise that matters for the dynamics in question.</p>
 
   <p>Three things fall out of this formula immediately. First, when the batch equals the full dataset, mini-batch noise vanishes and the gap collapses to zero — we recover full-batch gradient descent and Damian's earlier result. Second, since the noise of an average over <em>b</em> independent samples scales as <em>1/b</em>, the gap should scale inversely with batch size. Third, the formula identifies which quantity from the noise covariance matters: not the trace, not the largest eigenvalue, but the projection onto the top Hessian eigenvector.</p>
 
@@ -230,7 +230,7 @@
 
   <h2><span class="num">§6</span>Where it doesn't apply</h2>
 
-  <p>Now the part it would be dishonest to skip. The mechanism predicts sharpness suppression <em>conditional on</em> sustained Edge of Stability dynamics — that is, the iterate has to actually reach <em>2/η</em> in the first place, and stay there long enough to oscillate. When that condition fails, the formula has nothing to say.</p>
+  <p>Now the part it would be dishonest to skip. The mechanism predicts sharpness suppression <em>conditional on</em> sustained Edge of Stability dynamics — that is, the iterate has to reach <em>2/η</em> in the first place, and stay there long enough to oscillate. When that condition fails, the formula has nothing to say.</p>
 
   <p>The cleanest example of this failure is, perhaps surprisingly, the same CNN architecture but trained with cross-entropy instead of squared-error loss. On the same 5,000-image dataset, with the same step size and the same batch sizes, the sharpness rises to about a hundred — well below the threshold of two hundred — peaks, and then collapses to about fifteen. Edge of Stability dynamics never emerge. Different batch sizes all collapse to the same low value.</p>
 
@@ -239,7 +239,7 @@
     <p class="caption"><span class="num">Figure 3.</span> Loss function matters more than architecture. Left: CNN with cross-entropy loss on a small CIFAR-10 subset never reaches the stability threshold; sharpness peaks at around 95 and collapses to 15. There is no batch-size dependence because there is no Edge of Stability regime to suppress. Right: identical CNN with squared-error loss on the same subset shows the typical batch-size-dependent gap.</p>
   </div>
 
-  <p>This is a clean negative result. Cross-entropy on a small dataset drives the network rapidly to near-zero loss, the Hessian spectrum flattens, and the conditions our theory needs are simply not present. The mechanism is precisely scoped: <em>where Edge of Stability dynamics hold, here is what happens. Where they don't, you should not expect this formula to apply.</em></p>
+  <p>This is a clean negative result. Cross-entropy on a small dataset drives the network rapidly to near-zero loss, the Hessian spectrum flattens, and the conditions our theory needs are not present. The mechanism is precisely scoped: <em>where Edge of Stability dynamics hold, here is what happens. Where they don't, you should not expect this formula to apply.</em></p>
 
   <h2><span class="num">§7</span>What this is — and isn't</h2>
 
@@ -259,7 +259,7 @@
 
   <p>Within those boundaries, what we have is, we think, the right kind of result for an empirical regularity that has been visible for years without a satisfying account: a mechanism, a closed-form prediction, a clean scaling experiment that confirms it, and a sharply-defined region outside of which the prediction is not promised to hold.</p>
 
-  <p>It also identifies what the right &ldquo;edge&rdquo; of mini-batch training really is. The full-batch sharpness is a <em>summary statistic</em>; it is not what governs whether a mini-batch update will diverge. The quantity that does — batch sharpness, the curvature seen along the mini-batch gradient direction — does saturate at <em>2/η</em>, and our gap formula is precisely the predicted amount by which the two diverge from each other. The picture, we hope, is one in which mini-batch SGD looks less like a noisy approximation of gradient descent and more like a different equilibrium: living at its own edge, of its own quantity, with full-batch sharpness as a controlled byproduct.</p>
+  <p>It also identifies what the right &ldquo;edge&rdquo; of mini-batch training really is. The full-batch sharpness is a <em>summary statistic</em>; it is not what governs whether a mini-batch update will diverge. The quantity that does — batch sharpness, the curvature seen along the mini-batch gradient direction — does saturate at <em>2/η</em>, and our gap formula is precisely the predicted amount by which the two diverge. The picture, we hope, is one in which mini-batch SGD looks less like a noisy approximation of gradient descent and more like a different equilibrium: living at its own edge, of its own quantity, with full-batch sharpness as a controlled byproduct.</p>
 
   <div class="glossary">
     <div class="label">Glossary</div>

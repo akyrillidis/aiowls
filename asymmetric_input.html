@@ -710,7 +710,7 @@ mjx-container[display="true"] { margin: 0 !important; }
 
     <p>The setting is small recurrent Transformers — networks that read a puzzle, then quietly turn it over in their heads for a fixed number of cycles before answering. A recent paper, the Hierarchical Reasoning Model (HRM), showed that this kind of architecture — only a few million parameters, but allowed to recur — can do surprisingly well on hard combinatorial puzzles like Sudoku-Extreme and 30&times;30 mazes. HRM's recipe is structural: it carries <em>two</em> latent recurrent states, a high-level <span class="zH-label">z_H</span> and a low-level <span class="zL-label">z_L</span>, and assigns each to its own Transformer with its own parameters. The two networks, the paper reports, end up doing visibly different things.</p>
 
-    <p>A follow-up paper (the Tiny Recursive Model, TRM) made a striking observation: you don't actually need two networks. Replace both with a single shared Transformer that's called twice per cycle, and the model still works. So a natural question follows. If the two recurrent states are now driven by <em>identical</em> parameters, do they still develop distinct roles? Or does the shared model treat the two updates as essentially the same operation?</p>
+    <p>A follow-up paper (the Tiny Recursive Model, TRM) made a striking observation: you don't need two networks. Replace both with a single shared Transformer that's called twice per cycle, and the model still works. So a natural question follows. If the two recurrent states are now driven by <em>identical</em> parameters, do they still develop distinct roles? Or does the shared model treat the two updates as essentially the same operation?</p>
 
     <p>Our paper, with Jucheng Shen and Barbara Su, asks this question carefully and answers it: <em>yes</em>, specialization survives the move to a single shared model — but only when the model has some way to tell which of the two states it is currently updating. The most minimal such signal, and the one we focus on, is whether the encoded input is injected into the update at all.</p>
 </section>
@@ -751,7 +751,7 @@ mjx-container[display="true"] { margin: 0 !important; }
         <h2>What the two states do</h2>
     </header>
 
-    <p>To see what each state is doing, we use the trick that mechanistic-interpretability work has been using for some time: apply the trained output head not just to the final <span class="zH-label">z_H</span>, but to <em>every</em> intermediate state, at every sub-step, and read out what the model would have said if asked to stop right then. The output is a Sudoku grid in one experiment and a maze in the other. We can simply look.</p>
+    <p>To see what each state is doing, we use the trick that mechanistic-interpretability work has been using for some time: apply the trained output head not just to the final <span class="zH-label">z_H</span>, but to <em>every</em> intermediate state, at every sub-step, and read out what the model would have said if asked to stop right then. The output is a Sudoku grid in one experiment and a maze in the other. We can look.</p>
 
     <h3>Sudoku</h3>
     <p>The decoded picture is consistent across puzzles and across the five random seeds we trained. <span class="zH-label">z_H</span> always renders a <em>complete</em> Sudoku board — every cell filled with a digit, even when several of those digits are still wrong. <span class="zL-label">z_L</span> renders an <em>incomplete</em> board — some cells held back as a special <code>BLANK</code> token while the model is still uncertain about them — and the locations of those held-back cells shift across sub-steps as the puzzle is worked.</p>
@@ -928,7 +928,7 @@ mjx-container[display="true"] { margin: 0 !important; }
         </figcaption>
     </figure>
 
-    <p>On Maze the picture is symmetric in shape but opposite in sign: freezing either state amplifies the other's revisions. The two tasks differ in the geometry of their state coupling — Sudoku's seems hierarchical, Maze's seems mutual — but in both, the freeze tests demonstrate that the two states are genuinely doing complementary work. The decoded role split is not just a visual artefact; it is a property of how the model's dynamics depend on each part.</p>
+    <p>On Maze the picture is symmetric in shape but opposite in sign: freezing either state amplifies the other's revisions. The two tasks differ in the geometry of their state coupling — Sudoku's seems hierarchical, Maze's seems mutual — but in both, the freeze tests demonstrate that the two states are doing complementary work. The decoded role split is not just a visual artefact; it is a property of how the model's dynamics depend on each part.</p>
 
     <p>The symmetric <code>Lx_Hx</code> control, by contrast, does not show this organized freeze response — freezing either state in the symmetric model produces unstructured perturbation rather than a role-consistent pattern. The two pictures are coherent only when the asymmetry is present.</p>
 
@@ -947,7 +947,7 @@ mjx-container[display="true"] { margin: 0 !important; }
 
     <p>The decoded behaviour and the freeze responses are downstream of something happening <em>inside</em> the Transformer. To get at that, we looked at the attention. Each sub-step has its own attention pattern; we measured, for every blank query cell, how much attention mass lands inside the cell's local neighbourhood, and compared the L-update with the H-update.</p>
 
-    <p>On Sudoku, every blank cell has a natural neighbourhood: the twenty other cells that share its row, its column, or its 3&times;3 box — the cells whose values constrain it. Before any aggregate statistics, it is worth just looking at a single example.</p>
+    <p>On Sudoku, every blank cell has a natural neighbourhood: the twenty other cells that share its row, its column, or its 3&times;3 box — the cells whose values constrain it. Before any aggregate statistics, it is worth looking at a single example.</p>
 
     <figure class="full">
         <img src="./assets/img/air_attention_sudoku_example1.png" alt="Attention heatmaps on a single Sudoku puzzle showing L-update concentrating inside the cell's neighborhood while H-update spreads attention across the whole board.">
@@ -1017,7 +1017,7 @@ mjx-container[display="true"] { margin: 0 !important; }
 
     <p>There is a common assumption in modern architecture design that if you want a network to play multiple roles, you build it with multiple parameter sets — multiple experts, multiple modules, multiple heads, multiple LoRA adapters. Functional modularity is implemented as <em>parameter</em> modularity, by construction.</p>
 
-    <p>What this work suggests, in a small and carefully controlled setting, is that the relationship is more relaxed than that. A single set of parameters can play more than one role <em>if</em> it has a clean signal at update time telling it which role it is in. The signal can be very thin — in our case, the mere presence or absence of the input vector is enough. What it cannot be is mixed indistinguishably into the content.</p>
+    <p>What this work suggests, in a small and carefully controlled setting, is that the relationship is more relaxed than that. A single set of parameters can play more than one role <em>if</em> it has a clean signal at update time telling it which role it is in. The signal can be thin — in our case, the mere presence or absence of the input vector is enough. What it cannot be is mixed indistinguishably into the content.</p>
 
     <p>That has two implications worth thinking about. The first is design-economic: the same task can be solved by a model with half the parameters of the obvious modular alternative, if the architecture exposes a sufficient state-identity signal. The second is mechanistic: when we ask what a shared model is "really doing," the answer can be "two different things at two different invocations," and that is detectable by the kinds of probes that mechanistic-interpretability work has been using to read inside transformer LLMs.</p>
 
