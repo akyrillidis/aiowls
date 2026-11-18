@@ -1,6 +1,7 @@
 ---
 layout: page
-title: Publications
+title: "Publications (2023 — present)"
+eyebrow: Publications
 page_class: pubs
 ---
 

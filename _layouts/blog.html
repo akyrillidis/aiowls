@@ -3,7 +3,7 @@ layout: default
 ---
 {%- assign posts = site.data.posts | sort: "date" | reverse -%}
 <section class="page-head wrap-page">
-  <p class="eyebrow">{{ page.title }}</p>
+  <p class="eyebrow">{{ page.eyebrow | default: page.title }}</p>
   <h1 class="page-title">{{ page.heading }}</h1>
   <p class="page-dek">{{ posts.size }} posts from {{ site.title | strip }}, newest first.</p>
 </section>

@@ -1,5 +1,6 @@
 ---
 layout: blog
-title: Blog
+title: Blogposts
+eyebrow: Blog
 heading: Research notes
 ---

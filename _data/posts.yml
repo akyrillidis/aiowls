@@ -1,17 +1,17 @@
 # Blog cards for the home page and blogs.html, sorted by date at build time (newest first).
 # Titles match the posts; summaries are one line drawn from the old index blurbs; dates are the
-# day each post first landed in git; minutes = words / 230. New post: add one entry (BLOGPOST.md).
+# time each post first landed in git; minutes = words / 230. New post: add one entry (BLOGPOST.md).
 - url: /which_layer_runs_the_program.html
   title: Which Layer Runs the Program?
-  date: 2026-07-08
+  date: 2026-07-08 15:45:29 +0300
   minutes: 8
   summary: On a tiny transformer whose correct layer layout we know exactly, we find what puts computation at a given depth.
   authors: Anastasios Kyrillidis, in collaboration with Microsoft Research
   thumb: /assets/img/p2_scaling.png
-  thumb_alt: Last-block update share versus network depth for unnormalized and normalized networks
+  thumb_alt: "Last-block update share versus depth, 2 to 12 layers. Unnormalized networks stay high (0.79-0.91); normalized networks track the 1/L line closely."
 - url: /measuring_relaxation.html
   title: What Counts as a Relaxed Structure?
-  date: 2026-07-07
+  date: 2026-07-07 17:27:31 +0300
   minutes: 7
   summary: ML potentials have no agreed metric for relaxation success; a map of the three metric families and the benchmarks behind them.
   authors: AI-OWLS, companion to the G-DEQ post
@@ -19,15 +19,15 @@
   thumb_alt: What counts as a relaxed structure
 - url: /can_we_train_a_computer.html
   title: "Can We Train a Computer? Two Ways to Point at a Memory"
-  date: 2026-07-07
+  date: 2026-07-07 23:46:45 +0300
   minutes: 13
   summary: We wired a transformer by hand to be a Turing-complete computer, then trained another from scratch to do the identical job.
   authors: Anastasios Kyrillidis, in collaboration with Microsoft Research
-  thumb: /assets/img/ctac_kmatrix.png
-  thumb_alt: Key-overlap matrices of the hand-built and the trained transformer
+  thumb: /assets/img/cards/can_we_train_a_computer.svg
+  thumb_alt: "Title card: the SUBLEQ instruction, subleq a, b, c"
 - url: /guided_deq.html
   title: "Which Valley, and How Deep: Training Neural Atomic Relaxation at a Fraction of the Memory"
-  date: 2026-07-03
+  date: 2026-07-03 12:42:31 +0300
   minutes: 10
   summary: A structure relaxation does two separable jobs; splitting them matches full backprop on silicon at 3.5× less memory.
   authors: Yifei Zhang, Evan Dramko, Anastasios Kyrillidis
@@ -35,7 +35,7 @@
   thumb_alt: Two jobs in a relaxation, which valley and how deep
 - url: /magnitude_safety.html
   title: "Two Ways to Slim a Model: Remember vs Recompute"
-  date: 2026-06-24
+  date: 2026-06-24 18:51:17 +0300
   minutes: 7
   summary: Which pruning rule is safe depends on whether a model part remembers or recomputes.
   authors: Anastasios Kyrillidis, building on GHOST with Michael Menezes
@@ -43,7 +43,7 @@
   thumb_alt: LAMBADA capability under 90% dynamic FFN sparsity
 - url: /one_rank_at_a_time.html
   title: "One Rank at a Time: Cascading Error Dynamics in Sequential Learning"
-  date: 2026-05-26
+  date: 2026-05-26 11:21:11 -0500
   minutes: 9
   summary: When models are built one rank at a time, per-step errors compound through every later step, at a rate set by the spectral gaps.
   authors: Mahtab Alizadeh Vandchali, Fangshuo (Jasper) Liao, Anastasios Kyrillidis
@@ -51,7 +51,7 @@
   thumb_alt: Cascading error dynamics across rank-1 steps
 - url: /asymmetric_input.html
   title: "One Model, Two Roles: Emergent Specialization in a Shared Recurrent Transformer"
-  date: 2026-05-19
+  date: 2026-05-19 08:49:23 -0500
   minutes: 16
   summary: Injecting the input into one update but not the other is enough to make a shared-weight recurrent Transformer behave like two.
   authors: Jucheng Shen, Barbara Su, Anastasios Kyrillidis
@@ -59,7 +59,7 @@
   thumb_alt: The AIR architecture, one shared block with two latent roles
 - url: /adapad.html
   title: "From PCA to LoRA: Why Fine-Tuning Could Have Been Parallel All Along"
-  date: 2026-05-14
+  date: 2026-05-14 14:09:22 -0500
   minutes: 14
   summary: AdaPaD trains LoRA's rank-1 pieces in parallel, and the errors correct themselves, provably.
   authors: Barbara Su, Fangshuo (Jasper) Liao, Anastasios Kyrillidis
@@ -67,7 +67,7 @@
   thumb_alt: Five worker error envelopes converging across communication rounds
 - url: /ghost_mamba2.html
   title: "GHOST: pruning Mamba2 by what each channel does"
-  date: 2026-05-08
+  date: 2026-05-08 13:06:03 -0500
   minutes: 13
   summary: A forward-only state pruner for Mamba2 selective SSMs, built on controllability and observability. ICML 2026.
   authors: Michael Menezes, Anastasios Kyrillidis
@@ -75,7 +75,7 @@
   thumb_alt: Phantom and corporeal hidden states in Mamba2-1.3B
 - url: /multiplicative_gaussian_input.html
   title: How a little Gaussian dust changes how a network learns
-  date: 2026-05-02
+  date: 2026-05-02 23:11:49 -0500
   minutes: 9
   summary: Multiply every input by random noise; training still converges, to a target whose distance from the global minimum we can write down.
   authors: Afroditi Kolomvaki, Fangshuo Liao, Evan Dramko, Ziyun Guang, Anastasios Kyrillidis
@@ -83,25 +83,25 @@
   thumb_alt: Smoothed ReLU under multiplicative Gaussian input noise
 - url: /stochastic_self_stabilization.html
   title: Why Stochastic Gradient Descent Stops Just Short of the Edge
-  date: 2026-04-24
+  date: 2026-04-24 21:29:25 -0500
   minutes: 10
   summary: A closed-form sharpness gap explains a long-observed property of mini-batch training.
   authors: Fangshuo (Jasper) Liao, Afroditi Kolomvaki, Anastasios Kyrillidis
   thumb: /assets/img/seos_fig1_trajectories.png
-  thumb_alt: Sharpness trajectories under SGD
+  thumb_alt: "Sharpness trajectories during training across batch sizes; smaller batches plateau lower"
 - url: /accelerated_nesterov_deepReLU.html
   title: Provable Acceleration of Nesterov's Momentum for Deep ReLU Networks
-  date: 2026-04-21
+  date: 2026-04-21 13:05:57 -0500
   minutes: 11
   summary: A new objective class that makes Nesterov provably accelerated for non-trivial neural architectures.
   authors: Fangshuo (Jasper) Liao, Anastasios Kyrillidis
   thumb: /assets/img/agd_exp1.png
-  thumb_alt: Nesterov acceleration experiment
+  thumb_alt: "Experiment 1: sigma_max(A_2) = 0.01"
 - url: /parallel_deflation.html
   title: Provable Model-Parallel Distributed Principal Component Analysis with Parallel Deflation
-  date: 2025-02-25
+  date: 2025-02-25 13:33:42 -0600
   minutes: 3
   summary: A self-correcting parallel deflation scheme for distributed PCA, with convergence guarantees.
   authors: Fangshuo Liao, Wenyi Su, Anastasios Kyrillidis
   thumb: /assets/img/ParallelDeflationDiagram.png
-  thumb_alt: Parallel deflation diagram
+  thumb_alt: "Parallel Deflation Algorithm"
