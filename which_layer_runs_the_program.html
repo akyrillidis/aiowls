@@ -15,78 +15,20 @@
 <meta name="twitter:image" content="https://akyrillidis.github.io/aiowls/assets/img/p2_scaling.png">
 <title>Which Layer Runs the Program? &middot; AI-OWLS</title>
 
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Display&family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
 
 <script>window.MathJax={tex:{inlineMath:[['\\(','\\)']],displayMath:[['\\[','\\]']]}};</script>
 <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 
-<style>
-  :root{
-    --paper:#f6f1e6; --ink:#2c2218; --soft:#5c4d3f; --line:#ddd4c0; --rule:#2c2218;
-    --oxblood:#7c1f2b;
-    --built:#a9761c;  --builtbg:#f2e9d6; --built-d:#8a5f16;   /* amber = no normalization (data-ink) */
-    --train:#1f6b67;  --trainbg:#e5efec; --train-d:#17544f;   /* teal  = normalization      (data-ink) */
-    --grey:#8a7d6b;
-  }
-  *{box-sizing:border-box;}
-  body{
-    background:var(--paper); color:var(--ink);
-    font-family:"Libre Caslon Text", Georgia, "Times New Roman", serif;
-    font-size:19.5px; line-height:1.72; margin:0;
-    -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
-  }
-  .wrap{ max-width:624px; margin:0 auto; padding:0 24px 112px; }
-  .kick{ font-style:italic; font-size:.9rem; letter-spacing:.02em; color:var(--soft); margin:56px 0 14px; text-align:center; }
-  h1{ font-family:"Libre Caslon Display", Georgia, serif; font-weight:400; font-size:2.6rem;
-    line-height:1.09; letter-spacing:.004em; margin:0 0 .32em; text-align:center; }
-  .dek{ font-size:1.12rem; line-height:1.5; color:var(--soft); font-style:italic; font-weight:400;
-    margin:0 auto 1.3em; text-align:center; max-width:540px; }
-  .byline{ font-style:italic; font-size:1rem; margin:0 0 3px; text-align:center; }
-  .venue{ font-style:italic; font-size:.84rem; color:var(--soft); margin:2px auto 0; text-align:center; max-width:500px; }
-  .links{ font-size:.9rem; margin:12px 0 0; text-align:center; }
-  a{ color:var(--ink); text-decoration:none; border-bottom:1px solid rgba(44,34,24,.32); }
-  a:hover{ border-bottom-color:var(--ink); }
-  .rule-top{ border:0; border-top:1px solid var(--rule); width:64px; margin:26px auto 42px; opacity:.5; }
-  h2{ font-family:"Libre Caslon Display", Georgia, serif; font-weight:400; font-size:1.5rem;
-    line-height:1.2; margin:2.05em 0 .45em; letter-spacing:.005em; }
-  h2 .num{ color:var(--oxblood); margin-right:.45em; }
-  p{ margin:0 0 1.12em; } strong{ font-weight:700; } em{ font-style:italic; }
-  hr{ border:0; border-top:1px solid var(--rule); opacity:.5; width:64px; margin:40px auto; }
-  .drop::first-letter{ font-family:"Libre Caslon Display", Georgia, serif; float:left;
-    font-size:4.4rem; line-height:.66; padding:.02em .09em 0 0; color:var(--oxblood); font-weight:400; }
-  .brief{ background:transparent; border:1px solid var(--line); border-left:2px solid var(--oxblood);
-    padding:15px 20px; margin:28px 0; }
-  .brief .lbl{ font-style:italic; font-size:.82rem; letter-spacing:.02em; color:var(--oxblood);
-    display:block; margin-bottom:6px; }
-  .brief p{ font-size:.99rem; line-height:1.56; margin:0; }
-  .brief p + p{ margin-top:.65em; }
-  figure{ margin:32px auto; text-align:center; max-width:500px; }
-  figure img{ max-width:100%; height:auto; border:1px solid var(--line); background:#fbf8f0; padding:6px; }
-  figure svg{ max-width:100%; height:auto; }
-  .card{ border:1px solid var(--line); background:#fbf8f0; padding:12px 12px 6px; }
-  figcaption{ font-style:italic; font-size:.85rem; color:var(--soft); line-height:1.55;
-    margin-top:11px; text-align:left; }
-  figcaption b{ color:var(--ink); font-weight:700; font-style:normal; }
-  .svglbl{ font-family:Georgia, serif; font-style:italic; }
-  .eq{ margin:1.5em 0; text-align:center; overflow-x:auto; }
-  .ledger{ display:grid; grid-template-columns:1fr 1fr; gap:18px; margin:28px 0; }
-  .ledger .col{ border:1px solid var(--line); background:#fbf8f0; padding:14px 18px; }
-  .ledger .col.proven{ border-top:2px solid var(--train); }
-  .ledger .col.open{ border-top:2px solid var(--built); }
-  .ledger h3{ font-style:italic; font-size:.92rem; letter-spacing:.02em; margin:0 0 9px; font-weight:400; }
-  .ledger .proven h3{ color:var(--train-d); } .ledger .open h3{ color:var(--built-d); }
-  .ledger ul{ margin:0; padding-left:18px; font-size:.92rem; line-height:1.46; }
-  .ledger li{ margin:0 0 8px; } .ledger li:last-child{ margin-bottom:0; }
-  .foot{ font-style:italic; font-size:.85rem; color:var(--soft); margin-top:42px; line-height:1.62;
-    border-top:1px solid var(--line); padding-top:20px; }
-  .foot a{ font-style:normal; }
-  .backlink{ font-style:italic; font-size:.92rem; margin:42px 0 0; display:block; }
-  @media (max-width:640px){ body{font-size:18px;} h1{font-size:2rem;} .dek{font-size:1.05rem;} .ledger{grid-template-columns:1fr;} }
-</style>
+<!-- site:head -->
+<link rel="icon" type="image/png" href="./assets/img/brand/favicon.png">
+<link rel="stylesheet" href="./assets/css/site.css">
+<link rel="stylesheet" href="./assets/css/post-legacy.css">
+<!-- /site:head -->
 </head>
-<body>
+<body class="post-legacy post-which-layer-runs-the-program">
+<!-- site:bar -->
+<div id="site-bar" class="site-bar" role="banner"><div class="site-bar__in"><a class="site-brand" href="./"><span class="site-mark" aria-hidden="true"></span><span class="site-name">AI-OWLS</span></a><div class="site-nav" role="navigation" aria-label="Site"><a href="./blogs.html">Blog</a><a href="./publications.html">Publications</a><a href="./#people">People</a></div></div></div>
+<!-- /site:bar -->
 <div class="wrap">
 
   <div class="kick">Interpretability &middot; Transformers &middot; Machine Learning</div>
@@ -307,5 +249,8 @@
   <a class="backlink" href="./blogs.html">&larr; All AI-OWLS posts</a>
 
 </div>
+<!-- site:foot -->
+<div id="site-foot" class="site-foot" role="contentinfo"><div class="site-foot__in"><div class="site-foot__brand"><a class="site-brand" href="./"><span class="site-mark" aria-hidden="true"></span><span class="site-name">AI-OWLS</span></a><p>Open-source ML/AI algorithms research at Rice CS.</p></div><div class="site-foot__links"><a href="./blogs.html">Blog</a><a href="./publications.html">Publications</a><a href="https://akyrillidis.github.io/">Anastasios Kyrillidis</a></div></div></div>
+<!-- /site:foot -->
 </body>
 </html>

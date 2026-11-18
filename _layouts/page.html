@@ -1,0 +1,14 @@
+---
+layout: default
+---
+<article class="page wrap-page">
+  <header class="page-head page-head--in">
+    <p class="eyebrow">{{ page.title }}</p>
+    {%- if page.heading %}
+    <h1 class="page-title">{{ page.heading }}</h1>
+    {%- endif %}
+  </header>
+  <div class="{{ page.page_class }}">
+{{ content }}
+  </div>
+</article>

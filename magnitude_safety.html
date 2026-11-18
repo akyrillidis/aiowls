@@ -15,65 +15,21 @@
 <meta name="twitter:image" content="https://akyrillidis.github.io/aiowls/assets/img/magsafe_capability.png">
 <title>Two Ways to Slim a Model &middot; AI-OWLS</title>
 
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;0,8..60,500;0,8..60,600;0,8..60,700;1,8..60,400&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 
-<style>
-  :root{
-    --paper:#fbf9f4; --ink:#1f1d1a; --soft:#5a564e; --line:#e6e1d4;
-    --keep:#2f8f4e;  --keepbg:#eaf5ee;
-    --lose:#c0392b;  --losebg:#fbecea;
-    --accent:#2d8f8a; --amber:#9a6b12;
-  }
-  *{box-sizing:border-box;}
-  body{
-    background:var(--paper); color:var(--ink);
-    font-family:"Source Serif 4", Georgia, serif; font-size:19px; line-height:1.66;
-    margin:0; -webkit-font-smoothing:antialiased;
-  }
-  .wrap{max-width:760px; margin:0 auto; padding:0 22px 90px;}
-  .kick{font-family:"IBM Plex Sans",sans-serif; font-weight:600; font-size:.74rem;
-    letter-spacing:.14em; text-transform:uppercase; color:var(--accent); margin:46px 0 14px;}
-  h1{font-weight:700; font-size:2.55rem; line-height:1.12; letter-spacing:-.01em; margin:0 0 .35em;}
-  .dek{font-size:1.3rem; line-height:1.45; color:var(--soft); font-weight:400; font-style:italic; margin:0 0 1.2em;}
-  .byline{font-family:"IBM Plex Sans",sans-serif; font-size:.92rem; color:var(--soft); margin:0 0 4px;}
-  .links{font-family:"IBM Plex Sans",sans-serif; font-size:.9rem; margin:10px 0 0;}
-  .links a{display:inline-block; margin-right:16px;}
-  a{color:#185f5b; text-decoration:none; border-bottom:1px solid rgba(45,143,138,.35);}
-  a:hover{border-bottom-color:var(--accent); background:rgba(45,143,138,.07);}
-  h2{font-family:"IBM Plex Sans",sans-serif; font-weight:600; font-size:1.5rem; line-height:1.25;
-    margin:2.1em 0 .55em; letter-spacing:-.01em;}
-  h3{font-family:"IBM Plex Sans",sans-serif; font-weight:600; font-size:1.12rem; color:var(--ink);
-    margin:1.6em 0 .35em;}
-  p{margin:0 0 1.1em;} strong{font-weight:600;}
-  hr{border:0; border-top:1px solid var(--line); margin:34px 0;}
-  .upshot{background:#1f1d1a; color:#f4efe4; border-radius:10px; padding:22px 26px; margin:30px 0 8px;
-    font-size:1.08rem; line-height:1.55;}
-  .upshot b{color:#ffd98a;}
-  figure{margin:30px 0; text-align:center;}
-  figure img{max-width:100%; height:auto; border:1px solid var(--line); border-radius:8px; background:#fff;}
-  figcaption{font-family:"IBM Plex Sans",sans-serif; font-size:.86rem; color:var(--soft);
-    line-height:1.5; margin-top:10px; text-align:left;}
-  figcaption b{color:var(--ink);}
-  .callout{border-left:4px solid var(--accent); background:#f1f7f6; padding:16px 20px; border-radius:0 8px 8px 0; margin:26px 0;}
-  .callout.keep{border-left-color:var(--keep); background:var(--keepbg);}
-  .callout.scope{border-left-color:var(--amber); background:#fbf4e6;}
-  .callout p:last-child{margin-bottom:0;}
-  .callout .lbl{font-family:"IBM Plex Sans",sans-serif; font-weight:600; font-size:.74rem; letter-spacing:.1em;
-    text-transform:uppercase; color:var(--soft); display:block; margin-bottom:6px;}
-  .keepword{color:var(--keep); font-weight:600;} .loseword{color:var(--lose); font-weight:600;}
-  code{font-family:"IBM Plex Mono",monospace; font-size:.86em; background:#efeadf; padding:1px 5px; border-radius:3px;}
-  .foot{font-family:"IBM Plex Sans",sans-serif; font-size:.86rem; color:var(--soft); margin-top:40px;}
-  .backlink{font-family:"IBM Plex Sans",sans-serif; font-size:.9rem; margin:46px 0 0; display:block;}
-  @media (max-width:560px){ body{font-size:17.5px;} h1{font-size:2rem;} .dek{font-size:1.12rem;} }
-</style>
 
 <script>window.MathJax={tex:{inlineMath:[['\\(','\\)']]}};</script>
 <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<!-- site:head -->
+<link rel="icon" type="image/png" href="./assets/img/brand/favicon.png">
+<link rel="stylesheet" href="./assets/css/site.css">
+<link rel="stylesheet" href="./assets/css/post-legacy.css">
+<!-- /site:head -->
 </head>
 
-<body>
+<body class="post-legacy post-magnitude-safety">
+<!-- site:bar -->
+<div id="site-bar" class="site-bar" role="banner"><div class="site-bar__in"><a class="site-brand" href="./"><span class="site-mark" aria-hidden="true"></span><span class="site-name">AI-OWLS</span></a><div class="site-nav" role="navigation" aria-label="Site"><a href="./blogs.html">Blog</a><a href="./publications.html">Publications</a><a href="./#people">People</a></div></div></div>
+<!-- /site:bar -->
 <div class="wrap">
 
   <div class="kick">AI-OWLS &middot; Model compression</div>
@@ -248,5 +204,8 @@
   <a class="backlink" href="./blogs.html">&larr; All AI-OWLS posts</a>
 
 </div>
+<!-- site:foot -->
+<div id="site-foot" class="site-foot" role="contentinfo"><div class="site-foot__in"><div class="site-foot__brand"><a class="site-brand" href="./"><span class="site-mark" aria-hidden="true"></span><span class="site-name">AI-OWLS</span></a><p>Open-source ML/AI algorithms research at Rice CS.</p></div><div class="site-foot__links"><a href="./blogs.html">Blog</a><a href="./publications.html">Publications</a><a href="https://akyrillidis.github.io/">Anastasios Kyrillidis</a></div></div></div>
+<!-- /site:foot -->
 </body>
 </html>

@@ -1,0 +1,8 @@
+<div id="site-bar" class="site-bar" role="banner"><div class="site-bar__in">
+  <a class="site-brand" href="{{ '/' | relative_url }}"><span class="site-mark" aria-hidden="true"></span><span class="site-name">{{ site.title | strip }}</span></a>
+  <div class="site-nav" role="navigation" aria-label="Site">
+    {%- for item in site.nav %}
+    <a href="{{ item.url | relative_url }}"{% if page.url == item.url %} aria-current="page"{% endif %}>{{ item.title }}</a>
+    {%- endfor %}
+  </div>
+</div></div>

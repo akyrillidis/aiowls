@@ -5,3 +5,26 @@ description: Open-source ML/AI algorithms research at Rice CS
 show_downloads: true
 google_analytics:
 theme: jekyll-theme-minimal
+plugins:
+  - jekyll-seo-tag
+
+# 2026-11 design system: layouts in _layouts/, styles in assets/css/site.css,
+# blog cards from _data/posts.yml.
+hero_eyebrow: Rice University · Computer Science
+about_heading: About the lab
+blog_page: /blogs.html
+footer_text: Open-source ML/AI algorithms research at Rice CS.
+nav:
+  - title: Blog
+    url: /blogs.html
+  - title: Publications
+    url: /publications.html
+  - title: People
+    url: /#people
+footer_links:
+  - title: Blog
+    url: /blogs.html
+  - title: Publications
+    url: /publications.html
+  - title: Anastasios Kyrillidis
+    url: https://akyrillidis.github.io/

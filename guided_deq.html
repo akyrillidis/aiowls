@@ -15,81 +15,20 @@
 <meta name="twitter:image" content="https://akyrillidis.github.io/aiowls/assets/img/gdeq_og.png">
 <title>Which Valley, and How Deep: Training Neural Atomic Relaxation at a Fraction of the Memory &middot; AI-OWLS</title>
 
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400;1,6..72,500&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 
 <script>window.MathJax={tex:{inlineMath:[['\\(','\\)']]}};</script>
 <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 
-<style>
-  :root{
-    --paper:#faf7f1; --ink:#211f1b; --soft:#615c52; --line:#e8e2d4;
-    --basin:#b0771a;  --basinbg:#f8f0dc;      /* amber  = basin selection / guidance */
-    --eq:#1c7d78;     --eqbg:#e5f2f0;         /* teal   = equilibrium / implicit / precision */
-    --wrong:#c0553f;  --wrongbg:#f9ece7;      /* coral  = wrong basin / caveat */
-    --grey:#9a9384;
-  }
-  *{box-sizing:border-box;}
-  body{
-    background:var(--paper); color:var(--ink);
-    font-family:"Newsreader", Georgia, serif; font-size:20px; line-height:1.62;
-    margin:0; -webkit-font-smoothing:antialiased;
-  }
-  .wrap{max-width:748px; margin:0 auto; padding:0 22px 96px;}
-  .kick{font-family:"Space Grotesk",sans-serif; font-weight:600; font-size:.72rem;
-    letter-spacing:.2em; text-transform:uppercase; color:var(--eq); margin:52px 0 16px;}
-  h1{font-family:"Newsreader",serif; font-weight:500; font-size:2.4rem; line-height:1.13;
-    letter-spacing:-.015em; margin:0 0 .34em;}
-  .dek{font-size:1.4rem; line-height:1.42; color:var(--soft); font-weight:400; font-style:italic; margin:0 0 1.1em;}
-  .byline{font-family:"Space Grotesk",sans-serif; font-size:.9rem; color:var(--soft); margin:0 0 4px; letter-spacing:.01em;}
-  .links{font-family:"Space Grotesk",sans-serif; font-size:.88rem; margin:12px 0 0;}
-  .links a{display:inline-block; margin-right:18px;}
-  a{color:#155f5a; text-decoration:none; border-bottom:1px solid rgba(28,125,120,.35);}
-  a:hover{border-bottom-color:var(--eq); background:rgba(28,125,120,.07);}
-  h2{font-family:"Space Grotesk",sans-serif; font-weight:600; font-size:1.42rem; line-height:1.24;
-    margin:2.2em 0 .5em; letter-spacing:-.01em;}
-  h2 .num{color:var(--eq); font-weight:500; margin-right:.5em;}
-  p{margin:0 0 1.15em;} strong{font-weight:600;}
-  em{font-style:italic;}
-  hr{border:0; border-top:1px solid var(--line); margin:38px 0;}
-  .drop::first-letter{font-family:"Newsreader",serif; float:left; font-size:3.9rem; line-height:.82;
-    padding:.06em .1em 0 0; color:var(--basin); font-weight:500;}
-  .brief{background:var(--eqbg); border:1px solid #cfe6e3; border-radius:12px; padding:20px 24px; margin:30px 0;}
-  .brief .lbl{font-family:"Space Grotesk",sans-serif; font-weight:600; font-size:.72rem; letter-spacing:.16em;
-    text-transform:uppercase; color:var(--eq); display:block; margin-bottom:8px;}
-  .brief p{font-size:1.04rem; line-height:1.5; margin:0;}
-  figure{margin:34px 0; text-align:center;}
-  figure svg{max-width:100%; height:auto;}
-  .card{border:1px solid var(--line); border-radius:10px; background:#fffdf8; padding:10px 12px;}
-  figcaption{font-family:"Space Grotesk",sans-serif; font-size:.85rem; color:var(--soft);
-    line-height:1.5; margin-top:12px; text-align:left;}
-  figcaption b{color:var(--ink); font-weight:600;}
-  .callout{border-left:4px solid var(--eq); background:var(--eqbg); padding:16px 20px; border-radius:0 8px 8px 0; margin:28px 0;}
-  .callout.idea{border-left-color:var(--basin); background:var(--basinbg);}
-  .callout.scope{border-left-color:var(--wrong); background:var(--wrongbg);}
-  .callout p:last-child{margin-bottom:0;}
-  .callout .lbl{font-family:"Space Grotesk",sans-serif; font-weight:600; font-size:.72rem; letter-spacing:.12em;
-    text-transform:uppercase; color:var(--soft); display:block; margin-bottom:7px;}
-  table{border-collapse:collapse; width:100%; margin:26px 0; font-size:.92rem;
-    font-family:"Space Grotesk",sans-serif;}
-  caption{caption-side:top; text-align:left; font-family:"Space Grotesk",sans-serif; font-size:.85rem;
-    color:var(--soft); margin-bottom:9px; line-height:1.45;}
-  th,td{text-align:left; padding:8px 10px; border-bottom:1px solid var(--line); vertical-align:top;}
-  thead th{font-weight:600; color:var(--ink); border-bottom:1.5px solid #d8d1c0; font-size:.82rem;
-    letter-spacing:.02em;}
-  tbody tr.hi{background:var(--basinbg);}
-  td .y{color:var(--eq); font-weight:600;} td .n{color:var(--wrong); font-weight:600;} td .q{color:var(--grey); font-weight:600;}
-  .gloss td:nth-child(1), .gloss th:nth-child(1){font-weight:600; color:var(--basin); width:26%;}
-  .gloss td:nth-child(3), .gloss th:nth-child(3){font-weight:600; color:var(--eq); width:26%;}
-  code{font-family:"JetBrains Mono",monospace; font-size:.84em; background:#efeadf; padding:1px 5px; border-radius:3px;}
-  .foot{font-family:"Space Grotesk",sans-serif; font-size:.84rem; color:var(--soft); margin-top:42px; line-height:1.6;}
-  .backlink{font-family:"Space Grotesk",sans-serif; font-size:.9rem; margin:48px 0 0; display:block;}
-  .svglbl{font-family:"Space Grotesk",sans-serif;}
-  @media (max-width:560px){ body{font-size:18px;} h1{font-size:1.72rem;} .dek{font-size:1.18rem;} table{font-size:.82rem;} th,td{padding:6px 6px;} }
-</style>
+<!-- site:head -->
+<link rel="icon" type="image/png" href="./assets/img/brand/favicon.png">
+<link rel="stylesheet" href="./assets/css/site.css">
+<link rel="stylesheet" href="./assets/css/post-legacy.css">
+<!-- /site:head -->
 </head>
-<body>
+<body class="post-legacy post-guided-deq">
+<!-- site:bar -->
+<div id="site-bar" class="site-bar" role="banner"><div class="site-bar__in"><a class="site-brand" href="./"><span class="site-mark" aria-hidden="true"></span><span class="site-name">AI-OWLS</span></a><div class="site-nav" role="navigation" aria-label="Site"><a href="./blogs.html">Blog</a><a href="./publications.html">Publications</a><a href="./#people">People</a></div></div></div>
+<!-- /site:bar -->
 <div class="wrap">
 
   <div class="kick">Optimization &middot; Materials &middot; Machine Learning</div>
@@ -400,5 +339,8 @@
   <a class="backlink" href="./blogs.html">&larr; All AI-OWLS posts</a>
 
 </div>
+<!-- site:foot -->
+<div id="site-foot" class="site-foot" role="contentinfo"><div class="site-foot__in"><div class="site-foot__brand"><a class="site-brand" href="./"><span class="site-mark" aria-hidden="true"></span><span class="site-name">AI-OWLS</span></a><p>Open-source ML/AI algorithms research at Rice CS.</p></div><div class="site-foot__links"><a href="./blogs.html">Blog</a><a href="./publications.html">Publications</a><a href="https://akyrillidis.github.io/">Anastasios Kyrillidis</a></div></div></div>
+<!-- /site:foot -->
 </body>
 </html>

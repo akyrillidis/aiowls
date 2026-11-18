@@ -9,334 +9,22 @@
 <meta property="og:title" content="How a little Gaussian dust changes how a network learns" />
 <meta property="og:description" content="What happens when every input to a two-layer ReLU network is multiplied by random noise? The math, surprisingly, still goes through." />
 
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400;1,500&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 
 <script>
 window.MathJax = { tex: { inlineMath: [['$','$'], ['\\(','\\)']] } };
 </script>
 <script type="text/javascript" id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
 
-<style>
-:root {
-    --ink:        #21201c;
-    --ink-soft:   #525049;
-    --paper:      #ffffff;
-    --paper-tint: #faf9f6;
-    --rule:       #e6e3da;
-    --rule-soft:  #f0eee7;
-
-    /* Sci-Am editorial accent (used sparingly) */
-    --accent-red: #c72a1e;
-
-    /* Conceptual palette — three colors, used consistently across figures */
-    --data-teal:   #2d8f8a;   /* "the math" / clean ReLU / theory */
-    --data-coral:  #e6725b;   /* "the noise" / κ / perturbation */
-    --data-amber:  #d4a03f;   /* "the result" / smoothed activation */
-    --data-grey:   #8a8780;   /* secondary data */
-
-    --serif:   "Spectral", Georgia, "Times New Roman", serif;
-    --sans:    "IBM Plex Sans", "Helvetica Neue", system-ui, sans-serif;
-    --mono:    "IBM Plex Mono", "JetBrains Mono", Menlo, monospace;
-}
-
-* { box-sizing: border-box; }
-html, body { margin: 0; padding: 0; }
-body {
-    background: var(--paper);
-    color: var(--ink);
-    font-family: var(--serif);
-    font-weight: 400;
-    font-size: 18px;
-    line-height: 1.65;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-}
-
-a { color: inherit; }
-
-/* Masthead — clean, sans-only, very thin rule (Sci-Am editorial) */
-.masthead {
-    border-bottom: 1px solid var(--rule);
-    padding: 16px 32px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    max-width: 1140px;
-    margin: 0 auto;
-}
-.masthead .brand {
-    font-family: var(--sans);
-    font-weight: 700;
-    font-size: 14px;
-    letter-spacing: 0.18em;
-    text-transform: uppercase;
-    color: var(--ink);
-    text-decoration: none;
-}
-.masthead .nav {
-    font-family: var(--sans);
-    font-size: 12px;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: var(--ink-soft);
-}
-.masthead .nav a { color: inherit; text-decoration: none; margin-left: 18px; }
-.masthead .nav a:hover { color: var(--accent-red); }
-
-/* Hero */
-.hero {
-    max-width: 880px;
-    margin: 0 auto;
-    padding: 56px 32px 28px;
-    text-align: left;
-}
-.kicker {
-    font-family: var(--sans);
-    font-weight: 600;
-    font-size: 12px;
-    letter-spacing: 0.22em;
-    text-transform: uppercase;
-    color: var(--accent-red);
-    margin-bottom: 18px;
-}
-.kicker .dot { color: var(--ink-soft); margin: 0 8px; font-weight: 400; }
-.hero h1 {
-    font-family: var(--serif);
-    font-weight: 600;
-    font-size: 54px;
-    line-height: 1.06;
-    letter-spacing: -0.012em;
-    margin: 0 0 22px 0;
-    color: var(--ink);
-}
-.dek {
-    font-family: var(--serif);
-    font-style: italic;
-    font-weight: 400;
-    font-size: 22px;
-    line-height: 1.45;
-    color: var(--ink-soft);
-    max-width: 720px;
-    margin: 0 0 28px 0;
-}
-.byline {
-    font-family: var(--sans);
-    font-size: 12px;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: var(--ink-soft);
-    border-top: 1px solid var(--rule);
-    padding-top: 14px;
-    margin-top: 22px;
-}
-.byline strong { font-weight: 600; color: var(--ink); }
-.byline .sep { margin: 0 8px; color: var(--rule); }
-
-/* Article body */
-.article {
-    max-width: 880px;
-    margin: 0 auto;
-    padding: 28px 32px 80px;
-}
-.article p { margin: 0 0 18px 0; }
-.article p.lede {
-    font-size: 22px;
-    line-height: 1.55;
-    color: var(--ink);
-    margin-bottom: 36px;
-    border-left: 3px solid var(--accent-red);
-    padding-left: 24px;
-}
-
-/* Section headers */
-.article h2 {
-    font-family: var(--sans);
-    font-weight: 700;
-    font-size: 13px;
-    letter-spacing: 0.22em;
-    text-transform: uppercase;
-    color: var(--accent-red);
-    margin: 56px 0 8px 0;
-}
-.article h2 + h3 { margin-top: 4px; }
-.article h3 {
-    font-family: var(--serif);
-    font-weight: 600;
-    font-size: 30px;
-    line-height: 1.2;
-    letter-spacing: -0.005em;
-    margin: 0 0 18px 0;
-    color: var(--ink);
-}
-
-/* Inline emphasis — sparing red highlight for key terms (Sci-Am) */
-.term { color: var(--accent-red); font-weight: 500; }
-
-/* Pullout: single short sentence, large, between sections */
-.pullout {
-    font-family: var(--serif);
-    font-style: italic;
-    font-weight: 400;
-    font-size: 26px;
-    line-height: 1.35;
-    color: var(--ink);
-    border-top: 1px solid var(--rule);
-    border-bottom: 1px solid var(--rule);
-    padding: 28px 0;
-    margin: 36px 0 36px;
-    text-align: center;
-}
-
-/* Equations */
-.eq {
-    margin: 22px 0;
-    text-align: center;
-    overflow-x: auto;
-}
-
-/* Figures */
-figure {
-    margin: 32px 0 24px 0;
-    padding: 0;
-}
-figure.full { margin-left: -8px; margin-right: -8px; }
-figure img {
-    display: block;
-    max-width: 100%;
-    height: auto;
-    margin: 0 auto;
-    border: 1px solid var(--rule);
-    background: var(--paper);
-}
-figure svg { display: block; max-width: 100%; height: auto; margin: 0 auto; }
-figcaption {
-    font-family: var(--sans);
-    font-size: 15px;
-    line-height: 1.5;
-    color: var(--ink-soft);
-    margin-top: 14px;
-    padding-top: 12px;
-    border-top: 1px solid var(--rule);
-}
-figcaption .fnum {
-    font-weight: 700;
-    color: var(--accent-red);
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    margin-right: 8px;
-}
-
-/* Sidebar callout — Sci-Am "How it works" / "What this means" */
-.callout {
-    background: var(--paper-tint);
-    border-left: 4px solid var(--data-teal);
-    padding: 18px 22px;
-    margin: 28px 0;
-    font-size: 17px;
-    line-height: 1.55;
-}
-.callout.coral { border-left-color: var(--data-coral); }
-.callout.amber { border-left-color: var(--data-amber); }
-.callout .label {
-    font-family: var(--sans);
-    font-weight: 700;
-    font-size: 11px;
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-    color: var(--data-teal);
-    display: block;
-    margin-bottom: 8px;
-}
-.callout.coral .label { color: var(--data-coral); }
-.callout.amber .label { color: var(--data-amber); }
-.callout p:last-child { margin-bottom: 0; }
-
-/* Verdict ledger — two columns: proved / open */
-.ledger {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 0;
-    border: 1px solid var(--rule);
-    margin: 28px 0;
-}
-.ledger .col { padding: 22px 24px; }
-.ledger .col + .col { border-left: 1px solid var(--rule); }
-.ledger h4 {
-    font-family: var(--sans);
-    font-weight: 700;
-    font-size: 11px;
-    letter-spacing: 0.22em;
-    text-transform: uppercase;
-    margin: 0 0 14px 0;
-}
-.ledger .proved h4 { color: var(--data-teal); }
-.ledger .open   h4 { color: var(--data-coral); }
-.ledger ul { margin: 0; padding-left: 18px; }
-.ledger li { margin-bottom: 8px; font-size: 16px; line-height: 1.5; }
-
-@media (max-width: 700px) {
-    .ledger { grid-template-columns: 1fr; }
-    .ledger .col + .col { border-left: none; border-top: 1px solid var(--rule); }
-    .hero h1 { font-size: 38px; }
-    .dek { font-size: 19px; }
-    .pullout { font-size: 20px; }
-    .article h3 { font-size: 24px; }
-}
-
-/* Glossary */
-.glossary {
-    background: var(--paper-tint);
-    border: 1px solid var(--rule);
-    padding: 24px 28px;
-    margin-top: 48px;
-}
-.glossary h4 {
-    font-family: var(--sans);
-    font-weight: 700;
-    font-size: 12px;
-    letter-spacing: 0.22em;
-    text-transform: uppercase;
-    color: var(--ink);
-    margin: 0 0 14px 0;
-}
-.glossary dl { margin: 0; }
-.glossary dt {
-    font-family: var(--sans);
-    font-weight: 600;
-    font-size: 14px;
-    color: var(--data-teal);
-    margin-top: 12px;
-}
-.glossary dt:first-of-type { margin-top: 0; }
-.glossary dd {
-    margin: 4px 0 10px 0;
-    font-size: 16px;
-    line-height: 1.5;
-    color: var(--ink);
-}
-
-/* Footer / colophon */
-.colophon {
-    border-top: 1px solid var(--rule);
-    padding: 28px 0 0;
-    margin-top: 48px;
-    font-family: var(--sans);
-    font-size: 13px;
-    color: var(--ink-soft);
-    line-height: 1.5;
-}
-.colophon a { color: var(--accent-red); text-decoration: none; }
-.colophon a:hover { text-decoration: underline; }
-.colophon .row { margin-bottom: 10px; }
-.colophon strong { color: var(--ink); font-weight: 600; }
-
-/* Inline math sizing */
-mjx-container { font-size: 1em !important; }
-</style>
+<!-- site:head -->
+<link rel="icon" type="image/png" href="./assets/img/brand/favicon.png">
+<link rel="stylesheet" href="./assets/css/site.css">
+<link rel="stylesheet" href="./assets/css/post-legacy.css">
+<!-- /site:head -->
 </head>
-<body>
+<body class="post-legacy post-multiplicative-gaussian-input">
+<!-- site:bar -->
+<div id="site-bar" class="site-bar" role="banner"><div class="site-bar__in"><a class="site-brand" href="./"><span class="site-mark" aria-hidden="true"></span><span class="site-name">AI-OWLS</span></a><div class="site-nav" role="navigation" aria-label="Site"><a href="./blogs.html">Blog</a><a href="./publications.html">Publications</a><a href="./#people">People</a></div></div></div>
+<!-- /site:bar -->
 
 <!-- Masthead -->
 <header class="masthead">
@@ -434,13 +122,6 @@ free parameter — the noise scale.
             <path d="M0,0 L0,6 L8,3 z" fill="#525049"/>
         </marker>
     </defs>
-    <style>
-        .lab  { font-family: 'IBM Plex Sans', sans-serif; font-size: 13px; fill: #525049; }
-        .labb { font-family: 'IBM Plex Sans', sans-serif; font-size: 14px; font-weight: 600; fill: #21201c; }
-        .math { font-family: 'Spectral', serif; font-style: italic; font-size: 18px; fill: #21201c; }
-        .op   { font-family: 'Spectral', serif; font-size: 28px; fill: #525049; }
-        .grid rect { stroke: #21201c; stroke-width: 1; fill-opacity: 1; }
-    </style>
 
     <!-- 1. clean input x -->
     <g transform="translate(20,40)">
@@ -778,5 +459,8 @@ framework underneath.
 
 </article>
 
+<!-- site:foot -->
+<div id="site-foot" class="site-foot" role="contentinfo"><div class="site-foot__in"><div class="site-foot__brand"><a class="site-brand" href="./"><span class="site-mark" aria-hidden="true"></span><span class="site-name">AI-OWLS</span></a><p>Open-source ML/AI algorithms research at Rice CS.</p></div><div class="site-foot__links"><a href="./blogs.html">Blog</a><a href="./publications.html">Publications</a><a href="https://akyrillidis.github.io/">Anastasios Kyrillidis</a></div></div></div>
+<!-- /site:foot -->
 </body>
 </html>

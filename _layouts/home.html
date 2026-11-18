@@ -1,0 +1,35 @@
+---
+layout: default
+---
+{%- assign posts = site.data.posts | sort: "date" | reverse -%}
+<section class="hero wrap-page">
+  <p class="eyebrow">{{ site.hero_eyebrow }}</p>
+  <h1 class="hero-title">{{ site.title | strip }}</h1>
+  <p class="hero-dek">{{ site.subtitle }}</p>
+</section>
+
+<section class="latest wrap-page" aria-labelledby="latest-h">
+  <div class="section-head"><h2 id="latest-h" class="section-title">Latest posts</h2><a class="more" href="{{ site.blog_page | relative_url }}">All {{ posts.size }} posts &rarr;</a></div>
+  {% include card.html post=posts.first feature=true %}
+  <div class="grid">
+    {%- for p in posts offset:1 limit:6 %}
+    {% include card.html post=p %}
+    {%- endfor %}
+  </div>
+</section>
+
+<section class="about wrap-page" aria-labelledby="about-h">
+  <div class="split">
+    <h2 id="about-h" class="section-title">{{ site.about_heading | default: "About" }}</h2>
+    <div class="about-body">
+{{ content }}
+    </div>
+  </div>
+</section>
+
+<section id="people" class="people wrap-page" aria-labelledby="people-h">
+  <div class="split">
+    <h2 id="people-h" class="section-title">People</h2>
+    <div>{% include people.html %}</div>
+  </div>
+</section>

@@ -4,9 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>One Rank at a Time — AI-OWLS</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <!-- MathJax for LaTeX rendering -->
 <script>
 window.MathJax = {
@@ -29,176 +26,16 @@ window.MathJax = {
 };
 </script>
 <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js" id="MathJax-script" async></script>
-<style>
-:root {
-  --paper:#f6f6f4;
-  --grid:#e6e6e3;
-  --ink:#101012;
-  --soft:#5b5b5e;
-  --rule:#1d1d20;
-  --accent:#c84539;      /* error / cascade */
-  --gain:#1a5f3c;         /* proven / contained */
-  --warn:#a07000;         /* caveat / open */
-  --hl:#fff3a0;
-}
-* { box-sizing: border-box; }
-html, body {
-  margin:0; padding:0; background:var(--paper); color:var(--ink);
-  font-family:'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size:14px; line-height:1.55;
-  -webkit-font-smoothing:antialiased;
-}
-body {
-  max-width: 1080px; margin:0 auto; padding: 48px 56px 96px 56px;
-  background-image:
-    linear-gradient(var(--grid) 1px, transparent 1px),
-    linear-gradient(90deg, var(--grid) 1px, transparent 1px);
-  background-size: 24px 24px;
-  background-position: -1px -1px;
-}
-.sheet {
-  background: var(--paper);
-  padding: 28px 36px;
-  border: 1.4px solid var(--rule);
-}
-.masthead {
-  display:flex; justify-content:space-between; align-items:baseline;
-  border-bottom: 2px solid var(--rule); padding-bottom: 8px; margin-bottom: 24px;
-  font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase;
-  font-weight: 600;
-}
-.masthead .lhs { color: var(--ink); }
-.masthead .rhs { color: var(--soft); }
-.kicker {
-  font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase;
-  color: var(--accent); font-weight: 700; margin-bottom: 4px;
-}
-h1.title {
-  font-family: 'Inter', sans-serif; font-weight: 700;
-  font-size: 38px; line-height: 1.08; margin: 0 0 12px 0;
-  letter-spacing: -0.015em;
-}
-h1.title em { font-style: italic; color: var(--soft); }
-.dek {
-  font-family: 'Inter', sans-serif; font-weight: 400; font-style: italic;
-  font-size: 19px; line-height: 1.4; color: var(--ink); margin-bottom: 18px;
-  max-width: 760px;
-}
-.byline {
-  font-size: 12px; color: var(--soft); letter-spacing: 0.04em;
-  padding: 8px 0; border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule);
-  margin-bottom: 32px;
-  display:flex; gap: 24px; flex-wrap: wrap;
-}
-.byline a { color: var(--accent); text-decoration: none; font-weight: 600; }
-.byline a:hover { text-decoration: underline; }
-
-/* Upshot — the lab-notebook "result of the day" banner */
-.upshot {
-  background: var(--ink); color: var(--paper);
-  padding: 18px 24px; margin: 0 0 36px 0;
-  font-family: 'Inter', sans-serif; font-size: 16px; line-height: 1.5;
-  font-weight: 500;
-}
-.upshot strong { color: var(--paper); font-weight: 700; }
-.upshot .label {
-  display: block; font-family: 'JetBrains Mono', monospace; font-size: 11px;
-  letter-spacing: 0.18em; text-transform: uppercase; color: #9aa0a6;
-  margin-bottom: 6px; font-weight: 600;
-}
-
-/* Section headings — chunk index style */
-h2 {
-  font-family: 'JetBrains Mono', monospace; font-size: 14px;
-  letter-spacing: 0.1em; text-transform: uppercase; font-weight: 700;
-  margin: 40px 0 8px 0; padding-bottom: 4px;
-  border-bottom: 1.2px solid var(--rule); color: var(--ink);
-}
-h2 .idx { color: var(--accent); margin-right: 12px; }
-
-/* Body prose */
-p {
-  font-family: 'Inter', sans-serif; font-size: 16px; line-height: 1.62;
-  margin: 12px 0;
-}
-p code, li code, table code {
-  font-family: 'JetBrains Mono', monospace;
-  background: #ececea; padding: 1px 5px; border-radius: 2px;
-  font-size: 0.92em;
-}
-
-ul, ol {
-  font-family: 'Inter', sans-serif; font-size: 16px; line-height: 1.55;
-  padding-left: 20px;
-}
-li { margin-bottom: 6px; }
-
-/* Callouts (notebook-style boxes) */
-.callout {
-  border-left: 4px solid var(--ink);
-  background: rgba(0,0,0,0.025);
-  padding: 14px 18px; margin: 20px 0;
-  font-family: 'Inter', sans-serif; font-size: 15px; line-height: 1.5;
-}
-.callout.thm  { border-color: var(--gain); }
-.callout.warn { border-color: var(--warn); background: rgba(160,112,0,0.06); }
-.callout.cav  { border-color: var(--accent); background: rgba(200,69,57,0.05); }
-.callout .label {
-  display: inline-block;
-  font-family: 'JetBrains Mono', monospace; font-size: 11px;
-  letter-spacing: 0.18em; text-transform: uppercase; font-weight: 700;
-  margin-right: 8px;
-}
-.callout.thm  .label { color: var(--gain); }
-.callout.warn .label { color: var(--warn); }
-.callout.cav  .label { color: var(--accent); }
-
-/* Tables */
-table { width: 100%; border-collapse: collapse; margin: 16px 0; font-family: 'JetBrains Mono', monospace; font-size: 13px; }
-th, td { padding: 7px 12px; text-align: left; border-bottom: 1px solid var(--grid); }
-th { background: var(--ink); color: var(--paper); font-weight: 600; letter-spacing: 0.06em; }
-tr:last-child td { border-bottom: 1.4px solid var(--rule); }
-td.num { text-align: right; font-variant-numeric: tabular-nums; }
-
-/* Two-column grid */
-.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; margin: 24px 0; }
-@media (max-width: 760px) { .grid2 { grid-template-columns: 1fr; } }
-
-.figpanel {
-  background: rgba(0,0,0,0.025); border: 1px solid var(--grid);
-  padding: 14px 16px; font-size: 13px;
-}
-.figpanel .figlabel {
-  font-family: 'JetBrains Mono', monospace; font-size: 11px;
-  letter-spacing: 0.16em; text-transform: uppercase; color: var(--soft);
-  margin-bottom: 6px;
-}
-
-/* Math eqn block — MathJax renders. Left-aligned (default body alignment). */
-.eq {
-  font-size: 15px;
-  text-align: left;
-  padding: 14px 18px; margin: 14px 0;
-  background: rgba(0,0,0,0.03);
-  border-top: 1px solid var(--grid); border-bottom: 1px solid var(--grid);
-  overflow-x: auto;
-}
-.eq mjx-container { text-align: left !important; }
-
-/* Final notebook footer */
-.footer {
-  margin-top: 56px; padding-top: 18px;
-  border-top: 2px solid var(--rule);
-  font-size: 12px; color: var(--soft); letter-spacing: 0.04em;
-  display: flex; justify-content: space-between; flex-wrap: wrap;
-}
-.footer a { color: var(--accent); }
-
-/* Highlight pen */
-mark { background: var(--hl); padding: 0 2px; }
-</style>
+<!-- site:head -->
+<link rel="icon" type="image/png" href="./assets/img/brand/favicon.png">
+<link rel="stylesheet" href="./assets/css/site.css">
+<link rel="stylesheet" href="./assets/css/post-legacy.css">
+<!-- /site:head -->
 </head>
-<body>
+<body class="post-legacy post-one-rank-at-a-time">
+<!-- site:bar -->
+<div id="site-bar" class="site-bar" role="banner"><div class="site-bar__in"><a class="site-brand" href="./"><span class="site-mark" aria-hidden="true"></span><span class="site-name">AI-OWLS</span></a><div class="site-nav" role="navigation" aria-label="Site"><a href="./blogs.html">Blog</a><a href="./publications.html">Publications</a><a href="./#people">People</a></div></div></div>
+<!-- /site:bar -->
 
 <div class="sheet">
 
@@ -425,5 +262,8 @@ $$t_k(\alpha) \;\propto\; \max\big(1 + \alpha x_k,\,10^{-9}\big), \qquad \sum_{k
 
 </div>
 
+<!-- site:foot -->
+<div id="site-foot" class="site-foot" role="contentinfo"><div class="site-foot__in"><div class="site-foot__brand"><a class="site-brand" href="./"><span class="site-mark" aria-hidden="true"></span><span class="site-name">AI-OWLS</span></a><p>Open-source ML/AI algorithms research at Rice CS.</p></div><div class="site-foot__links"><a href="./blogs.html">Blog</a><a href="./publications.html">Publications</a><a href="https://akyrillidis.github.io/">Anastasios Kyrillidis</a></div></div></div>
+<!-- /site:foot -->
 </body>
 </html>

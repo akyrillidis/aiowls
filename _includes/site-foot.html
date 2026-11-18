@@ -1,0 +1,11 @@
+<div id="site-foot" class="site-foot" role="contentinfo"><div class="site-foot__in">
+  <div class="site-foot__brand">
+    <a class="site-brand" href="{{ '/' | relative_url }}"><span class="site-mark" aria-hidden="true"></span><span class="site-name">{{ site.title | strip }}</span></a>
+    <p>{{ site.footer_text }}</p>
+  </div>
+  <div class="site-foot__links">
+    {%- for item in site.footer_links %}
+    <a href="{% if item.url contains '://' %}{{ item.url }}{% else %}{{ item.url | relative_url }}{% endif %}">{{ item.title }}</a>
+    {%- endfor %}
+  </div>
+</div></div>

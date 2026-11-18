@@ -15,68 +15,17 @@
 <meta name="twitter:image" content="https://akyrillidis.github.io/aiowls/assets/img/measuring_relaxation_og.png">
 <title>What Counts as a Relaxed Structure? &middot; AI-OWLS</title>
 
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:ital,wght@0,400;0,600;0,700;0,900;1,400&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;1,8..60,400&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 
-<style>
-  :root{
-    --paper:#fbfaf7; --ink:#121212; --soft:#55524c; --line:#ded9cf;
-    --ecoRed:#e3120b; --ecoBlue:#006ba6; --ecoGrey:#a4a4a4; --ecoDark:#0e0e0e;
-    --posbg:#eaf3f7;
-  }
-  *{box-sizing:border-box;}
-  body{
-    background:var(--paper); color:var(--ink);
-    font-family:"Source Sans 3", Helvetica, Arial, sans-serif; font-size:18.5px; line-height:1.55;
-    margin:0; -webkit-font-smoothing:antialiased;
-  }
-  .wrap{max-width:740px; margin:0 auto; padding:0 22px 90px;}
-  /* Economist red masthead strip */
-  .masthead{background:var(--ecoRed); margin:0 -9999px; padding:0;}
-  .masthead .inner{max-width:740px; margin:0 auto; padding:9px 22px; color:#fff;
-    font-weight:900; font-size:.82rem; letter-spacing:.02em; text-transform:uppercase;
-    display:flex; justify-content:space-between; align-items:center;}
-  .masthead .inner span:last-child{font-weight:600; opacity:.9;}
-  .kick{font-weight:700; font-size:.76rem; letter-spacing:.06em; text-transform:uppercase;
-    color:var(--ecoRed); margin:34px 0 10px;}
-  h1{font-weight:900; font-size:2.5rem; line-height:1.08; letter-spacing:-.015em; margin:0 0 .3em;}
-  .dek{font-family:"Source Serif 4", Georgia, serif; font-size:1.28rem; line-height:1.42;
-    color:var(--soft); font-weight:400; margin:0 0 1.1em;}
-  .standfirst{font-size:.9rem; color:var(--soft); border-bottom:2px solid var(--ink);
-    padding-bottom:12px; margin-bottom:6px; font-weight:600; text-transform:uppercase; letter-spacing:.04em;}
-  p{margin:0 0 1.05em;} strong{font-weight:700;}
-  a{color:var(--ecoBlue); text-decoration:none; border-bottom:1px solid rgba(0,107,166,.35);}
-  a:hover{border-bottom-color:var(--ecoBlue); background:rgba(0,107,166,.07);}
-  h2{font-weight:700; font-size:1.34rem; line-height:1.2; margin:2em 0 .5em; letter-spacing:-.01em;}
-  h2 .n{color:var(--ecoRed); font-family:"IBM Plex Mono",monospace; font-size:.8em; margin-right:.5em;}
-  hr{border:0; border-top:1px solid var(--line); margin:32px 0;}
-  table{border-collapse:collapse; width:100%; margin:24px 0; font-size:.87rem;}
-  caption{caption-side:top; text-align:left; font-weight:700; font-size:.78rem; letter-spacing:.05em;
-    text-transform:uppercase; color:var(--ink); border-top:3px solid var(--ecoRed); padding:8px 0 4px;}
-  th,td{text-align:left; padding:8px 10px; border-bottom:1px solid var(--line); vertical-align:top;}
-  thead th{font-weight:700; color:#fff; background:var(--ecoDark); font-size:.72rem;
-    letter-spacing:.03em; text-transform:uppercase;}
-  td:first-child{font-weight:700; white-space:nowrap;}
-  td .blind{color:var(--ecoRed); font-weight:600;}
-  .pull{background:var(--posbg); border-left:4px solid var(--ecoBlue); padding:16px 20px;
-    margin:26px 0; font-family:"Source Serif 4",serif;}
-  .pull b{color:var(--ecoBlue);}
-  .stat{display:flex; gap:20px; align-items:baseline; margin:24px 0; padding:16px 0;
-    border-top:2px solid var(--ink); border-bottom:1px solid var(--line);}
-  .stat .big{font-weight:900; font-size:3.1rem; line-height:.9; color:var(--ecoRed); letter-spacing:-.02em;}
-  .stat .cap{font-size:.9rem; color:var(--soft);}
-  .credit{background:#f4f1ea; border:1px solid var(--line); border-radius:4px; padding:16px 20px; margin:24px 0; font-size:.92rem;}
-  .credit .lbl{font-weight:700; font-size:.74rem; letter-spacing:.06em; text-transform:uppercase; color:var(--soft); display:block; margin-bottom:8px;}
-  .credit ul{margin:0; padding-left:1.1em;} .credit li{margin:5px 0;}
-  code{font-family:"IBM Plex Mono",monospace; font-size:.85em; background:#efeadf; padding:1px 5px; border-radius:3px;}
-  .foot{font-size:.82rem; color:var(--soft); margin-top:36px; line-height:1.55;}
-  .foot b{color:var(--ink);}
-  .backlink{font-size:.9rem; margin:44px 0 0; display:block; font-weight:600;}
-  @media (max-width:560px){ body{font-size:17px;} h1{font-size:2rem;} .dek{font-size:1.12rem;} table{font-size:.8rem;} th,td{padding:6px 6px;} .stat{flex-direction:column; gap:6px;} .stat .big{font-size:2.5rem;} }
-</style>
+<!-- site:head -->
+<link rel="icon" type="image/png" href="./assets/img/brand/favicon.png">
+<link rel="stylesheet" href="./assets/css/site.css">
+<link rel="stylesheet" href="./assets/css/post-legacy.css">
+<!-- /site:head -->
 </head>
-<body>
+<body class="post-legacy post-measuring-relaxation">
+<!-- site:bar -->
+<div id="site-bar" class="site-bar" role="banner"><div class="site-bar__in"><a class="site-brand" href="./"><span class="site-mark" aria-hidden="true"></span><span class="site-name">AI-OWLS</span></a><div class="site-nav" role="navigation" aria-label="Site"><a href="./blogs.html">Blog</a><a href="./publications.html">Publications</a><a href="./#people">People</a></div></div></div>
+<!-- /site:bar -->
 
 <div class="masthead"><div class="inner"><span>AI&middot;OWLS &nbsp;/&nbsp; The Data Desk</span><span>Evaluation &middot; 2026</span></div></div>
 
@@ -161,5 +110,8 @@
   <a class="backlink" href="./blogs.html">&larr; All AI-OWLS posts</a>
 
 </div>
+<!-- site:foot -->
+<div id="site-foot" class="site-foot" role="contentinfo"><div class="site-foot__in"><div class="site-foot__brand"><a class="site-brand" href="./"><span class="site-mark" aria-hidden="true"></span><span class="site-name">AI-OWLS</span></a><p>Open-source ML/AI algorithms research at Rice CS.</p></div><div class="site-foot__links"><a href="./blogs.html">Blog</a><a href="./publications.html">Publications</a><a href="https://akyrillidis.github.io/">Anastasios Kyrillidis</a></div></div></div>
+<!-- /site:foot -->
 </body>
 </html>

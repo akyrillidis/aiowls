@@ -1,0 +1,22 @@
+---
+layout: default
+---
+{%- assign posts = site.data.posts | sort: "date" | reverse -%}
+<section class="page-head wrap-page">
+  <p class="eyebrow">{{ page.title }}</p>
+  <h1 class="page-title">{{ page.heading }}</h1>
+  <p class="page-dek">{{ posts.size }} posts from {{ site.title | strip }}, newest first.</p>
+</section>
+<section class="bloglist wrap-page">
+  {%- assign groups = posts | group_by_exp: "p", "p.date | date: '%Y'" %}
+  {%- for g in groups %}
+  <div class="year">
+    <h2 class="year-label">{{ g.name }}</h2>
+    <ol class="rows">
+      {%- for p in g.items %}
+      {% include row.html post=p %}
+      {%- endfor %}
+    </ol>
+  </div>
+  {%- endfor %}
+</section>

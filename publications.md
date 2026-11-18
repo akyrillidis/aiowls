@@ -1,5 +1,7 @@
 ---
-layout: default
+layout: page
+title: Publications
+page_class: pubs
 ---
 
 ### Publications (2023 &mdash; present)
