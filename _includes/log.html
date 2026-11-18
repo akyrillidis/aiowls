@@ -5,12 +5,12 @@ Data: _data/posts.yml (newest first by date; optional map: [x, y] on a 1600 x 10
   <div class="loghead">
     <h2 id="log-h">{{ include.title | default: "Research log" }} &middot; {{ posts.size }} entries</h2>
     <div class="views js-only" role="tablist" aria-label="View">
-      <button type="button" role="tab" data-view="list" aria-selected="true">List</button>
-      <button type="button" role="tab" data-view="map" aria-selected="false">Map</button>
+      <button type="button" role="tab" id="tab-list" aria-controls="panel-list" data-view="list" aria-selected="true">List</button>
+      <button type="button" role="tab" id="tab-map" aria-controls="panel-map" data-view="map" aria-selected="false" tabindex="-1">Map</button>
     </div>
-    <p class="hints js-only"><span class="kbd">&#8984;K</span> search <span class="kbd">j</span><span class="kbd">k</span> move <span class="kbd">&#8629;</span> open <span class="kbd">v</span> list / map</p>
+    <p class="hints js-only"><span class="kbd">&#8984;K</span> search <span class="kbd">j</span><span class="kbd">k</span> move <span class="kbd">&#8629;</span> open <span class="kbd">v</span> list / map <button type="button" class="keys-toggle" aria-pressed="true">keys on</button></p>
   </div>
-  <div class="view-list">
+  <div class="view-list" id="panel-list" role="tabpanel" aria-labelledby="tab-list">
     <div class="cols" aria-hidden="true"><span>&#8470;</span><span>Date</span><span>Title</span><span>Authors</span><span>Read</span></div>
     <div class="rows">
       {%- for p in posts %}
@@ -25,12 +25,12 @@ Data: _data/posts.yml (newest first by date; optional map: [x, y] on a 1600 x 10
       {%- endfor %}
     </div>
   </div>
-  <div class="view-map" hidden>
+  <div class="view-map" id="panel-map" role="tabpanel" aria-labelledby="tab-map" hidden>
     <div class="mapstage">
       <svg viewBox="0 0 1600 1000" preserveAspectRatio="xMidYMid meet" role="group" aria-label="Map of the research notes"><g class="world"></g></svg>
       <div class="mapzoom"><button type="button" data-z="+" aria-label="Zoom in">+</button><button type="button" data-z="-" aria-label="Zoom out">&minus;</button><button type="button" data-z="0" aria-label="Reset view">&#9675;</button></div>
       <p class="maphint">drag to move &middot; pinch or &#8984;/ctrl + scroll to zoom &middot; hover a note to see its links</p>
-      <div class="mapcard" aria-hidden="true"><div class="img"><img alt=""></div><div class="bd"><div class="mt"></div><h3></h3><p></p><div class="by"></div></div></div>
+      <div class="mapcard" aria-hidden="true"><div class="bd"><div class="mt"></div><h3></h3><p></p><div class="by"></div><div class="lk" hidden></div></div></div>
     </div>
   </div>
 </section>

@@ -11,6 +11,12 @@
   var log = $(".log"), rowsBox = $(".rows", log), rows = rowsBox ? rowsBox.children : [];
   var listView = $(".view-list", log), mapView = $(".view-map", log);
   var narrow = function () { return window.innerWidth <= 900; };
+  var keysOn = true;
+  try { keysOn = localStorage.getItem("log-keys") !== "off"; } catch (e) {}
+  var keyBtn = $(".keys-toggle", log);
+  function showKeys() { if (keyBtn) { keyBtn.textContent = keysOn ? "keys on" : "keys off"; keyBtn.setAttribute("aria-pressed", String(keysOn)); } }
+  if (keyBtn) keyBtn.addEventListener("click", function () { keysOn = !keysOn; try { localStorage.setItem("log-keys", keysOn ? "on" : "off"); } catch (e) {} showKeys(); });
+  showKeys();
   var still = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   /* ---------- cursor preview on the list ---------- */
@@ -62,7 +68,7 @@
     if (narrow()) v = "list";   // the map needs room; phones get the list
     var isMap = v === "map";
     listView.hidden = isMap; mapView.hidden = !isMap;
-    buttons.forEach(function (b) { b.setAttribute("aria-selected", String(b.dataset.view === v)); });
+    buttons.forEach(function (b) { var on = b.dataset.view === v; b.setAttribute("aria-selected", String(on)); b.tabIndex = on ? 0 : -1; });
     if (isMap && !built) { buildMap(); built = true; }
     if (push) history.replaceState(null, "", isMap ? "#map" : "#log");
     try { localStorage.setItem("log-view", v); } catch (e) {}
@@ -71,7 +77,8 @@
 
   document.addEventListener("keydown", function (e) {
     var tag = (e.target.tagName || "").toLowerCase();
-    if (((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") || (e.key === "/" && tag !== "input" && !(pal && pal.classList.contains("on")))) { e.preventDefault(); openPal(); return; }
+    if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") { e.preventDefault(); openPal(); return; }
+    if (keysOn && e.key === "/" && tag !== "input" && !(pal && pal.classList.contains("on"))) { e.preventDefault(); openPal(); return; }
     if (pal && pal.classList.contains("on")) {
       var li = res.children;
       if (e.key === "Escape") closePal();
@@ -86,6 +93,11 @@
     }
     if (tag === "input" || tag === "textarea" || e.metaKey || e.ctrlKey || e.altKey) return;
     if (e.key === "Enter" && e.target.closest && e.target.closest("a, button, select, [role=tab]")) return;
+    if ((e.key === "ArrowRight" || e.key === "ArrowLeft") && e.target.getAttribute && e.target.getAttribute("role") === "tab") {
+      e.preventDefault(); var nv = listView.hidden ? "list" : "map"; setView(nv, true);
+      var nb = log.querySelector('.views button[data-view="' + nv + '"]'); if (nb) nb.focus(); return;
+    }
+    if (!keysOn) return;
     if (e.key === "j") select(sel + 1);
     if (e.key === "k") select(sel - 1);
     if (e.key === "Enter" && sel >= 0 && !listView.hidden) location.href = P[sel].url;
@@ -102,25 +114,31 @@
     var ax = CFG.axes || {}, AX = 810, AY = 535;
     world.appendChild(mk("line", { x1: AX, y1: 40, x2: AX, y2: VH - 40, stroke: "#2A3039", "stroke-dasharray": "2 8" }));
     world.appendChild(mk("line", { x1: 40, y1: AY, x2: VW - 40, y2: AY, stroke: "#2A3039", "stroke-dasharray": "2 8" }));
-    [[ax.left, 52, AY - 9, "start"], [ax.right, VW - 52, AY - 9, "end"], [ax.top, AX + 12, 52, "start"], [ax.bottom, AX + 12, VH - 26, "start"]]
-      .forEach(function (a) { if (!a[0]) return; var t = mk("text", { x: a[1], y: a[2], "class": "axis", "text-anchor": a[3] }); t.textContent = a[0]; world.appendChild(t); });
+    function axisText() {
+      [[ax.left, 52, AY - 9, "start"], [ax.right, VW - 52, AY - 9, "end"], [ax.top, AX + 12, 30, "start"], [ax.bottom, AX + 12, VH - 26, "start"]]
+        .forEach(function (a) { if (!a[0]) return; var t = mk("text", { x: a[1], y: a[2], "class": "axis", "text-anchor": a[3] }); t.textContent = a[0]; world.appendChild(t); });
+    }
     var byKey = {}, pos = {}, free = 0;
     P.forEach(function (p) {
       byKey[p.key] = p;
       pos[p.key] = (p.map && p.map.length === 2) ? p.map : [140 + (free++ % 6) * 240, VH - 90];   // unplaced posts wait in a row
     });
     var edges = (CFG.edges || []).filter(function (e) { return pos[e[0]] && pos[e[1]]; }).map(function (e) {
-      // the arc rises above both nodes, higher for longer spans, so it never runs through a title;
-      // its label shows only while one of its two notes is hovered
-      var a = pos[e[0]], b = pos[e[1]], mx = (a[0] + b[0]) / 2;
-      var my = Math.min(a[1], b[1]) - 70 - 0.2 * Math.abs(a[0] - b[0]), g = mk("g", { "class": "eg" });
-      var path = mk("path", { d: "M" + a[0] + "," + a[1] + " Q" + mx + "," + my + " " + b[0] + "," + b[1], "class": "edge" });
-      var t = mk("text", { x: mx, y: (a[1] + 2 * my + b[1]) / 4 - 8, "class": "elab", "text-anchor": "middle" }); t.textContent = e[2] || "";
-      g.appendChild(path); g.appendChild(t); world.appendChild(g); return { a: e[0], b: e[1], path: path, g: g };
+      // same-row pairs: the arc rises above the row (higher for longer spans, never above y = 40);
+      // pairs in different rows: a gentle curve between them. Relation names live in the hover card.
+      var a = pos[e[0]], b = pos[e[1]], mx = (a[0] + b[0]) / 2, my, cx = mx;
+      // a same-row arc tops out at (2 y + 2 my) / 4: high enough to clear the notes in between,
+      // never above the plane (my >= y - 300 keeps the top at y - 150 or lower)
+      if (Math.abs(a[1] - b[1]) < 10) my = Math.max(a[1] - 300, a[1] - 190 - 0.1 * Math.abs(a[0] - b[0]));
+      else { my = (a[1] + b[1]) / 2; cx = mx + 50; }
+      var g = mk("g", { "class": "eg" });
+      var path = mk("path", { d: "M" + a[0] + "," + a[1] + " Q" + cx + "," + my + " " + b[0] + "," + b[1], "class": "edge" });
+      g.appendChild(path); world.appendChild(g); return { a: e[0], b: e[1], label: e[2] || "", path: path, g: g };
     });
+    axisText();
     var nodes = {};
     P.forEach(function (p) {
-      var c = pos[p.key], x = c[0] - NW / 2, y = c[1] - NH / 2, g = mk("a", { href: p.url, "class": "node" });
+      var c = pos[p.key], x = c[0] - NW / 2, y = c[1] - NH / 2, g = mk("a", { href: p.url, "class": "node", "aria-label": p.title + ", " + p.date });
       g.appendChild(mk("rect", { x: x, y: y, width: NW, height: NH, rx: 10, "class": "f" }));
       g.appendChild(mk("rect", { x: x + 6, y: y + 6, width: NW - 12, height: NH - 12, rx: 6, "class": "im" }));
       g.appendChild(mk("image", { href: p.thumb, x: x + 10, y: y + 10, width: NW - 20, height: NH - 20, preserveAspectRatio: "xMidYMid meet" }));
@@ -149,12 +167,20 @@
       edges.forEach(function (e) { var on = !!k && (e.a === k || e.b === k); e.path.classList.toggle("hi", on); e.g.classList.toggle("hi", on); });
       if (!k) { card.classList.remove("on"); return; }
       var p = byKey[k];
-      $("img", card).src = p.thumb; $("img", card).alt = p.thumb_alt || "";
       $("h3", card).textContent = p.title; $("p", card).textContent = p.summary;
       $(".mt", card).textContent = p.date + " · " + p.minutes + " min read" + (p.series ? " · " + p.series : "");
       $(".by", card).textContent = p.authors;
-      card.classList.toggle("left", pos[k][0] > (vb[0] + vb[2] / 2));
-      card.classList.add("on");
+      var rel = edges.filter(function (e) { return e.a === k || e.b === k; }).map(function (e) {
+        var o = byKey[e.a === k ? e.b : e.a]; return e.label + " \u2192 " + o.title; });
+      var lk = $(".lk", card); lk.textContent = rel.join("  \u00b7  "); lk.hidden = !rel.length;
+      var pts = [pos[k]].concat(edges.filter(function (e) { return e.a === k || e.b === k; }).map(function (e) { return pos[e.a === k ? e.b : e.a]; }));
+      var best = "br", bestD = -1;
+      [["tl", .17, .2], ["tr", .83, .2], ["bl", .17, .8], ["br", .83, .8]].forEach(function (c) {
+        var cxp = vb[0] + c[1] * vb[2], cyp = vb[1] + c[2] * vb[3], d = 1e9;
+        pts.forEach(function (q) { d = Math.min(d, Math.hypot(q[0] - cxp, (q[1] - cyp) * 1.6)); });
+        if (d > bestD) { bestD = d; best = c[0]; }
+      });
+      card.className = "mapcard on " + best;
     }
     var vb = [0, 0, VW, VH], drag = null;
     function setVB() { svg.setAttribute("viewBox", vb.join(" ")); }

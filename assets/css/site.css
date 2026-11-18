@@ -196,7 +196,13 @@ body.site .mapcard {
   box-shadow: 0 30px 60px -24px rgba(0, 0, 0, .8); opacity: 0; transform: translateY(10px); transition: opacity .18s, transform .18s; pointer-events: none;
 }
 body.site .mapcard.on { opacity: 1; transform: none; }
-body.site .mapcard.left { right: auto; left: 16px; }
+body.site .mapcard.tl { top: 16px; left: 16px; right: auto; bottom: auto; }
+body.site .mapcard.tr { top: 62px; right: 16px; left: auto; bottom: auto; }
+body.site .mapcard.bl { bottom: 16px; left: 16px; right: auto; top: auto; }
+body.site .mapcard.br { bottom: 16px; right: 16px; left: auto; top: auto; }
+body.site .mapcard .lk { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--in-line2); font: 400 12px/1.5 var(--ds-font-mono); color: var(--in-acc2); }
+body.site .keys-toggle { font: 500 11px/1 var(--ds-font-mono); color: var(--in-ink2); background: none; border: 1px dashed var(--in-line2); border-radius: 5px; padding: 3px 7px; cursor: pointer; }
+body.site .keys-toggle[aria-pressed="false"] { color: var(--in-mute); }
 body.site .mapcard .bd { padding: 14px 16px 16px; }
 body.site .mapcard .mt { font: 500 11.5px/1.3 var(--ds-font-mono); letter-spacing: .06em; text-transform: uppercase; color: var(--in-mute); }
 body.site .mapcard h3 { margin: 8px 0 6px; font: 600 19px/1.2 var(--ds-font-sans); letter-spacing: -.015em; color: var(--in-ink); }
