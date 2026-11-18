@@ -1,24 +1,22 @@
 ---
 layout: default
+log: true
 ---
-{%- assign posts = site.data.posts | sort: "date" | reverse -%}
-<section class="hero wrap-page">
-  <p class="eyebrow">{{ site.hero_eyebrow }}</p>
-  <h1 class="hero-title">{{ site.title | strip }}</h1>
-  <p class="hero-dek">{{ site.subtitle }}</p>
-</section>
-
-<section class="latest wrap-page" aria-labelledby="latest-h">
-  <div class="section-head"><h2 id="latest-h" class="section-title">Latest posts</h2><a class="more" href="{{ site.blog_page | relative_url }}">All {{ posts.size }} posts &rarr;</a></div>
-  {% include card.html post=posts.first feature=true %}
-  <div class="grid">
-    {%- for p in posts offset:1 limit:6 %}
-    {% include card.html post=p %}
-    {%- endfor %}
+<section class="hero" aria-label="{{ site.title | strip }}">
+  <canvas id="field-a" aria-hidden="true"></canvas><canvas id="field-b" aria-hidden="true"></canvas>
+  <div class="hero-over">
+    <div>
+      <p class="kick">{{ site.hero_eyebrow }} &middot; live</p>
+      <h1 class="hero-title">{{ site.title | strip }}</h1>
+      <p class="hero-dek">{{ site.hero_dek | default: site.subtitle }}</p>
+    </div>
+    <div class="readout" id="readout" aria-hidden="true"></div>
   </div>
 </section>
 
-<section class="about wrap-page" aria-labelledby="about-h">
+{% include log.html %}
+
+<section class="about" aria-labelledby="about-h">
   <div class="split">
     <h2 id="about-h" class="section-title">{{ site.about_heading | default: "About" }}</h2>
     <div class="about-body">
@@ -27,9 +25,10 @@ layout: default
   </div>
 </section>
 
-<section id="people" class="people wrap-page" aria-labelledby="people-h">
+<section id="people" class="people" aria-labelledby="people-h">
   <div class="split">
     <h2 id="people-h" class="section-title">People</h2>
     <div>{% include people.html %}</div>
   </div>
 </section>
+<script src="{{ '/assets/js/field.js' | relative_url }}" defer></script>

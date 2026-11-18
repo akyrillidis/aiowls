@@ -15,16 +15,16 @@ about_heading: About the lab
 blog_page: /blogs.html
 footer_text: Open-source ML/AI algorithms research at Rice CS.
 nav:
-  - title: Blog
+  - title: Log
     url: /blogs.html
-  - title: Publications
+  - title: Papers
     url: /publications.html
   - title: People
     url: /#people
 footer_links:
-  - title: Blog
+  - title: Log
     url: /blogs.html
-  - title: Publications
+  - title: Papers
     url: /publications.html
   - title: Anastasios Kyrillidis
     url: https://akyrillidis.github.io/

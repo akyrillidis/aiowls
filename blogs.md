@@ -1,6 +1,6 @@
 ---
 layout: blog
 title: Blogposts
-eyebrow: Blog
+eyebrow: Research log
 heading: Research notes
 ---

@@ -4,5 +4,8 @@
     {%- for item in site.nav %}
     <a href="{{ item.url | relative_url }}"{% if page.url == item.url %} aria-current="page"{% endif %}>{{ item.title }}</a>
     {%- endfor %}
+    {%- if page.layout == "home" or page.layout == "blog" %}
+    <button type="button" class="kbd-btn" data-open-palette aria-label="Search the notes"><span class="kbd">&#8984;K</span></button>
+    {%- endif %}
   </div>
 </div></div>

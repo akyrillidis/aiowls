@@ -1,0 +1,14 @@
+# Map view of the research log (assets/js/log.js). Posts sit on a 1600 x 1000 plane at the map: [x, y]
+# given in _data/posts.yml (a post without one waits in a row at the bottom). Edges join posts that
+# say they build on each other; the label is drawn on the edge.
+axes:
+  left: "← PROOFS"
+  right: "EXPERIMENTS →"
+  top: "↑ TRAINING & OPTIMIZATION"
+  bottom: "↓ MODELS & SCIENCE"
+edges:
+  - [/one_rank_at_a_time.html, /adapad.html, companion]
+  - [/parallel_deflation.html, /adapad.html, parallel deflation]
+  - [/ghost_mamba2.html, /magnitude_safety.html, builds on GHOST]
+  - [/can_we_train_a_computer.html, /which_layer_runs_the_program.html, same line of work]
+  - [/guided_deq.html, /measuring_relaxation.html, companion]
