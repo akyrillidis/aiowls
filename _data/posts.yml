@@ -8,7 +8,7 @@
   minutes: 8
   summary: On a tiny transformer whose correct layer layout we know exactly, we find what puts computation at a given depth.
   authors: Anastasios Kyrillidis, in collaboration with Microsoft Research
-  map: [1230, 230]
+  map: [1200, 150]
   thumb: /assets/img/p2_scaling.png
   thumb_alt: "Last-block update share versus depth, 2 to 12 layers. Unnormalized networks stay high (0.79-0.91); normalized networks track the 1/L line closely."
 - url: /measuring_relaxation.html
@@ -17,7 +17,7 @@
   minutes: 7
   summary: ML potentials have no agreed metric for relaxation success; a map of the three metric families and the benchmarks behind them.
   authors: AI-OWLS, companion to the G-DEQ post
-  map: [1420, 860]
+  map: [1450, 880]
   thumb: /assets/img/measuring_relaxation_og.png
   thumb_alt: What counts as a relaxed structure
 - url: /can_we_train_a_computer.html
@@ -26,7 +26,7 @@
   minutes: 13
   summary: We wired a transformer by hand to be a Turing-complete computer, then trained another from scratch to do the identical job.
   authors: Anastasios Kyrillidis, in collaboration with Microsoft Research
-  map: [930, 270]
+  map: [950, 150]
   thumb: /assets/img/cards/can_we_train_a_computer.svg
   thumb_alt: "Title card: the SUBLEQ instruction, subleq a, b, c"
 - url: /guided_deq.html
@@ -35,7 +35,7 @@
   minutes: 10
   summary: A structure relaxation does two separable jobs; splitting them matches full backprop on silicon at 3.5× less memory.
   authors: Yifei Zhang, Evan Dramko, Anastasios Kyrillidis
-  map: [1150, 870]
+  map: [1200, 880]
   thumb: /assets/img/gdeq_thumbnail.svg
   thumb_alt: Two jobs in a relaxation, which valley and how deep
 - url: /magnitude_safety.html
@@ -44,7 +44,7 @@
   minutes: 7
   summary: Which pruning rule is safe depends on whether a model part remembers or recomputes.
   authors: Anastasios Kyrillidis, building on GHOST with Michael Menezes
-  map: [1360, 600]
+  map: [1450, 650]
   thumb: /assets/img/magsafe_thumbnail.png
   thumb_alt: LAMBADA capability under 90% dynamic FFN sparsity
 - url: /one_rank_at_a_time.html
@@ -53,7 +53,7 @@
   minutes: 9
   summary: When models are built one rank at a time, per-step errors compound through every later step, at a rate set by the spectral gaps.
   authors: Mahtab Alizadeh Vandchali, Fangshuo (Jasper) Liao, Anastasios Kyrillidis
-  map: [470, 650]
+  map: [420, 400]
   thumb: /assets/img/one_rank_thumbnail.svg
   thumb_alt: Cascading error dynamics across rank-1 steps
 - url: /asymmetric_input.html
@@ -62,7 +62,7 @@
   minutes: 16
   summary: Injecting the input into one update but not the other is enough to make a shared-weight recurrent Transformer behave like two.
   authors: Jucheng Shen, Barbara Su, Anastasios Kyrillidis
-  map: [840, 850]
+  map: [950, 650]
   thumb: /assets/img/air_thumbnail.svg
   thumb_alt: The AIR architecture, one shared block with two latent roles
 - url: /adapad.html
@@ -71,7 +71,7 @@
   minutes: 14
   summary: AdaPaD trains LoRA's rank-1 pieces in parallel, and the errors correct themselves, provably.
   authors: Barbara Su, Fangshuo (Jasper) Liao, Anastasios Kyrillidis
-  map: [720, 560]
+  map: [670, 400]
   thumb: /assets/img/adapad_thumbnail.svg
   thumb_alt: Five worker error envelopes converging across communication rounds
 - url: /ghost_mamba2.html
@@ -80,7 +80,7 @@
   minutes: 13
   summary: A forward-only state pruner for Mamba2 selective SSMs, built on controllability and observability. ICML 2026.
   authors: Michael Menezes, Anastasios Kyrillidis
-  map: [1080, 640]
+  map: [1200, 650]
   thumb: /assets/img/ghost_thumbnail.png
   thumb_alt: Phantom and corporeal hidden states in Mamba2-1.3B
 - url: /multiplicative_gaussian_input.html
@@ -89,16 +89,16 @@
   minutes: 9
   summary: Multiply every input by random noise; training still converges, to a target whose distance from the global minimum we can write down.
   authors: Afroditi Kolomvaki, Fangshuo Liao, Evan Dramko, Ziyun Guang, Anastasios Kyrillidis
-  map: [330, 400]
+  map: [670, 150]
   thumb: /assets/img/mgi_thumbnail.png
   thumb_alt: Smoothed ReLU under multiplicative Gaussian input noise
 - url: /stochastic_self_stabilization.html
   title: Why Stochastic Gradient Descent Stops Just Short of the Edge
   date: 2026-04-24 21:29:25 -0500
   minutes: 10
-  summary: A closed-form sharpness gap explains a long-observed property of mini-batch training.
+  summary: Why mini-batch SGD settles just below the edge of stability, and what sets the size of the gap.
   authors: Fangshuo (Jasper) Liao, Afroditi Kolomvaki, Anastasios Kyrillidis
-  map: [540, 150]
+  map: [420, 150]
   thumb: /assets/img/seos_fig1_trajectories.png
   thumb_alt: "Sharpness trajectories during training across batch sizes; smaller batches plateau lower"
 - url: /accelerated_nesterov_deepReLU.html
@@ -107,7 +107,7 @@
   minutes: 11
   summary: A new objective class that makes Nesterov provably accelerated for non-trivial neural architectures.
   authors: Fangshuo (Jasper) Liao, Anastasios Kyrillidis
-  map: [230, 190]
+  map: [170, 150]
   thumb: /assets/img/agd_exp1.png
   thumb_alt: "Experiment 1: sigma_max(A_2) = 0.01"
 - url: /parallel_deflation.html
@@ -116,6 +116,6 @@
   minutes: 3
   summary: A self-correcting parallel deflation scheme for distributed PCA, with convergence guarantees.
   authors: Fangshuo Liao, Wenyi Su, Anastasios Kyrillidis
-  map: [190, 650]
+  map: [170, 400]
   thumb: /assets/img/ParallelDeflationDiagram.png
   thumb_alt: "Parallel Deflation Algorithm"

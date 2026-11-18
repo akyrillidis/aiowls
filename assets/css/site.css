@@ -39,7 +39,7 @@
   --in-line2: #2A3039;
   --in-ink: #ECEAE4;
   --in-ink2: #A9ADB4;
-  --in-mute: #737983;
+  --in-mute: #80868F;
   --in-wide: 1320px;
 }
 
@@ -120,7 +120,9 @@ body.site .kick::before { content: ""; width: 7px; height: 7px; border-radius: 5
 /* hero: the live field */
 body.site .hero { position: relative; height: 84vh; min-height: 540px; max-height: 1000px; overflow: hidden; border-bottom: 1px solid var(--in-line); background: var(--in-bg); }
 body.site .hero canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
-body.site .hero-over {
+body.site .hero::after { content: ""; position: absolute; inset: auto 0 0 0; height: 62%; pointer-events: none;
+  background: linear-gradient(to top, rgba(10, 11, 13, .92) 0%, rgba(10, 11, 13, .55) 45%, rgba(10, 11, 13, 0) 100%); }
+body.site .hero-over { z-index: 1;
   position: absolute; left: 0; right: 0; bottom: 32px; padding: 0 28px; margin: 0 auto; max-width: var(--in-wide);
   display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 24px; align-items: end; pointer-events: none;
 }
@@ -181,7 +183,8 @@ body.site .mapstage .node text.no { font: 500 11px var(--ds-font-mono); fill: va
 body.site .mapstage .node:hover rect.f, body.site .mapstage .node.hi rect.f { stroke: var(--in-acc); stroke-width: 2.4; }
 body.site .mapstage .edge { fill: none; stroke: #4A525E; stroke-width: 1.4; stroke-dasharray: 5 6; }
 body.site .mapstage .edge.hi { stroke: var(--in-acc); stroke-width: 2.2; stroke-dasharray: none; }
-body.site .mapstage .elab { font: 500 11px var(--ds-font-mono); fill: var(--in-ink2); letter-spacing: .05em; text-transform: uppercase; paint-order: stroke; stroke: var(--in-bg); stroke-width: 5px; stroke-linejoin: round; }
+body.site .mapstage .elab { font: 500 11px var(--ds-font-mono); fill: var(--in-ink); letter-spacing: .05em; text-transform: uppercase; paint-order: stroke; stroke: var(--in-bg); stroke-width: 6px; stroke-linejoin: round; opacity: 0; transition: opacity .15s; pointer-events: none; }
+body.site .mapstage .eg.hi .elab { opacity: 1; }
 body.site .mapstage .axis { font: 600 12px var(--ds-font-mono); fill: var(--in-mute); letter-spacing: .14em; }
 body.site .mapstage .dim .node:not(.hi) { opacity: .26; }
 body.site .mapstage .dim .edge:not(.hi) { opacity: .2; }
@@ -193,6 +196,7 @@ body.site .mapcard {
   box-shadow: 0 30px 60px -24px rgba(0, 0, 0, .8); opacity: 0; transform: translateY(10px); transition: opacity .18s, transform .18s; pointer-events: none;
 }
 body.site .mapcard.on { opacity: 1; transform: none; }
+body.site .mapcard.left { right: auto; left: 16px; }
 body.site .mapcard .bd { padding: 14px 16px 16px; }
 body.site .mapcard .mt { font: 500 11.5px/1.3 var(--ds-font-mono); letter-spacing: .06em; text-transform: uppercase; color: var(--in-mute); }
 body.site .mapcard h3 { margin: 8px 0 6px; font: 600 19px/1.2 var(--ds-font-sans); letter-spacing: -.015em; color: var(--in-ink); }
@@ -207,6 +211,8 @@ body.site .pal ul { list-style: none; margin: 0; padding: 6px; max-height: 52vh;
 body.site .pal li { padding: 11px 14px; border-radius: 10px; display: flex; justify-content: space-between; gap: 14px; cursor: pointer; color: var(--in-ink); }
 body.site .pal li span { font: 400 12px var(--ds-font-mono); color: var(--in-mute); white-space: nowrap; }
 body.site .pal li.sel { background: #1A1E25; }
+
+html:not(.js) body.site .js-only { display: none !important; }
 
 /* page heads, about, people */
 body.site .page-head { max-width: var(--in-wide); margin: 0 auto; padding: 72px 28px 8px; }
@@ -257,6 +263,7 @@ body.site .pubs a { color: var(--in-acc2); }
   body.site .split { grid-template-columns: 1fr; }
   body.site .log, body.site .about, body.site .people, body.site .page-head, body.site .page { padding-left: 18px; padding-right: 18px; }
   body.site .mapcard { left: 12px; right: 12px; width: auto; }
+  body.site .views { display: none; }
   body.site .peek { display: none; }
 }
 @media (prefers-reduced-motion: reduce) {

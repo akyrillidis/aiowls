@@ -11,6 +11,7 @@
   var log = $(".log"), rowsBox = $(".rows", log), rows = rowsBox ? rowsBox.children : [];
   var listView = $(".view-list", log), mapView = $(".view-map", log);
   var narrow = function () { return window.innerWidth <= 900; };
+  var still = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   /* ---------- cursor preview on the list ---------- */
   var peek = $(".peek"), pimg = peek && $("img", peek), ptxt = peek && $("p", peek);
@@ -33,7 +34,7 @@
     if (sel >= 0 && rows[sel]) rows[sel].classList.remove("sel");
     sel = Math.max(0, Math.min(rows.length - 1, i));
     rows[sel].classList.add("sel");
-    rows[sel].scrollIntoView({ block: "nearest", behavior: "smooth" });
+    rows[sel].scrollIntoView({ block: "nearest", behavior: still ? "auto" : "smooth" });
   }
 
   /* ---------- Cmd-K palette ---------- */
@@ -45,8 +46,9 @@
     psel = 0;
     res.innerHTML = hits.map(function (p, i) { return '<li class="' + (i ? "" : "sel") + '" data-u="' + esc(p.url) + '">' + esc(p.title) + "<span>" + esc(p.date) + "</span></li>"; }).join("");
   }
-  function openPal() { if (!pal) return; pal.classList.add("on"); q.value = ""; render(); setTimeout(function () { q.focus(); }, 0); }
-  function closePal() { pal.classList.remove("on"); }
+  var lastFocus = null;
+  function openPal() { if (!pal) return; lastFocus = document.activeElement; pal.classList.add("on"); q.value = ""; render(); setTimeout(function () { q.focus(); }, 0); }
+  function closePal() { pal.classList.remove("on"); if (lastFocus && lastFocus.focus) lastFocus.focus(); }
   if (pal) {
     pal.addEventListener("click", function (e) { if (e.target === pal) closePal(); });
     res.addEventListener("click", function (e) { var li = e.target.closest("li"); if (li) location.href = li.dataset.u; });
@@ -57,6 +59,7 @@
   /* ---------- views ---------- */
   var built = false, buttons = log.querySelectorAll(".views button");
   function setView(v, push) {
+    if (narrow()) v = "list";   // the map needs room; phones get the list
     var isMap = v === "map";
     listView.hidden = isMap; mapView.hidden = !isMap;
     buttons.forEach(function (b) { b.setAttribute("aria-selected", String(b.dataset.view === v)); });
@@ -72,6 +75,7 @@
     if (pal && pal.classList.contains("on")) {
       var li = res.children;
       if (e.key === "Escape") closePal();
+      if (e.key === "Tab") { e.preventDefault(); q.focus(); }   // keep focus inside the dialog
       if ((e.key === "ArrowDown" || e.key === "ArrowUp") && li.length) {
         e.preventDefault(); li[psel].classList.remove("sel");
         psel = (psel + (e.key === "ArrowDown" ? 1 : li.length - 1)) % li.length;
@@ -81,6 +85,7 @@
       return;
     }
     if (tag === "input" || tag === "textarea" || e.metaKey || e.ctrlKey || e.altKey) return;
+    if (e.key === "Enter" && e.target.closest && e.target.closest("a, button, select, [role=tab]")) return;
     if (e.key === "j") select(sel + 1);
     if (e.key === "k") select(sel - 1);
     if (e.key === "Enter" && sel >= 0 && !listView.hidden) location.href = P[sel].url;
@@ -92,10 +97,12 @@
     var NS = "http://www.w3.org/2000/svg", svg = $("svg", mapView), world = $(".world", mapView), stage = $(".mapstage", mapView);
     var card = $(".mapcard", mapView), VW = 1600, VH = 1000, NW = 210, NH = 132;
     function mk(t, a) { var n = document.createElementNS(NS, t); for (var k in a) n.setAttribute(k, a[k]); return n; }
-    var ax = CFG.axes || {};
-    world.appendChild(mk("line", { x1: VW / 2, y1: 40, x2: VW / 2, y2: VH - 40, stroke: "#2A3039", "stroke-dasharray": "2 8" }));
-    world.appendChild(mk("line", { x1: 40, y1: VH / 2, x2: VW - 40, y2: VH / 2, stroke: "#2A3039", "stroke-dasharray": "2 8" }));
-    [[ax.left, 60, VH / 2 - 12, "start"], [ax.right, VW - 60, VH / 2 - 12, "end"], [ax.top, VW / 2 + 12, 62, "start"], [ax.bottom, VW / 2 + 12, VH - 46, "start"]]
+    // the axes cross in the empty lanes of the layout grid (columns at 170/420/670 | 950/1200/1450,
+    // rows at 150/400 | 650/880), so no label lands on a note
+    var ax = CFG.axes || {}, AX = 810, AY = 535;
+    world.appendChild(mk("line", { x1: AX, y1: 40, x2: AX, y2: VH - 40, stroke: "#2A3039", "stroke-dasharray": "2 8" }));
+    world.appendChild(mk("line", { x1: 40, y1: AY, x2: VW - 40, y2: AY, stroke: "#2A3039", "stroke-dasharray": "2 8" }));
+    [[ax.left, 52, AY - 9, "start"], [ax.right, VW - 52, AY - 9, "end"], [ax.top, AX + 12, 52, "start"], [ax.bottom, AX + 12, VH - 26, "start"]]
       .forEach(function (a) { if (!a[0]) return; var t = mk("text", { x: a[1], y: a[2], "class": "axis", "text-anchor": a[3] }); t.textContent = a[0]; world.appendChild(t); });
     var byKey = {}, pos = {}, free = 0;
     P.forEach(function (p) {
@@ -103,11 +110,13 @@
       pos[p.key] = (p.map && p.map.length === 2) ? p.map : [140 + (free++ % 6) * 240, VH - 90];   // unplaced posts wait in a row
     });
     var edges = (CFG.edges || []).filter(function (e) { return pos[e[0]] && pos[e[1]]; }).map(function (e) {
-      var a = pos[e[0]], b = pos[e[1]], mx = (a[0] + b[0]) / 2, my = (a[1] + b[1]) / 2 - 60, g = mk("g", {});
+      // the arc rises above both nodes, higher for longer spans, so it never runs through a title;
+      // its label shows only while one of its two notes is hovered
+      var a = pos[e[0]], b = pos[e[1]], mx = (a[0] + b[0]) / 2;
+      var my = Math.min(a[1], b[1]) - 70 - 0.2 * Math.abs(a[0] - b[0]), g = mk("g", { "class": "eg" });
       var path = mk("path", { d: "M" + a[0] + "," + a[1] + " Q" + mx + "," + my + " " + b[0] + "," + b[1], "class": "edge" });
-      // the label sits on the curve's midpoint, B(1/2) = (a + 2c + b) / 4
-      var t = mk("text", { x: mx, y: (a[1] + b[1]) / 2 - 30 - 6, "class": "elab", "text-anchor": "middle" }); t.textContent = e[2] || "";
-      g.appendChild(path); g.appendChild(t); world.appendChild(g); return { a: e[0], b: e[1], path: path };
+      var t = mk("text", { x: mx, y: (a[1] + 2 * my + b[1]) / 4 - 8, "class": "elab", "text-anchor": "middle" }); t.textContent = e[2] || "";
+      g.appendChild(path); g.appendChild(t); world.appendChild(g); return { a: e[0], b: e[1], path: path, g: g };
     });
     var nodes = {};
     P.forEach(function (p) {
@@ -116,9 +125,15 @@
       g.appendChild(mk("rect", { x: x + 6, y: y + 6, width: NW - 12, height: NH - 12, rx: 6, "class": "im" }));
       g.appendChild(mk("image", { href: p.thumb, x: x + 10, y: y + 10, width: NW - 20, height: NH - 20, preserveAspectRatio: "xMidYMid meet" }));
       var no = mk("text", { x: x, y: y - 10, "class": "no" }); no.textContent = "№ " + ("00" + p.n).slice(-2) + " · " + p.date.slice(0, 7); g.appendChild(no);
-      var words = p.title.split(" "), lines = [""];
-      words.forEach(function (w) { var L = lines[lines.length - 1]; if ((L + " " + w).length > 26 && lines.length < 3) lines.push(w); else lines[lines.length - 1] = L ? L + " " + w : w; });
-      lines.forEach(function (l, i) { var t = mk("text", { x: x, y: y + NH + 22 + i * 19 }); t.textContent = l; g.appendChild(t); });
+      var words = p.title.split(" "), lines = [""], cut = false;
+      words.forEach(function (w) {
+        var L = lines[lines.length - 1];
+        if (cut) return;
+        if (L && (L + " " + w).length > 25) { if (lines.length === 2) { cut = true; return; } lines.push(w); }
+        else lines[lines.length - 1] = L ? L + " " + w : w;
+      });
+      if (cut) lines[1] = lines[1].replace(/[,:;]?$/, "") + "\u2026";
+      lines.forEach(function (l, i) { var t = mk("text", { x: x, y: y + NH + 21 + i * 18 }); t.textContent = l; g.appendChild(t); });
       g.addEventListener("mouseenter", function () { focus(p.key); });
       g.addEventListener("mouseleave", function () { focus(null); });
       g.addEventListener("focus", function () { focus(p.key); });
@@ -131,13 +146,15 @@
         var near = k && (n === k || edges.some(function (e) { return (e.a === k && e.b === n) || (e.b === k && e.a === n); }));
         nodes[n].classList.toggle("hi", !!near);
       });
-      edges.forEach(function (e) { e.path.classList.toggle("hi", !!k && (e.a === k || e.b === k)); });
+      edges.forEach(function (e) { var on = !!k && (e.a === k || e.b === k); e.path.classList.toggle("hi", on); e.g.classList.toggle("hi", on); });
       if (!k) { card.classList.remove("on"); return; }
       var p = byKey[k];
       $("img", card).src = p.thumb; $("img", card).alt = p.thumb_alt || "";
       $("h3", card).textContent = p.title; $("p", card).textContent = p.summary;
       $(".mt", card).textContent = p.date + " · " + p.minutes + " min read" + (p.series ? " · " + p.series : "");
-      $(".by", card).textContent = p.authors; card.classList.add("on");
+      $(".by", card).textContent = p.authors;
+      card.classList.toggle("left", pos[k][0] > (vb[0] + vb[2] / 2));
+      card.classList.add("on");
     }
     var vb = [0, 0, VW, VH], drag = null;
     function setVB() { svg.setAttribute("viewBox", vb.join(" ")); }
@@ -146,6 +163,7 @@
       vb = [cx - (cx - vb[0]) * s, cy - (cy - vb[1]) * s, nw, vb[3] * s]; setVB();
     }
     svg.addEventListener("wheel", function (e) {
+      if (!e.ctrlKey && !e.metaKey) return;
       e.preventDefault(); var r = svg.getBoundingClientRect();
       zoom(Math.exp(e.deltaY * 0.0012), vb[0] + (e.clientX - r.left) / r.width * vb[2], vb[1] + (e.clientY - r.top) / r.height * vb[3]);
     }, { passive: false });
