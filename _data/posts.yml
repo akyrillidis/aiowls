@@ -24,7 +24,7 @@
   title: "Can We Train a Computer? Two Ways to Point at a Memory"
   date: 2026-07-07 23:46:45 +0300
   minutes: 13
-  summary: We wired a transformer by hand to be a Turing-complete computer, then trained another from scratch to do the identical job.
+  summary: We wired a transformer by hand to run a one-instruction computer, then trained another from scratch to do the same job.
   authors: Anastasios Kyrillidis, in collaboration with Microsoft Research
   map: [950, 150]
   thumb: /assets/img/cards/can_we_train_a_computer.svg
