@@ -85,10 +85,7 @@
   <h2><span class="num">2</span>Normalization decides where each step runs</h2>
   <p>We change exactly one thing. Two families of four-layer networks are identical in task, depth, width,
   activation, optimizer, and seed &mdash; they differ <em>only</em> in whether a normalization layer is present.
-  The effect is not subtle. <strong>Without</strong> normalization, the dereference and the arithmetic do not
-  become readable until the <em>final</em> layer; the network defers its real work to the end. <strong>With</strong>
-  it &mdash; LayerNorm or RMSNorm, it makes no difference &mdash; both surface early, at layer&nbsp;2, exactly the
-  layer the hand-built oracle uses, and later layers merely carry the answer forward.</p>
+  The effect is not subtle. <strong>Without</strong> normalization, the arithmetic does not become readable until the <em>final</em> layer (in all four seeds we read); the network defers its real work to the end. <strong>With</strong> LayerNorm, the arithmetic becomes readable one or two layers earlier: at layer&nbsp;2 or 3 across four seeds. The hand-built oracle forms it at layer&nbsp;2.</p>
 
   <p>One number summarizes it, read straight off the forward pass: the fraction of the network's total
   layer-to-layer change contributed by its <em>last</em> block. Spread evenly across four layers that share would
@@ -133,7 +130,7 @@
     <figcaption><b>Where the update lands.</b> The share of a network's total residual change contributed by each
     block. <span style="color:#8a5f16">Without normalization</span> the last block does almost all of it
     (\(0.88\)); <span style="color:#17544f">with normalization</span> the change is spread across depth
-    (last-block share \(0.38\)), and the arithmetic first appears at the layer the hand-built oracle uses. Same
+    (last-block share \(0.38\)), and the arithmetic first appears one or two layers earlier. Same
     task, same accuracy.</figcaption>
   </figure>
 
@@ -181,18 +178,13 @@
   effect: the residual stream grows across depth either way, so the last block acts on a larger input and its
   change looks bigger for free. Divide the stream size out and the unnormalized concentration falls from \(0.88\)
   to \(0.61\) &mdash; smaller, but still \(2.4\times\) the even share. The concentration is genuine; the raw metric
-  overstates it. Second, and more important, the claim that matters does not lean on the metric at all: we simply
-  <em>remove</em> the last block and read the output. The unnormalized network, having banked everything there,
-  collapses; the normalized one, which spread the work, keeps most of its accuracy. Depth becomes load-bearing
-  &mdash; or not &mdash; depending on the normalizer.</p>
+  overstates it. Second, we <em>remove</em> the last block and read the output. The unnormalized network collapses; the normalized one keeps most of its accuracy. This test has a blind spot, though: the hand-built oracle, which forms its arithmetic at layer&nbsp;2, collapses in the same way. The test reads where the answer is written to the output, not where it is computed, so the claim about where the computation happens rests on the readouts above.</p>
 
   <figure style="max-width:400px;">
     <img src="assets/img/p2_e1b.png" alt="Written-cell output accuracy when the network is truncated to its first k blocks; unnormalized is flat near 0.30 until the last block then jumps to 1.00, normalized climbs steadily and reaches about 0.82 with the last block removed.">
-    <figcaption><b>Depth becomes load-bearing.</b> Written-cell output accuracy when the network is truncated to
+    <figcaption><b>Where the answer is written.</b> Written-cell output accuracy when the network is truncated to
     its first \(k\) blocks (\(k=4\) is full depth; \(k=3\) drops the last block). Without normalization, accuracy
-    is flat near \(0.30\) until the last block, then jumps to \(1.00\) &mdash; everything is banked there, so
-    removing it breaks the executor; with normalization it climbs steadily and still reaches \(\sim\!0.82\) once
-    the last block is gone.</figcaption>
+    is flat near \(0.30\) until the last block, then jumps to \(1.00\); with normalization it climbs steadily and keeps most of its accuracy once the last block is gone. The hand-built oracle shows the same jump as the unnormalized network, so this test shows where the answer is written, not where it is computed.</figcaption>
   </figure>
 
   <p>It is not a quirk of one computer, either. The same signature appears across other one-instruction languages,
@@ -206,20 +198,17 @@
     <div class="col proven">
       <h3>What we show</h3>
       <ul>
-        <li>At fixed task, depth, width and accuracy, <strong>normalization</strong> moves the dereference and
-        arithmetic from the last layer to the layer the oracle uses (last-block share \(0.88\!\to\!0.38\); LayerNorm
+        <li>At fixed task, depth, width and accuracy, <strong>normalization</strong> moves the arithmetic one or two layers earlier (layer 2 or 3 with LayerNorm, the last layer without; last-block share \(0.88\!\to\!0.38\); LayerNorm
         \(=\) RMSNorm).</li>
         <li>It is a <strong>control knob</strong>: placing the normalizer relocates the computation; the contrast
         follows a \(1/L\) law from 2&ndash;12 layers; a norm-free stand-in does not reproduce it.</li>
-        <li>The one measurable consequence is <strong>load-bearing depth</strong>: remove the last block and the
-        unnormalized executor breaks, the normalized one survives.</li>
+        <li>Removing the last block breaks the unnormalized executor but not the normalized one. The hand-built oracle breaks too, so this shows <strong>where the answer is written</strong>, not where it is computed.</li>
       </ul>
     </div>
     <div class="col open">
       <h3>Honest scope</h3>
       <ul>
-        <li>The raw metric is <strong>stream-weighted</strong> (\(0.88\!\to\!0.61\) once corrected); the causal
-        claim rests on the truncation test, not the metric.</li>
+        <li>The raw metric is <strong>stream-weighted</strong> (\(0.88\!\to\!0.61\) once corrected); the claim about where the computation happens rests on the readouts; the truncation test reads where the answer is written.</li>
         <li>This is a <strong>small, ground-truthed</strong> transformer &mdash; the controlled complement to
         pretrained-model studies, not a substitute for them.</li>
         <li>We do <strong>not</strong> claim to explain Anthropic's workspace; we show, with ground truth, what one
@@ -241,10 +230,11 @@
 
   <p class="foot">Results are paired and multi-seed on a four-layer, width-256 SUBLEQ transformer, with the
   hand-built oracle as ground truth; the last-block-share metric is reported with its stream-normalized correction,
-  and the load-bearing claim is the last-block-removal test, which uses no metric. The full write-up and the code
+  and the last-block-removal test is read as where the answer is written, since the hand-built oracle shows the same jump. The full write-up and the code
   are available on request at <a href="mailto:anastasios@rice.edu">anastasios@rice.edu</a>. By Anastasios
   Kyrillidis (Rice University), in collaboration with Microsoft Research. On Anthropic's global workspace, see
   <a href="https://transformer-circuits.pub/2026/workspace/">transformer-circuits.pub/2026/workspace</a>.</p>
+<p class="foot">Updated November 2026: an earlier version said the normalized networks form their arithmetic exactly at the oracle&rsquo;s layer&nbsp;2 (it is layer&nbsp;2 or 3) and read the last-block test as proof that depth carries the computation (the hand-built oracle fails it in the same way).</p>
 
   <a class="backlink" href="./blogs.html">&larr; All AI-OWLS posts</a>
 
