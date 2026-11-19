@@ -88,12 +88,12 @@ layout: default
   <li>
     <span class="thumb">
       <a href="./can_we_train_a_computer.html">
-        <img src="./assets/img/ctac_kmatrix.png" alt="Two key-overlap matrices: hand-built Gaussian addressing (dense, correlated) vs trained orthogonal-key addressing (sharp diagonal)">
+        <img src="./assets/img/ctac_score_curves.png" alt="Attention scores over positions: a hand-built head draws a parabola, a trained head a single spike">
       </a>
     </span>
     <span class="title">
       <a href="./can_we_train_a_computer.html">Can We Train a Computer? Two Ways to Point at a Memory</a>
-      <span class="meta">We wired a transformer, by hand, to <em>be</em> a Turing-complete computer, then trained another from scratch to do the identical job. Both run it perfectly &mdash; yet to every weight-space test they look like different algorithms. They aren&rsquo;t: gradient descent found a more <em>perpendicular</em> way to point at memory (K<sub>off</sub> 0.89 vs 0.20&ndash;0.53), and that magnitude gap is what fools the standard test.</span>
+      <span class="meta">We wired a transformer, by hand, to <em>be</em> a computer, then trained another from scratch to do the same job. Both read the same memory cells, but they find them differently: the hand-built heads search, with the address in the query; the trained heads read a mark that earlier layers put on the target. The standard weight-space test cannot tell this from a change of random seed.</span>
       <span class="credits">A ground-truthed case for mechanistic probes over weight-space interpolation. In collaboration with Microsoft Research.</span>
     </span>
   </li>
