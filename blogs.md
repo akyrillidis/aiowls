@@ -93,7 +93,7 @@ layout: default
     </span>
     <span class="title">
       <a href="./can_we_train_a_computer.html">Can We Train a Computer? Two Ways to Point at a Memory</a>
-      <span class="meta">We wired a transformer, by hand, to <em>be</em> a computer, then trained another from scratch to do the same job. Both read the same memory cells, but they find them differently: the hand-built heads search, with the address in the query; the trained heads read a mark that earlier layers put on the target. The standard weight-space test cannot tell this from a change of random seed.</span>
+      <span class="meta">We wired a transformer, by hand, to <em>be</em> a computer, then trained another from scratch to do the same job. Both read the same memory cells, but they find them differently: the hand-built heads search, with the address in the query; the trained pointer heads read a mark that earlier layers put on the target. The standard weight-space test, with the matchings we tested, cannot tell this from a change of random seed.</span>
       <span class="credits">A ground-truthed case for mechanistic probes over weight-space interpolation. In collaboration with Microsoft Research.</span>
     </span>
   </li>

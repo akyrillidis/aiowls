@@ -3,15 +3,15 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="description" content="We hand-wired a transformer to be a computer and trained another from scratch to do the same job. Both read the same memory cells, but they find them differently: the hand-built heads search, with the address in the query; the trained heads read a mark that earlier layers put on the target cell. Comparing weights cannot tell this from a change of random seed; looking inside can.">
+<meta name="description" content="We hand-wired a transformer to be a computer and trained another from scratch to do the same job. Both read the same memory cells, but they find them differently: the hand-built heads search, with the address in the query; the trained pointer heads read a mark that earlier layers put on the target cell. Comparing weights, with the matchings we tested, cannot tell this from a change of random seed; looking inside can.">
 <meta name="keywords" content="mechanistic interpretability, transformers, content addressing, attention, SUBLEQ, Turing complete, mode connectivity, one-instruction set computer, pointer heads, search, mark">
 <meta property="og:title" content="Can We Train a Computer? Two Ways to Point at a Memory" />
-<meta property="og:description" content="Two transformers run the same one-instruction computer, one hand-wired and one trained from scratch. Both read the same memory cells. The hand-built one searches for them; the trained one reads a mark that earlier layers put on the target." />
+<meta property="og:description" content="Two transformers run the same one-instruction computer, one hand-wired and one trained from scratch. Both read the same memory cells. The hand-built one searches for them; the trained one&rsquo;s pointer heads read a mark that earlier layers put on the target." />
 <meta property="og:image" content="https://akyrillidis.github.io/aiowls/assets/img/ctac_score_curves.png" />
 <meta property="og:type" content="article" />
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Can We Train a Computer? Two Ways to Point at a Memory">
-<meta name="twitter:description" content="Two transformers run the same one-instruction computer, one wired by hand and one trained. Both read the same memory cells but find them differently: the hand-built heads search, the trained heads read a mark. The standard weight-space test cannot see this: it flags even two networks that differ only in their random seed. Looking inside settles it.">
+<meta name="twitter:description" content="Two transformers run the same one-instruction computer, one wired by hand and one trained. Both read the same memory cells but find them differently: the hand-built heads search, the trained pointer heads read a mark. The weight-space test, with the matchings we tested, cannot see this: it flags even two networks that differ only in their random seed. Looking inside settles it.">
 <meta name="twitter:image" content="https://akyrillidis.github.io/aiowls/assets/img/ctac_score_curves.png">
 <title>Can We Train a Computer? Two Ways to Point at a Memory &middot; AI-OWLS</title>
 
@@ -122,9 +122,7 @@
     <p>A transformer&rsquo;s attention &ldquo;points&rdquo; at a memory cell by matching a query against a key.
     We set the weights of a small transformer by hand so that its attention and ReLUs execute SUBLEQ, a
     one-instruction computer: of its 3.29 million weights, only 1,043 are nonzero, and it executes every step we
-    tried exactly. We also <em>trained</em> a transformer of the same shape from scratch to do the same job. On
-    states it never saw, it gets 99.93% of steps exactly right, and fed its own output, it runs programs. Do the
-    two work the same way? Comparing their weights says &ldquo;no,&rdquo; but that test says the same about two
+    tried exactly. We also <em>trained</em> a transformer of the same shape from scratch to do the same job. On states it never saw, drawn from its training distribution, it gets 99.93% of steps exactly right; fed its own output, it runs programs reliably for 16 steps while they run, though it has not learned to stay put once a program halts. Do the two work the same way? Comparing their weights says &ldquo;no,&rdquo; but with the matchings we tested, that test says the same about two
     trained networks that differ only in their random seed, so it cannot answer the question. Looking inside can.
     Both networks read the same cells, and they find them differently: the hand-built heads <em>search</em>,
     with the address carried in the query, while the trained heads read a <em>mark</em> that earlier layers put
@@ -136,9 +134,7 @@
   &mdash; short for &ldquo;subtract, and branch if less-than-or-equal to zero.&rdquo; That is the whole
   instruction set. You give it three addresses; it subtracts the contents of one memory cell from another, writes
   the result back, and then, if that result came out at or below zero, it jumps somewhere else in the program.
-  Then, repeat. It sounds far too meagre to do anything. It is, in fact, <em>Turing-complete</em>: with enough of
-  these little subtract-and-branch steps you can compute anything any computer can compute. Addition,
-  multiplication, division, square roots, loops, conditionals &mdash; all of it, out of one instruction.</p>
+  Then, repeat. It sounds far too meagre to do anything. It is, in fact, <em>Turing-complete</em> given unbounded memory: with enough of these little subtract-and-branch steps, and enough memory, you can compute anything any computer can compute.</p>
 
   <p>That makes SUBLEQ a beautiful object for one specific experiment. The computer is simple enough to hold in
   your head, and you can build it out of unusual parts. Our unusual part is a <em>transformer</em>, the
@@ -151,8 +147,7 @@
     <p><strong>SUBLEQ</strong> = <em>SUB</em>tract and branch if <em>L</em>ess-than-or-<em>EQ</em>ual to zero. One
     instruction, three operands \(a, b, c\): compute \(\mathrm{mem}[b] \leftarrow \mathrm{mem}[b] -
     \mathrm{mem}[a]\); if the result \(\le 0\), jump to instruction \(c\), otherwise continue.</p>
-    <p>It is a <em>one-instruction set computer</em> (OISC), and it is Turing-complete &mdash; a full
-    processor&rsquo;s worth of computation expressed with a single verb. That extreme simplicity is exactly what
+    <p>It is a <em>one-instruction set computer</em> (OISC), and, given unbounded memory, it is Turing-complete. The machines we build and train are finite, with 32 or 16 memory cells. That extreme simplicity is exactly what
     lets us hand-build a transformer that runs it, and check a trained one against the ground truth.</p>
   </div>
 
@@ -177,7 +172,7 @@
   so errors barely compound. What it has not learned is to stay put once a program halts, a state its training
   never showed it.</p>
 
-  <p>So now we have two networks. Both run the same computer, one exactly and one almost exactly. One we built;
+  <p>So now we have two networks. Both run the same computer, one exactly and one almost exactly on single steps. One we built;
   one we grew. The obvious next question, and the whole reason to set this up, is whether they are secretly the
   same machine underneath.</p>
 
@@ -204,7 +199,7 @@
       <text class="svglbl" x="520" y="216" text-anchor="middle" font-size="12" fill="#17544f">target cell</text>
       <text class="svglbl" x="540" y="50" text-anchor="middle" font-size="12.5" fill="#17544f">one sharp spike at the mark</text>
       <text class="svglbl" x="185" y="250" text-anchor="middle" font-size="13.5" fill="#2c2218">hand-built: search</text>
-      <text class="svglbl" x="535" y="250" text-anchor="middle" font-size="13.5" fill="#2c2218">trained: read a mark</text>
+      <text class="svglbl" x="535" y="250" text-anchor="middle" font-size="13.5" fill="#2c2218">trained pointer heads: read a mark</text>
       <line x1="360" y1="36" x2="360" y2="230" stroke="#ddd4c0" stroke-width="1"/>
     </svg>
     </div>
@@ -217,8 +212,7 @@
   </figure>
 
   <h2><span class="num">3</span>The tension: two tests disagree</h2>
-  <p>How do you check whether two networks &ldquo;learned the same algorithm&rdquo;? The field&rsquo;s default
-  instrument is a <strong>weight-space</strong> test called <em>mode connectivity</em>. Line up the two
+  <p>How do you check whether two networks &ldquo;learned the same algorithm&rdquo;? One common instrument is a <strong>weight-space</strong> test called <em>mode connectivity</em>. Line up the two
   networks&rsquo; weights and walk in a straight line from one to the other, watching the accuracy. If they are
   the same solution in slightly different clothes, every network along that path should keep working &mdash; you
   slide from one to the other without falling off a cliff. If accuracy collapses in the middle, they sit in
@@ -239,7 +233,7 @@
 
   <figure style="max-width:100%;">
     <img src="assets/img/ctac_corner_real.png" alt="Scatter plot of attention heads: parabola fit (R squared) against key alignment. The hand-built heads sit alone at the top right. The heads found in trained networks form one cluster near the bottom, between 0.3 and 0.6 in key alignment. Heads of untrained networks sit to their left. A second hand-built head with nearly orthogonal keys sits at the bottom left.">
-    <figcaption><b>Every head as a point.</b> Vertical: how well a parabola fits the head&rsquo;s attention
+    <figcaption><b>Heads as points.</b> Vertical: how well a parabola fits the head&rsquo;s attention
     scores over positions (\(R^2\); 1 for an exact parabola). Horizontal: <em>key alignment</em>, how close the
     keys of different positions are to lying along one line, after removing the part all keys share (1 when they
     are parallel). The <span style="color:#8a5f16">hand-built</span> network&rsquo;s five heads that find cells
@@ -250,7 +244,7 @@
     score. The parabola fit depends on the scores alone.</figcaption>
   </figure>
 
-  <p>So which is it: same algorithm or not? The weight test cannot settle it. Draw the same line between two
+  <p>So which is it: same algorithm or not? With the matchings we tested, the weight test cannot settle it. Draw the same line between two
   trained networks that differ only in their random seed, and the networks in the middle get no full state right
   either. A test that gives the same verdict for two networks that work alike cannot tell us whether these two
   differ (Section 6 comes back to this). The probe says the two networks make the same reads. It does not yet say
@@ -273,7 +267,7 @@
   range over tens of logits.</p>
 
   <figure style="max-width:100%;">
-    <img src="assets/img/ctac_score_curves.png" alt="Two panels of attention scores against position relative to the peak. Left, hand-built head L1H0: smooth parabolas spanning tens of thousands of logits. Right, trained head L3H0: one spike at the peak, about 25 logits above the noisy scores elsewhere.">
+    <img src="assets/img/ctac_score_curves.png" alt="Two panels of attention scores against position relative to the peak. Left, hand-built head L1H0: smooth parabolas spanning tens of thousands of logits. Right, trained head L3H0: one spike at the peak, tens of logits above the scores elsewhere.">
     <figcaption><b>Two fingerprints.</b> Attention scores over positions for the two heads that read the cell
     operand \(a\) points to, for 8 states with different program counters, each centered on its own peak.
     <span style="color:#8a5f16">Left, hand-built head L1H0:</span> parabolas. <span style="color:#17544f">Right,
@@ -303,7 +297,7 @@
   a score shape by the range of scores it needs, since a wider range needs a longer query or keys farther apart.
   For a head to put 99% of its attention on any one of 33 positions, a parabola needs a range of at least 1,353
   logits, whatever its weights. A spike needs about 8. The trained ranges, 9 to 42 logits over the twelve
-  networks of our main study, sit close to that minimum, and a network trained without weight decay keeps them below
+  networks of our main study, are of the same order as that minimum, and a network trained without weight decay keeps them below
   30, so weight decay is not what keeps them small. This prices the two shapes. It does not explain why training
   picks the cheaper one.</p>
 
@@ -378,8 +372,7 @@
   whether they make the weight test informative here is open.</p>
 
   <p>The second lesson is about training. A correct construction need not predict what training builds. Both
-  networks make the same two pointer reads, but training made them with scores thousands of times smaller, by
-  marking the target instead of searching for it, and it did so in all twelve networks we checked. What settled
+  networks make the same two pointer reads, but training made them with scores thousands of times smaller, and its pointer heads mark the target instead of searching for it, in all twelve networks we checked. What settled
   the question was looking inside, with a probe we could check against a network whose every step we know. The
   practical takeaway for interpretability: before you trust a tool&rsquo;s verdict on two networks, check it on a
   pair whose answer you know.</p>
@@ -388,8 +381,7 @@
     <div class="col proven">
       <h3>What we measured</h3>
       <ul>
-        <li>The trained network gets <strong>99.93%</strong> of unseen steps exactly right and, fed its own
-        output, runs programs for 16 steps with errors that barely compound while they run.</li>
+        <li>The trained network gets <strong>99.93%</strong> of unseen steps (from its training distribution) exactly right and, fed its own output, runs programs for 16 steps with errors that barely compound while they run; it has not learned to stay put once a program halts.</li>
         <li>It makes the hand-built network&rsquo;s <strong>two pointer reads</strong>: L3H0 and L3H3 hit the
         right cell on every one of 3,000 fresh states.</li>
         <li>It finds those cells <strong>differently</strong>: hand-built heads search (a parabola, about
@@ -419,8 +411,7 @@
   <p>We rarely get to check our interpretability tools against the truth, because we rarely know the truth. SUBLEQ
   gave us that rare thing: a network we understand completely, standing next to one we merely trained, both
   running the same machine. Held up to the light, they turned out to read the same cells and to find them in
-  different ways, one by searching and one by reading a mark. The standard instrument for telling them apart
-  could not tell that difference from the difference between two random seeds. What gradient descent actually
+  different ways, one by searching and one, at its pointer heads, by reading a mark. The weight comparison, with the matchings we tested, could not tell that difference from the difference between two random seeds. What gradient descent actually
   picks, when it is free to pick, is a hard thing to see. Once in a while, with the right toy computer, you can
   catch a clear glimpse of it.</p>
 
@@ -430,9 +421,7 @@
   are available on request at <a href="mailto:anastasios@rice.edu">anastasios@rice.edu</a>. By Anastasios
   Kyrillidis (Rice University), in collaboration with Microsoft Research.<br><br>
   <strong>Updated November 2026.</strong> An earlier version of this post said the trained network points at
-  memory with nearly orthogonal keys and is exact on every single step; the key measurement used inputs the
-  heads do not actually receive, and the trained network is exact on 99.93% of unseen steps. The post now
-  reports what later tests confirmed: the hand-built heads search, and the trained heads read a mark.</p>
+  memory with nearly orthogonal keys and is exact on every single step, that it ran 802 of 804 test programs, and that the hand-built network has about a hundred nonzero weights. The key measurement used inputs the heads do not actually receive; the trained network is exact on 99.93% of unseen steps; the paper reports no such program count; and the hand-built network has 1,043 nonzero weights. The post now reports what later tests confirmed: the hand-built heads search, and the trained pointer heads read a mark.</p>
 
   <a class="backlink" href="./blogs.html">&larr; All AI-OWLS posts</a>
 
