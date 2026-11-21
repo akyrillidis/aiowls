@@ -3,8 +3,8 @@
   :root{
     --paper:#f6f1e6; --ink:#2c2218; --soft:#5c4d3f; --line:#ddd4c0; --rule:#2c2218;
     --oxblood:#7c1f2b;                                   /* the one editorial spot color: drop cap */
-    --built:#a9761c;  --builtbg:#f2e9d6; --built-d:#8a5f16;   /* amber = hand-built / Gaussian (data-ink) */
-    --train:#1f6b67;  --trainbg:#e5efec; --train-d:#17544f;   /* teal  = trained / orthogonal (data-ink) */
+    --built:#a9761c;  --builtbg:#f2e9d6; --built-d:#8a5f16;   /* amber = hand-built / search (data-ink) */
+    --train:#1f6b67;  --trainbg:#e5efec; --train-d:#17544f;   /* teal  = trained / mark (data-ink) */
     --grey:#8a7d6b;
   }
   *{box-sizing:border-box;}
